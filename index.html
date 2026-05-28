@@ -235,6 +235,8 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
 </div>
 
 <!-- APP -->
+<div id="loader" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:300;flex-direction:column;gap:16px;"><div style="width:44px;height:44px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin 0.8s linear infinite;"></div><div style="font-size:13px;color:var(--tx2);">Cargando...</div></div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 <div class="app hidden" id="app">
   <div class="sidebar">
@@ -488,16 +490,59 @@ function loadAll(){
   if(!localStorage.getItem('is_e')) saveAll();
 }
 
+var _saveTimer=null;
 function saveAll(){
+  // Save to localStorage as backup
   localStorage.setItem('is_e',JSON.stringify(emps));
   localStorage.setItem('is_r',JSON.stringify(regs));
   localStorage.setItem('is_s',JSON.stringify(sals));
   localStorage.setItem('is_d',JSON.stringify(docs));
   localStorage.setItem('is_logs',JSON.stringify(emailLogs));
   localStorage.setItem('is_c',JSON.stringify(cfg));
+  // Debounce cloud save
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(saveCloud, 800);
+}
+async function saveCloud(){
+  try{
+    var data={emps,regs,sals,docs,emailLogs,cfg};
+    await fetch('/.netlify/functions/data',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    });
+    console.log('Cloud save OK');
+  }catch(e){ console.warn('Cloud save failed, using localStorage', e); }
+}
+async function loadCloud(){
+  try{
+    var r=await fetch('/.netlify/functions/data');
+    if(!r.ok) return false;
+    var data=await r.json();
+    if(!data) return false;
+    if(data.emps&&data.emps.length) emps=data.emps;
+    if(data.regs) regs=data.regs;
+    if(data.sals) sals=data.sals;
+    if(data.docs) docs=data.docs;
+    if(data.emailLogs) emailLogs=data.emailLogs;
+    if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
+    console.log('Cloud load OK');
+    return true;
+  }catch(e){ console.warn('Cloud load failed', e); return false; }
 }
 
-loadAll();
+loadAll(); // load localStorage as initial fallback
+
+async function initApp(){
+  // Try to load from cloud, override localStorage if successful
+  var cloudOk = await loadCloud();
+  if(!cloudOk){
+    console.log('Using localStorage data');
+  }
+  // Show login screen
+  document.getElementById('loader').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+}
 
 function gc(i){ return COLORS[i%COLORS.length]; }
 function gi(n,a){ return (n[0]||'')+(a[0]||''); }
@@ -1446,6 +1491,7 @@ async function syncSheets(){
     dot.style.background='var(--grn)'; st.textContent='Sincronizado';
   }catch(e){ dot.style.background='var(--red)'; st.textContent='Error sync'; }
 }
+initApp();
 </script>
 </body>
 </html>
