@@ -155,13 +155,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55;}
 .hidden{display:none!important;}
 .fx{display:flex;}.g2{gap:8px;}.ac{align-items:center;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
-.ls{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;}
+.ls{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
 .lb{
 background:rgba(23,27,38,.82);
 border:1px solid rgba(255,255,255,.08);
 border-radius:28px;
 padding:40px;
-width:380px;
+width:min(380px, 92vw);
 backdrop-filter:blur(18px);
 box-shadow:0 25px 60px rgba(0,0,0,.45);
 }
