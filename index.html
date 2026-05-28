@@ -291,7 +291,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
     <div class="sfoot">
       <div class="sdot" id="sdot"></div>
       <span id="sst">Sin sincronizar</span>
-      <button onclick="logout()" style="margin-left:auto;background:rgba(240,82,82,.1);border:1px solid rgba(240,82,82,.2);color:var(--red);cursor:pointer;font-size:12px;padding:5px 12px;border-radius:8px;font-family:inherit;">Salir</button>
+      <button onclick="logout()" style="margin-left:auto;background:rgba(240,82,82,.15);border:1px solid rgba(240,82,82,.4);color:#f87171;cursor:pointer;font-size:13px;font-weight:600;padding:7px 16px;border-radius:8px;font-family:inherit;white-space:nowrap;">⬅ Salir</button>
     </div>
   </div>
   <div class="main">
@@ -644,6 +644,7 @@ function applyRole(){
   document.getElementById('nav-reg').style.display=isAdmin?'':'none';
   document.getElementById('nav-sal').style.display=isAdmin?'':'none';
   document.getElementById('nav-cfg').style.display=isAdmin?'':'none';
+  document.getElementById('nav-auto').style.display=isAdmin?'':'none';
   document.getElementById('btn-add-emp').style.display=isAdmin?'':'none';
   document.getElementById('nl-team').style.display=(isAdmin||isCoord)?'':'none';
   document.getElementById('emplist').style.display=(isAdmin||isCoord)?'':'none';
