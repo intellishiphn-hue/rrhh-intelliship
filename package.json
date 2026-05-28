@@ -1,0 +1,8 @@
+{
+  "name": "rrhh-intelliship",
+  "version": "1.0.0",
+  "description": "INTELLISHIP Honduras - Sistema RRHH",
+  "dependencies": {
+    "@netlify/functions": "^2.0.0"
+  }
+}

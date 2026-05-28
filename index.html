@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTELLISHIP RRHH</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  (function(){
+    emailjs.init({ publicKey: 'q9dny_O5VCALgIzDB' });
+  })();
+  var EJS_SERVICE = 'service_ae309iq';
+  var EJS_TEMPLATE = 'template_au2kuvi';
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{--bg:#070b14;--sur:#101826;--sur2:#172235;--bdr:#2a2f42;--bdr2:#343b52;--acc:#4f8ef7;--acc2:#3a7be0;--grn:#34c87a;--yel:#f5c542;--red:#f05252;--pur:#a78bfa;--org:#fb923c;--pnk:#f472b6;--tel:#2dd4bf;--txt:#e8eaf0;--tx2:#9099b3;--tx3:#5a6280;--r:12px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+font-family:'DM Sans',sans-serif;
+background:
+radial-gradient(circle at top left, rgba(79,142,247,.18), transparent 25%),
+radial-gradient(circle at top right, rgba(167,139,250,.15), transparent 25%),
+var(--bg);
+color:var(--txt);
+min-height:100vh;
+}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{
+width:250px;
+background:rgba(10,15,25,.88);
+border-right:1px solid rgba(255,255,255,.05);
+display:flex;
+flex-direction:column;
+flex-shrink:0;
+backdrop-filter:blur(18px);
+}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.slogo{padding:18px 20px 14px;border-bottom:1px solid var(--bdr);}
+.brand{font-size:13px;font-weight:700;letter-spacing:2.5px;color:var(--acc);}
+.bsub{font-size:10px;color:var(--tx3);margin-top:1px;}
+.rchip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:600;margin-top:7px;}
+.rca{background:rgba(79,142,247,.15);color:var(--acc);}
+.rcc{background:rgba(167,139,250,.15);color:var(--pur);}
+.rce{background:rgba(52,200,122,.15);color:var(--grn);}
+.snav{padding:10px 8px;flex:1;overflow-y:auto;}
+.nl{font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--tx3);padding:4px 10px 6px;text-transform:uppercase;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--tx2);transition:all .15s;margin-bottom:1px;}
+.ni:hover{background:var(--sur2);color:var(--txt);}
+.ni.active{background:rgba(79,142,247,.12);color:var(--acc);font-weight:500;}
+.ei{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;transition:all .15s;}
+.ei:hover{background:var(--sur2);}
+.ei.active{background:rgba(79,142,247,.1);}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.sfoot{padding:11px 14px;border-top:1px solid var(--bdr);font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--tx3);flex-shrink:0;}
+.topbar{
+padding:18px 28px;
+border-bottom:1px solid rgba(255,255,255,.05);
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:rgba(10,15,25,.75);
+backdrop-filter:blur(18px);
+flex-shrink:0;
+}
+.topbar h1{font-size:17px;font-weight:600;}
+.topbar p{font-size:12.5px;color:var(--tx2);margin-top:1px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:12.5px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;}
+.bp{background:var(--acc);color:#fff;}.bp:hover{background:var(--acc2);}
+.bg{background:var(--sur2);color:var(--tx2);border:1px solid var(--bdr);}.bg:hover{color:var(--txt);}
+.bd{background:rgba(240,82,82,.1);color:var(--red);border:1px solid rgba(240,82,82,.25);}
+.bgr{background:rgba(52,200,122,.1);color:var(--grn);border:1px solid rgba(52,200,122,.25);}
+.bpu{background:rgba(167,139,250,.1);color:var(--pur);border:1px solid rgba(167,139,250,.25);}
+.bsm{padding:4px 10px;font-size:11.5px;}
+.content{padding:20px 24px;flex:1;}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.sc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:15px 17px;}
+.sl{font-size:11.5px;color:var(--tx2);font-weight:500;margin-bottom:5px;}
+.sv{font-size:25px;font-weight:700;font-family:'DM Mono',monospace;}
+.ss{font-size:11px;color:var(--tx3);margin-top:3px;}
+.card{
+background:rgba(23,27,38,.78);
+border:1px solid rgba(255,255,255,.06);
+border-radius:18px;
+overflow:hidden;
+backdrop-filter:blur(14px);
+box-shadow:0 10px 35px rgba(0,0,0,.25);
+transition:all .2s ease;
+}
+.card:hover{
+transform:translateY(-2px);
+border-color:rgba(79,142,247,.25);
+}
+.ch{padding:13px 17px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.ct{font-size:13.5px;font-weight:600;}
+table{width:100%;border-collapse:collapse;}
+th{padding:8px 13px;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-bottom:1px solid var(--bdr);}
+td{padding:10px 13px;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.015);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;}
+.bgr2{background:rgba(52,200,122,.12);color:var(--grn);}
+.bye{background:rgba(245,197,66,.12);color:var(--yel);}
+.bre{background:rgba(240,82,82,.12);color:var(--red);}
+.bbl{background:rgba(79,142,247,.12);color:var(--acc);}
+.bpu2{background:rgba(167,139,250,.12);color:var(--pur);}
+.bte{background:rgba(45,212,191,.12);color:var(--tel);}
+.dbar{display:flex;align-items:center;gap:8px;}
+.dbt{flex:1;height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;}
+.dbf{height:100%;border-radius:99px;}
+.dbtx{font-size:11px;font-family:'DM Mono',monospace;color:var(--tx2);min-width:44px;text-align:right;}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.md{background:var(--sur);border:1px solid var(--bdr);border-radius:16px;width:520px;max-height:88vh;overflow-y:auto;}
+.mdlg{width:640px;}
+.mh{padding:17px 22px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--sur);z-index:1;}
+.mt{font-size:15px;font-weight:600;}
+.mc{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:20px;line-height:1;}
+.mb{padding:20px 22px;}
+.mf{padding:13px 22px;border-top:1px solid var(--bdr);display:flex;gap:8px;justify-content:flex-end;}
+.fg{margin-bottom:13px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+label{display:block;font-size:11.5px;font-weight:500;color:var(--tx2);margin-bottom:4px;}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:8px 11px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);}
+input[readonly]{background:var(--sur);color:var(--tx2);}
+select option{background:var(--sur);}
+textarea{resize:vertical;min-height:80px;line-height:1.55;}
+.ph{display:flex;align-items:center;gap:16px;padding:18px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:14px;}
+.pav{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:700;flex-shrink:0;}
+.pname{font-size:19px;font-weight:700;}
+.prole{font-size:13px;color:var(--tx2);margin-top:2px;}
+.pmeta{display:flex;flex-wrap:wrap;gap:10px;margin-top:7px;}
+.pmi{font-size:11.5px;color:var(--tx3);}
+.do{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:14px;}
+.dc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:13px;text-align:center;}
+.dn{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;}
+.dl{font-size:11px;color:var(--tx2);margin-top:2px;}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
+.ic{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:13px 15px;}
+.icl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px;}
+.ir{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:12.5px;}
+.ir:last-child{border-bottom:none;padding-bottom:0;}
+.ik{color:var(--tx2);}
+.iv{font-weight:500;text-align:right;max-width:58%;word-break:break-word;}
+.ab{border-radius:var(--rs);padding:11px 13px;font-size:13px;margin-bottom:12px;}
+.aw{background:rgba(245,197,66,.1);border:1px solid rgba(245,197,66,.3);color:var(--yel);}
+.ar{background:rgba(240,82,82,.1);border:1px solid rgba(240,82,82,.3);color:var(--red);}
+.ai{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--acc);}
+.bday-row{display:flex;align-items:center;gap:12px;padding:13px 17px;border-radius:var(--r);margin-bottom:12px;background:linear-gradient(135deg,rgba(244,114,182,.1),rgba(167,139,250,.1));border:1px solid rgba(244,114,182,.25);}
+.empty{text-align:center;padding:36px;color:var(--tx3);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--sur);border:1px solid var(--bdr2);border-radius:var(--rs);padding:10px 16px;font-size:13px;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:all .3s;}
+.toast.hidden{transform:translateY(70px);opacity:0;pointer-events:none;}
+.hidden{display:none!important;}
+.fx{display:flex;}.g2{gap:8px;}.ac{align-items:center;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
+.ls{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;}
+.lb{
+background:rgba(23,27,38,.82);
+border:1px solid rgba(255,255,255,.08);
+border-radius:28px;
+padding:40px;
+width:380px;
+backdrop-filter:blur(18px);
+box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+.ll{font-size:13px;font-weight:700;letter-spacing:3px;color:var(--acc);text-align:center;margin-bottom:2px;}
+.lsub{font-size:11px;color:var(--tx3);text-align:center;margin-bottom:24px;}
+.rb{width:100%;padding:14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--r);cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;transition:all .15s;font-family:inherit;margin-bottom:8px;}
+.rb:hover{border-color:var(--acc);background:rgba(79,142,247,.05);}
+.ri{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.rn{font-size:14px;font-weight:600;color:var(--txt);}
+.esl{max-height:220px;overflow-y:auto;margin-top:10px;}
+.esi{display:flex;align-items:center;gap:9px;padding:9px;border-radius:var(--rs);cursor:pointer;border:1px solid var(--bdr);margin-bottom:5px;transition:all .15s;}
+.esi:hover{border-color:var(--acc);background:rgba(79,142,247,.05);}
+.perr{font-size:12px;color:var(--red);margin-top:6px;min-height:18px;}
+.dz{border:2px dashed var(--bdr);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.dz:hover{border-color:var(--acc);background:rgba(79,142,247,.04);}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="ls" id="ls">
+  <div class="lb">
+    <div class="ll">INTELLISHIP</div>
+    <div class="lsub">Sistema de Gestion RRHH</div>
+    <div id="ls1">
+      <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:18px;color:var(--txt);">Selecciona tu acceso</div>
+      <button class="rb" onclick="selRole('admin')">
+        <div class="ri" style="background:rgba(79,142,247,.15);color:var(--acc);">👑</div>
+        <div class="rn">Administrador</div>
+      </button>
+      <button class="rb" onclick="selRole('coord')">
+        <div class="ri" style="background:rgba(167,139,250,.15);color:var(--pur);">👁</div>
+        <div class="rn">Coordinador</div>
+      </button>
+      <button class="rb" onclick="selRole('emp')">
+        <div class="ri" style="background:rgba(52,200,122,.15);color:var(--grn);">👤</div>
+        <div class="rn">Empleado</div>
+      </button>
+    </div>
+    <div id="ls2" class="hidden">
+      <div id="ls2i"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app hidden" id="app">
+  <div class="sidebar">
+    <div class="slogo">
+      <div class="brand">INTELLISHIP</div>
+      <div class="bsub">Gestion RRHH</div>
+      <div id="rc" class="rchip rca">👑 Admin</div>
+    </div>
+    <div class="snav">
+      <div class="nl">Principal</div>
+      <div class="ni active" onclick="gv('dash')" id="nav-dash">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="ni" id="nav-emps" onclick="gv('emps')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Empleados
+      </div>
+      <div class="ni" id="nav-reg" onclick="gv('reg')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Nuevo Registro
+      </div>
+      <div class="ni" id="nav-sal" onclick="gv('sal')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Salarios
+      </div>
+      
+      <div class="ni" id="nav-auto" onclick="gv('auto')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 4h16v16H4z"></path>
+          <path d="M22 6l-10 7L2 6"></path>
+        </svg>
+        Automatizaciones
+      </div>
+
+      <div class="ni" id="nav-cfg" onclick="gv('cfg')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuracion
+      </div>
+      <div class="nl" id="nl-team" style="margin-top:8px;">Equipo</div>
+      <div id="emplist" style="padding:0 8px 10px;"></div>
+    </div>
+    <div class="sfoot">
+      <div class="sdot" id="sdot"></div>
+      <span id="sst">Sin sincronizar</span>
+      <button onclick="logout()" style="margin-left:auto;background:none;border:none;color:var(--tx3);cursor:pointer;font-size:12px;">Salir</button>
+    </div>
+  </div>
+  <div class="main">
+    <div id="vd" class="hidden">
+      <div class="topbar"><div><h1 id="dtitle">Dashboard</h1><p id="dsub"></p></div><div class="fx g2" id="dacts"></div></div>
+      <div class="content" id="dbody"></div>
+    </div>
+    <div id="ve" class="hidden">
+      <div class="topbar"><div><h1>Empleados</h1><p>Equipo INTELLISHIP Honduras</p></div><button class="btn bp" id="btn-add-emp" onclick="openAddEmp()">+ Agregar</button></div>
+      <div class="content"><div id="egrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:12px;"></div></div>
+    </div>
+    <div id="vr" class="hidden">
+      <div class="topbar"><div><h1>Nuevo Registro</h1><p>Vacaciones, permisos y ausencias</p></div></div>
+      <div class="content">
+        <div class="card" style="max-width:560px;">
+          <div class="mb">
+            <div class="fg"><label>Empleado *</label><select id="re-e"><option value="">Seleccionar...</option></select></div>
+            <div class="fg"><label>Tipo *</label>
+              <select id="re-t">
+                <option value="">Seleccionar...</option>
+                <option value="vacaciones">🌴 Vacaciones</option>
+                <option value="permiso">📋 Permiso Justificado</option>
+                <option value="falta_justificada">✅ Falta Justificada</option>
+                <option value="falta_no_justificada">❌ Falta No Justificada</option>
+              </select>
+            </div>
+            <div class="fr">
+              <div class="fg"><label>Fecha Inicio *</label><input type="date" id="re-fi" onchange="calcDias()"></div>
+              <div class="fg"><label>Fecha Fin *</label><input type="date" id="re-ff" onchange="calcDias()"></div>
+            </div>
+            <div class="fg"><label>Dias Habiles</label><input type="number" id="re-d" readonly></div>
+            <div class="fg"><label>Notas</label><textarea id="re-n" placeholder="Motivo o detalle..."></textarea></div>
+            <div class="fg">
+              <label>Documento adjunto (foto de solicitud firmada, opcional)</label>
+              <div class="dz" id="redz">
+                <input type="file" accept="image/*,.pdf" onchange="onRegFile(event)">
+                <div id="redz-prev" style="color:var(--tx3);font-size:13px;">📎 Arrastra o haz clic para adjuntar</div>
+              </div>
+            </div>
+            <div id="re-al" class="hidden ab aw"></div>
+            <div class="fx g2">
+              <button class="btn bp" onclick="saveReg()" style="flex:1;">Guardar Registro</button>
+              <button class="btn bg" onclick="gv('dash')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="vs" class="hidden">
+      <div class="topbar"><div><h1>Salarios</h1><p>Control de pagos y comprobantes</p></div>
+        <div class="fx g2">
+          <button class="btn bgr" onclick="openBAC()">📄 Subir PDF Banco</button>
+          <button class="btn bp" onclick="openAddSal()">+ Pago Manual</button>
+        </div>
+      </div>
+      <div class="content" id="sbody"></div>
+    </div>
+    <div id="vc" class="hidden">
+      <div class="topbar"><div><h1>Configuracion</h1><p>Mensajes y sincronizacion</p></div></div>
+      <div class="content" id="cbody"></div>
+    </div>
+    
+    <div id="va" class="hidden">
+      <div class="topbar">
+        <div>
+          <h1>Automatizaciones</h1>
+          <p>Correos automáticos y notificaciones</p>
+        </div>
+      </div>
+      <div class="content" id="abody"></div>
+    </div>
+
+
+    <div id="vp" class="hidden">
+      <div class="topbar"><div><h1 id="ptitle">Perfil</h1><p>Ficha del empleado</p></div><div class="fx g2" id="pacts"></div></div>
+      <div class="content" id="pbody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMP -->
+<div class="mo hidden" id="mo-e">
+  <div class="md mdlg">
+    <div class="mh"><div class="mt" id="mo-et">Agregar Empleado</div><button class="mc" onclick="cm('mo-e')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="ef-eid">
+      <div class="fr"><div class="fg"><label>Nombre *</label><input id="ef-n" placeholder="Nombre"></div><div class="fg"><label>Apellidos *</label><input id="ef-a" placeholder="Apellidos"></div></div>
+      <div class="fr"><div class="fg"><label>ID Empleado</label><input id="ef-id" placeholder="IS-011"></div><div class="fg"><label>Fecha Ingreso *</label><input type="date" id="ef-i"></div></div>
+      <div class="fr"><div class="fg"><label>Departamento</label><input id="ef-dep" placeholder="Departamento"></div><div class="fg"><label>Cargo</label><input id="ef-c" placeholder="Cargo"></div></div>
+      <div class="fr"><div class="fg"><label>Telefono</label><input id="ef-t" placeholder="9999-9999"></div><div class="fg"><label>Email</label><input type="email" id="ef-e" placeholder="correo@gmail.com"></div></div>
+      <div class="fr"><div class="fg"><label>Fecha Nacimiento</label><input type="date" id="ef-nb"></div><div class="fg"><label>Genero</label><select id="ef-g"><option value="">--</option><option>Femenino</option><option>Masculino</option></select></div></div>
+      <div class="fr"><div class="fg"><label>Estado Civil</label><select id="ef-ec"><option value="">--</option><option>Soltero/a</option><option>Casado/a</option><option>Union Libre</option></select></div><div class="fg"><label>Numero Identidad</label><input id="ef-idn" placeholder="0000-0000-00000"></div></div>
+      <div class="fr"><div class="fg"><label>Direccion</label><input id="ef-dir" placeholder="Colonia, ciudad..."></div><div class="fg"><label>Contacto Emergencia</label><input id="ef-emg" placeholder="Nombre y telefono"></div></div>
+      <div class="fg"><label>Salario Base (Lps)</label><input type="number" id="ef-s" placeholder="0.00"></div>
+    </div>
+    <div class="mf"><button class="btn bg" onclick="cm('mo-e')">Cancelar</button><button class="btn bp" onclick="saveEmp()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL SAL -->
+<div class="mo hidden" id="mo-s">
+  <div class="md">
+    <div class="mh"><div class="mt">Registrar Pago</div><button class="mc" onclick="cm('mo-s')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label>Empleado *</label><select id="sf-e" onchange="onSalEmp()"><option value="">Seleccionar...</option></select></div>
+      <div class="fr"><div class="fg"><label>Periodo</label><select id="sf-p"><option value="1ra Quincena">1ra Quincena</option><option value="2da Quincena">2da Quincena</option></select></div><div class="fg"><label>Mes/Ano *</label><input type="month" id="sf-m"></div></div>
+      <div class="fg"><label>Monto Neto (Lps) *</label><input type="number" id="sf-mn" placeholder="0.00"></div>
+      <div class="fg"><label>Notas</label><textarea id="sf-n" placeholder="Bonos, deducciones..."></textarea></div>
+      <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;">📧 Enviar email al empleado</div>
+        <div class="fg"><label>Email destino</label><input id="sf-em" placeholder="correo@gmail.com"></div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--tx2);"><input type="checkbox" id="sf-se" style="width:auto;"> Enviar al guardar</label>
+      </div>
+    </div>
+    <div class="mf"><button class="btn bg" onclick="cm('mo-s')">Cancelar</button><button class="btn bp" onclick="saveSal()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL BAC -->
+<div class="mo hidden" id="mo-b">
+  <div class="md mdlg">
+    <div class="mh"><div class="mt">Subir Comprobante BAC</div><button class="mc" onclick="cm('mo-b')">✕</button></div>
+    <div class="mb">
+      <div id="bst1">
+        <div class="dz" ondragover="event.preventDefault()" ondrop="onBACDrop(event)">
+          <input type="file" accept=".pdf,image/*" onchange="onBACFile(event)" id="bfi">
+          <div style="font-size:28px;margin-bottom:8px;">📄</div>
+          <div style="font-size:13.5px;color:var(--tx2);">Arrastra cualquier PDF o imagen aquí</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:3px;">o haz clic para seleccionar</div>
+        </div>
+        <div id="bload" class="hidden" style="text-align:center;padding:24px;color:var(--tx2);">⏳ Leyendo PDF...</div>
+      </div>
+      <div id="bst2" class="hidden">
+        <div class="ab ai" id="bsum"></div>
+        <table style="margin-bottom:14px;"><thead><tr><th>Empleado</th><th>Monto</th><th>Estado</th></tr></thead><tbody id="btb"></tbody></table>
+        <div class="fr">
+          <div class="fg"><label>Periodo</label><select id="bp"><option value="1ra Quincena">1ra Quincena</option><option value="2da Quincena">2da Quincena</option></select></div>
+          <div class="fg"><label>Mes/Ano</label><input type="month" id="bm"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--tx2);margin-top:4px;"><input type="checkbox" id="bse" style="width:auto;" checked> Enviar email a empleados identificados</label>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bg" onclick="cm('mo-b')">Cancelar</button>
+      <button class="btn bp hidden" id="bbtn" onclick="confirmBAC()">Registrar y Enviar</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="mo hidden" id="mail-preview">
+  <div class="md" style="width:700px;">
+    <div class="mh">
+      <div class="mt">📧 Vista previa del correo</div>
+      <button class="mc" onclick="cm('mail-preview')">✕</button>
+    </div>
+    <div class="mb">
+      <div style="background:#0b111d;border:1px solid rgba(255,255,255,.06);padding:24px;border-radius:18px;">
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:18px;">
+          Así recibirán el correo los empleados:
+        </div>
+        <div id="mail-preview-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"><span id="ti">✓</span><span id="tm">OK</span></div>
+
+<script>
+var COLORS=['#4f8ef7','#34c87a','#a78bfa','#f5c542','#fb923c','#f472b6','#22d3ee','#818cf8','#4ade80','#e879f9'];
+var TL={vacaciones:'🌴 Vacaciones',permiso:'📋 Permiso',falta_justificada:'✅ Falta Justif.',falta_no_justificada:'❌ Falta No Justif.'};
+var TB={vacaciones:'bbl',permiso:'bpu2',falta_justificada:'bye',falta_no_justificada:'bre'};
+var PASSES={admin:'@Tamu.edu123',coord:'Intelliship2026$$'};
+var INIT=[
+  {id:'IS-001',n:'Judith',a:'Xiomaris Centeno Pinel',i:'2021-08-18',dep:'IntelliShip',c:'Coordinacion Operativa',t:'3248-9360',e:'',g:'Femenino',ec:'Union Libre',nb:'1995-01-22',idn:'0603199500332',dir:'Col. Betania, Tegucigalpa',emg:'',s:0},
+  {id:'IS-002',n:'Brayan',a:'Alexander Mejia Ramos',i:'2021-10-01',dep:'IntelliShip',c:'Coordinacion Operativa',t:'9956-1511',e:'',g:'Masculino',ec:'Soltero',nb:'2002-03-24',idn:'0801200206112',dir:'Col. Emmanuel Bloque E casa 6',emg:'',s:0},
+  {id:'IS-003',n:'Ana',a:'Beatriz Ortez Lopez',i:'2022-06-15',dep:'IntelliShip',c:'Coordinacion Operativa',t:'9609-6712',e:'',g:'Femenino',ec:'Soltera',nb:'1997-03-05',idn:'1007199700198',dir:'Col. Emanuel, Tegucigalpa',emg:'9997-0769',s:0},
+  {id:'IS-004',n:'Lesnin',a:'Mexali Pinel',i:'2023-04-21',dep:'IntelliShip',c:'Soporte y Servicio al Cliente',t:'8745-2977',e:'',g:'Femenino',ec:'Union Libre',nb:'1998-02-27',idn:'0603199900129',dir:'Col. Betania, Tegucigalpa',emg:'8742-7643',s:0},
+  {id:'IS-005',n:'Wuendy',a:'Sarahi Alvarado Navarro',i:'2023-11-06',dep:'IntelliShip',c:'Gestion de Almacen',t:'8890-4075',e:'',g:'Femenino',ec:'Union Libre',nb:'1995-08-07',idn:'0701199500370',dir:'Col. nueva Suyapa',emg:'9663-4506',s:0},
+  {id:'IS-006',n:'Jose',a:'Fernando Carrasco Cabrera',i:'2024-01-22',dep:'IntelliShip',c:'Gestion de Almacen',t:'8907-9281',e:'',g:'Masculino',ec:'Soltero',nb:'2005-07-02',idn:'0801200511233',dir:'Col. Nueva Capital sector 4',emg:'8772-9066',s:0},
+  {id:'IS-007',n:'Angel',a:'Daniel Garcia Lopez',i:'2024-04-14',dep:'IntelliShip',c:'Gestion de Almacen',t:'',e:'',g:'Masculino',ec:'Union Libre',nb:'1994-02-21',idn:'0801199411937',dir:'Tegucigalpa',emg:'',s:0},
+  {id:'IS-008',n:'Hecto',a:'Ricardo Zuniga Garmendia',i:'2024-08-05',dep:'IntelliShip',c:'Distribucion y Ultima Milla',t:'9593-4487',e:'',g:'Masculino',ec:'Soltero',nb:'1986-11-26',idn:'0801198620240',dir:'Col. Miraflores Bloque IV',emg:'8859-2044',s:0},
+  {id:'IS-009',n:'Kevin',a:'Josue Zelaya Amador',i:'2024-04-20',dep:'IntelliShip',c:'Seguridad Ejecutiva',t:'9616-1804',e:'',g:'Masculino',ec:'Union Libre',nb:'1993-04-10',idn:'0704199300904',dir:'Danli el Paraiso',emg:'95690970',s:0},
+  {id:'IS-010',n:'Larissa',a:'Gissel Ortez Lopez',i:'2025-01-15',dep:'IntelliShip',c:'Soporte y Servicio al Cliente',t:'9616-1804',e:'',g:'Femenino',ec:'Union Libre',nb:'2004-03-16',idn:'0801200407903',dir:'Col. Emanuel, Tegucigalpa',emg:'9997-0769',s:0}
+];
+
+var emps,regs,sals,docs,cfg,role,activeEmp,curEmp,bacData,regFile,emailLogs=[];
+role='admin'; activeEmp=null; curEmp=null; bacData=[]; regFile=null;
+
+function loadAll(){
+  try{ emps=JSON.parse(localStorage.getItem('is_e'))||JSON.parse(JSON.stringify(INIT)); }catch(e){ emps=JSON.parse(JSON.stringify(INIT)); }
+  try{ regs=JSON.parse(localStorage.getItem('is_r'))||[]; }catch(e){ regs=[]; }
+  try{ sals=JSON.parse(localStorage.getItem('is_s'))||[]; }catch(e){ sals=[]; }
+  try{ docs=JSON.parse(localStorage.getItem('is_d'))||[]; }catch(e){ docs=[]; }
+  try{ emailLogs=JSON.parse(localStorage.getItem('is_logs'))||[]; }catch(e){ emailLogs=[]; }
+  try{
+    cfg=JSON.parse(localStorage.getItem('is_c'))||{};
+    if(!cfg.bdayMsg) cfg.bdayMsg='Estimado/a {nombre}, en nombre de todo el equipo de INTELLISHIP Honduras le deseamos un muy feliz cumpleanos. Es un privilegio contar con usted en nuestro equipo. Feliz cumpleanos! Equipo INTELLISHIP Honduras';
+    if(!cfg.salMsg) cfg.salMsg='Estimado/a {nombre}, nos complace informarle que su pago correspondiente al periodo {periodo} de {mes} ha sido acreditado exitosamente a su cuenta bancaria. Monto: {monto}. Es un gusto y un honor tenerle como parte del equipo de INTELLISHIP Honduras. Saludos, Equipo INTELLISHIP Honduras';
+    if(!cfg.adminEmail) cfg.adminEmail='';
+    if(!cfg.sheetId) cfg.sheetId='';
+    if(!cfg.appsUrl) cfg.appsUrl='';
+  }catch(e){ cfg={bdayMsg:'',salMsg:'',adminEmail:'',sheetId:'',appsUrl:''}; }
+  if(!localStorage.getItem('is_e')) saveAll();
+}
+
+function saveAll(){
+  localStorage.setItem('is_e',JSON.stringify(emps));
+  localStorage.setItem('is_r',JSON.stringify(regs));
+  localStorage.setItem('is_s',JSON.stringify(sals));
+  localStorage.setItem('is_d',JSON.stringify(docs));
+  localStorage.setItem('is_logs',JSON.stringify(emailLogs));
+  localStorage.setItem('is_c',JSON.stringify(cfg));
+}
+
+loadAll();
+
+function gc(i){ return COLORS[i%COLORS.length]; }
+function gi(n,a){ return (n[0]||'')+(a[0]||''); }
+function fd(d){ if(!d) return '--'; var dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('es-HN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fm(n){ return 'L. '+parseFloat(n||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function antig(i){ return (new Date()-new Date(i))/(1000*60*60*24*365.25); }
+function dxley(y){ if(y<1) return 0; if(y<2) return 10; if(y<3) return 12; if(y<4) return 15; return 20; }
+function yt(y){ var yr=Math.floor(y),mo=Math.floor((y-yr)*12); if(yr===0) return mo+' mes(es)'; if(mo===0) return yr+' año(s)'; return yr+' año(s), '+mo+' mes(es)'; }
+function vacUsadas(eid){ var yr=new Date().getFullYear(); return regs.filter(function(r){ return r.eid===eid&&r.t==='vacaciones'&&new Date(r.fi).getFullYear()===yr; }).reduce(function(s,r){ return s+(r.d||0); },0); }
+function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t; }).length; }
+function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0&&w!==6) c++; d.setDate(d.getDate()+1); } return c; }
+function bdays(ahead){ var now=new Date(),tgt=new Date(now); tgt.setDate(tgt.getDate()+ahead); var m=tgt.getMonth()+1,d=tgt.getDate(); return emps.filter(function(e){ if(!e.nb) return false; var b=new Date(e.nb+'T00:00:00'); return b.getMonth()+1===m&&b.getDate()===d; }); }
+
+function toast(msg,t){
+  var el=document.getElementById('toast');
+  document.getElementById('tm').textContent=msg;
+  document.getElementById('ti').textContent=t==='err'?'⚠':'✓';
+  el.classList.remove('hidden');
+  setTimeout(function(){ el.classList.add('hidden'); },3000);
+}
+function cm(id){ document.getElementById(id).classList.add('hidden'); }
+function om(id){ document.getElementById(id).classList.remove('hidden'); }
+
+// ---- LOGIN ----
+function selRole(r){
+  role=r;
+  document.getElementById('ls1').classList.add('hidden');
+  document.getElementById('ls2').classList.remove('hidden');
+  var inner=document.getElementById('ls2i');
+  if(r==='emp'){
+    var html='<div style="font-size:13px;font-weight:600;text-align:center;margin-bottom:12px;">Selecciona tu nombre</div><div class="esl">';
+    for(var i=0;i<emps.length;i++){
+      var e=emps[i];
+      html+='<div class="esi" onclick="loginEmp(\''+e.id+'\')">';
+      html+='<div class="av" style="background:'+gc(i)+'22;color:'+gc(i)+';width:34px;height:34px;font-size:12px;">'+gi(e.n,e.a)+'</div>';
+      html+='<div><div style="font-size:13.5px;font-weight:500;">'+e.n+' '+e.a+'</div><div style="font-size:11.5px;color:var(--tx3);">'+e.c+'</div></div>';
+      html+='</div>';
+    }
+    html+='</div><button class="btn bg" style="width:100%;margin-top:12px;justify-content:center;" onclick="backLogin()">Volver</button>';
+    inner.innerHTML=html;
+  } else {
+    var lbl=r==='admin'?'Administrador':'Coordinador';
+    inner.innerHTML='<div style="font-size:13px;font-weight:600;text-align:center;margin-bottom:16px;">Acceso '+lbl+'</div>'
+      +'<div class="fg"><label>Contrasena</label><input type="password" id="pin" placeholder="Ingresa la contrasena" onkeydown="if(event.key===\'Enter\')doPin()"></div>'
+      +'<div class="perr" id="perr"></div>'
+      +'<button class="btn bp" style="width:100%;justify-content:center;margin-top:8px;" onclick="doPin()">Ingresar</button>'
+      +'<button class="btn bg" style="width:100%;justify-content:center;margin-top:8px;" onclick="backLogin()">Volver</button>';
+    setTimeout(function(){ var p=document.getElementById('pin'); if(p) p.focus(); },100);
+  }
+}
+function doPin(){
+  var val=document.getElementById('pin').value;
+  if(val===PASSES[role]){ startApp(); }
+  else{ document.getElementById('perr').textContent='Contrasena incorrecta.'; }
+}
+function loginEmp(eid){ activeEmp=eid; startApp(); }
+function backLogin(){
+  document.getElementById('ls1').classList.remove('hidden');
+  document.getElementById('ls2').classList.add('hidden');
+}
+function startApp(){
+  document.getElementById('ls').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  var rc=document.getElementById('rc');
+  if(role==='admin'){ rc.className='rchip rca'; rc.textContent='👑 Admin'; }
+  else if(role==='coord'){ rc.className='rchip rcc'; rc.textContent='👁 Coordinador'; }
+  else{ rc.className='rchip rce'; rc.textContent='👤 Empleado'; }
+  applyRole();
+  if(role==='emp') gv('vp-emp');
+  else gv('dash');
+  checkBdays();
+}
+function logout(){
+  role='admin'; activeEmp=null; curEmp=null;
+  document.getElementById('ls').style.display='flex';
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('ls1').classList.remove('hidden');
+  document.getElementById('ls2').classList.add('hidden');
+}
+function applyRole(){
+  var isAdmin=role==='admin', isCoord=role==='coord';
+  document.getElementById('nav-reg').style.display=isAdmin?'':'none';
+  document.getElementById('nav-sal').style.display=isAdmin?'':'none';
+  document.getElementById('nav-cfg').style.display=isAdmin?'':'none';
+  document.getElementById('btn-add-emp').style.display=isAdmin?'':'none';
+  document.getElementById('nl-team').style.display=(isAdmin||isCoord)?'':'none';
+  document.getElementById('emplist').style.display=(isAdmin||isCoord)?'':'none';
+  document.getElementById('nav-emps').style.display=(isAdmin||isCoord)?'':'none';
+}
+
+// ---- NAV ----
+function gv(v,eid){
+  var views=['vd','ve','vr','vs','vc','va','vp'];
+  for(var i=0;i<views.length;i++) document.getElementById(views[i]).classList.add('hidden');
+  var navs=['dash','emps','reg','sal','cfg','auto'];
+  for(var i=0;i<navs.length;i++){ var n=document.getElementById('nav-'+navs[i]); if(n) n.classList.remove('active'); }
+  if(v==='dash'){ document.getElementById('vd').classList.remove('hidden'); document.getElementById('nav-dash').classList.add('active'); rDash(); }
+  else if(v==='emps'){ document.getElementById('ve').classList.remove('hidden'); document.getElementById('nav-emps').classList.add('active'); rEmps(); }
+  else if(v==='reg'){
+    if(role!=='admin'){ toast('Solo el Administrador puede crear registros','err'); return; }
+    document.getElementById('vr').classList.remove('hidden'); document.getElementById('nav-reg').classList.add('active'); rRegForm(eid);
+  }
+  else if(v==='sal'){ document.getElementById('vs').classList.remove('hidden'); document.getElementById('nav-sal').classList.add('active'); rSal(); }
+  
+  else if(v==='auto'){
+    document.getElementById('va').classList.remove('hidden');
+    document.getElementById('nav-auto').classList.add('active');
+    rAuto();
+  }
+
+  else if(v==='cfg'){
+    if(role!=='admin'){ toast('Solo el Administrador puede acceder aqui','err'); return; }
+    document.getElementById('vc').classList.remove('hidden'); document.getElementById('nav-cfg').classList.add('active'); rCfg();
+  }
+  else if(v==='perf'&&eid){ document.getElementById('vp').classList.remove('hidden'); rPerf(eid); }
+  else if(v==='vp-emp'){ document.getElementById('vp').classList.remove('hidden'); rPerf(activeEmp); }
+}
+
+// ---- SIDEBAR ----
+
+function rAuto(){
+  var html='';
+  var prox=[];
+  for(var d=0;d<=7;d++){
+    var bd=bdays(d);
+    for(var i=0;i<bd.length;i++) prox.push({e:bd[i],dias:d});
+  }
+  var proxHtml='';
+  if(prox.length){
+    for(var i=0;i<prox.length;i++){
+      var lbl=prox[i].dias===0?'HOY cumple años':prox[i].dias===1?'Mañana cumple años':'En '+prox[i].dias+' días cumple años';
+      proxHtml+='<div style="background:var(--bg);padding:13px;border-radius:12px;border:1px solid var(--bdr);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">'
+        +'<div><strong>🎂 '+prox[i].e.n+' '+prox[i].e.a+'</strong><div style="font-size:12px;color:var(--tx2);margin-top:3px;">'+lbl+'</div></div>'
+        +(prox[i].dias===0?'<button class="btn bpu bsm" onclick="sendBday(\''+prox[i].e.id+'\')">📧 Felicitar</button>':'')
+        +'</div>';
+    }
+  } else {
+    proxHtml='<div style="color:var(--tx3);font-size:12.5px;padding:8px;">No hay cumpleaños en los próximos 7 días.</div>';
+  }
+
+  // Real logs
+  var logsHtml='';
+  if(emailLogs.length){
+    for(var i=0;i<Math.min(emailLogs.length,20);i++){
+      var l=emailLogs[i];
+      logsHtml+='<div style="padding:13px;background:rgba(255,255,255,.03);border-radius:14px;margin-bottom:8px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        +'<strong>'+l.tipo+'</strong>'
+        +'<span style="font-size:11px;color:var(--tx3);">'+l.fecha+'</span>'
+        +'</div>'
+        +'<div style="font-size:12.5px;color:var(--tx2);margin-top:4px;">'+l.detalle+' &middot; <span style="color:var(--tx3);">'+l.destino+'</span></div>'
+        +'</div>';
+    }
+  } else {
+    logsHtml='<div style="color:var(--tx3);font-size:12.5px;padding:8px;">Aún no se han enviado correos desde esta sesión.</div>';
+  }
+
+  html += `
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;">
+
+    <div class="card">
+      <div class="ch"><div class="ct">🎂 Cumpleaños Empleado</div><span class="badge bgr2">Activo</span></div>
+      <div style="padding:16px;">
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;">Este correo se envía al empleado el día de su cumpleaños.</div>
+        <textarea id="tpl-bday" style="min-height:160px;">${escH(cfg.bdayMsg)}</textarea>
+        <div style="margin-top:14px;display:flex;gap:8px;">
+          <button class="btn bp" onclick="previewMailById('tpl-bday','¡Feliz Cumpleaños!')">👁 Vista previa</button>
+          <button class="btn bg" onclick="saveTpl('bdayMsg','tpl-bday')">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ct">💳 Pago Acreditado</div><span class="badge bgr2">Activo</span></div>
+      <div style="padding:16px;">
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;">Se envía cuando se registra un pago. Variables: {nombre} {periodo} {mes} {monto}</div>
+        <textarea id="tpl-sal" style="min-height:160px;">${escH(cfg.salMsg)}</textarea>
+        <div style="margin-top:14px;display:flex;gap:8px;">
+          <button class="btn bp" onclick="previewMailById('tpl-sal','Pago Acreditado')">👁 Vista previa</button>
+          <button class="btn bg" onclick="saveTpl('salMsg','tpl-sal')">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ct">⏰ Próximos Cumpleaños</div><span class="badge bye">7 días</span></div>
+      <div style="padding:16px;">${proxHtml}</div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1;">
+      <div class="ch">
+        <div class="ct">📨 Logs de Correos</div>
+        <span class="badge bte">${emailLogs.length} enviados</span>
+      </div>
+      <div style="padding:18px;" id="logs-container">${logsHtml}</div>
+    </div>
+
+  </div>
+  `;
+
+  document.getElementById('abody').innerHTML = html;
+}
+
+
+
+
+function addEmailLog(tipo,destino,detalle){
+  emailLogs.unshift({
+    fecha:new Date().toLocaleString('es-HN'),
+    tipo:tipo,
+    destino:destino,
+    detalle:detalle
+  });
+  saveAll();
+}
+
+function getEmailTemplate(title,body){
+  return `
+  <div style="background:#f4f6fb;padding:40px;font-family:Arial,sans-serif;">
+    <div style="max-width:720px;margin:auto;background:white;border-radius:24px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.08);">
+      
+      <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:42px;">
+        <img src="https://i.postimg.cc/nV2CfGnh/logo-intelliship-letras-blancas.png" style="height:48px;">
+      </div>
+
+      <div style="padding:50px;">
+        <h1 style="font-size:42px;color:#0f172a;margin-bottom:28px;">
+          ${title}
+        </h1>
+
+        <div style="font-size:19px;line-height:1.9;color:#475569;">
+          ${body}
+        </div>
+
+        <div style="margin-top:50px;padding-top:24px;border-top:1px solid #e2e8f0;color:#64748b;font-size:14px;">
+          Equipo INTELLISHIP Honduras
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function previewMail(btn){
+  var card = btn.closest('.card');
+  var type = card.querySelector('.ct').innerText;
+  var txt = card.querySelector('textarea').value;
+
+  txt = txt
+    .replaceAll('{nombre}','Juan Pérez')
+    .replaceAll('{periodo}','2da Quincena')
+    .replaceAll('{mes}','Mayo 2026')
+    .replaceAll('{monto}','L. 18,500.00');
+
+  var title = type.includes('Pago') ? 'Pago acreditado' :
+              type.includes('Equipo') ? 'Cumpleaños del equipo' :
+              'Feliz cumpleaños';
+
+  document.getElementById('mail-preview-content').innerHTML =
+    getEmailTemplate(title, txt.replace(/\n/g,'<br>'));
+
+  om('mail-preview');
+}
+
+function previewMailById(textareaId, title){
+  var el=document.getElementById(textareaId);
+  if(!el) return;
+  var txt=el.value
+    .replace(/{nombre}/g,'Juan Pérez')
+    .replace(/{periodo}/g,'2da Quincena')
+    .replace(/{mes}/g,'Mayo 2026')
+    .replace(/{monto}/g,'L. 18,500.00');
+  document.getElementById('mail-preview-content').innerHTML=getEmailTemplate(title, txt.replace(/\n/g,'<br>'));
+  om('mail-preview');
+}
+
+function saveTpl(field, textareaId){
+  var el=document.getElementById(textareaId);
+  if(!el) return;
+  cfg[field]=el.value.trim();
+  saveAll();
+  toast('Plantilla guardada ✓');
+}
+
+function rSidebar(){
+  if(role==='emp') return;
+  var html='';
+  for(var i=0;i<emps.length;i++){
+    var e=emps[i];
+    html+='<div class="ei'+(curEmp===e.id?' active':'')+'" onclick="gv(\'perf\',\''+e.id+'\')">';
+    html+='<div class="av" style="background:'+gc(i)+'22;color:'+gc(i)+'">'+gi(e.n,e.a)+'</div>';
+    html+='<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.n+'</div>';
+    html+='<div style="font-size:10.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.c+'</div></div></div>';
+  }
+  document.getElementById('emplist').innerHTML=html;
+}
+
+// ---- DASHBOARD ----
+function rDash(){
+  rSidebar();
+  var now=new Date(), yr=now.getFullYear();
+  var bd0=bdays(0),bd1=bdays(1),bd2=bdays(2),bd3=bdays(3);
+  var allBd=[];
+  for(var i=0;i<bd0.length;i++) allBd.push({e:bd0[i],d:0});
+  for(var i=0;i<bd1.length;i++) allBd.push({e:bd1[i],d:1});
+  for(var i=0;i<bd2.length;i++) allBd.push({e:bd2[i],d:2});
+  for(var i=0;i<bd3.length;i++) allBd.push({e:bd3[i],d:3});
+
+  if(role==='emp'){
+    var e=null;
+    for(var i=0;i<emps.length;i++) if(emps[i].id===activeEmp){ e=emps[i]; break; }
+    document.getElementById('dtitle').textContent='Hola, '+e.n+' 👋';
+    document.getElementById('dsub').textContent='Bienvenido a su panel';
+    document.getElementById('dacts').innerHTML='';
+    var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+    var html='';
+    for(var i=0;i<bd0.length;i++) if(bd0[i].id===e.id) html+='<div class="bday-row">🎂 <div><strong>Feliz Cumpleanos, '+e.n+'!</strong></div></div>';
+    html+='<div class="do">';
+    html+='<div class="dc"><div class="dn" style="color:var(--grn);">'+disp+'</div><div class="dl">Dias Disponibles</div></div>';
+    html+='<div class="dc"><div class="dn" style="color:var(--red);">'+us+'</div><div class="dl">Dias Tomados</div></div>';
+    html+='<div class="dc"><div class="dn" style="color:var(--tx2);">'+tot+'</div><div class="dl">Total por Ley</div></div>';
+    html+='</div>';
+    html+='<div class="card"><div class="ch"><div class="ct">Mi Historial</div></div>'+rHistTbl(e.id,true)+'</div>';
+    document.getElementById('dbody').innerHTML=html;
+    return;
+  }
+
+  document.getElementById('dtitle').textContent='Dashboard';
+  document.getElementById('dsub').textContent=now.toLocaleDateString('es-HN',{month:'long',year:'numeric'});
+  document.getElementById('dacts').innerHTML=(role==='admin'?'<button class="btn bg" onclick="gv(\'cfg\')">⚙️ Configuracion</button>':'')+'<button class="btn bp" onclick="gv(\'reg\')">+ Nuevo Registro</button>';
+  if(role!=='admin') document.getElementById('dacts').innerHTML='';
+
+  var vU=regs.filter(function(r){ return r.t==='vacaciones'&&new Date(r.fi).getFullYear()===yr; }).reduce(function(s,r){ return s+r.d; },0);
+  var fNJ=regs.filter(function(r){ return r.t==='falta_no_justificada'; }).length;
+  var perm=regs.filter(function(r){ return r.t==='permiso'; }).length;
+
+  var bdHtml='';
+  for(var i=0;i<allBd.length;i++){
+    var b=allBd[i],lbl=b.d===0?'HOY cumple anos':('En '+b.d+(b.d===1?' dia':' dias')+' cumple anos');
+    bdHtml+='<div class="bday-row"><div style="font-size:26px;">🎂</div><div style="flex:1;"><strong>'+lbl+' '+b.e.n+' '+b.e.a+'!</strong><div style="font-size:12px;color:var(--tx2);margin-top:2px;">'+b.e.c+'</div></div>';
+    if(b.d===0&&b.e.e&&cfg.bdayMsg) bdHtml+='<button class="btn bpu bsm" onclick="sendBday(\''+b.e.id+'\')">📧 Felicitar</button>';
+    bdHtml+='</div>';
+  }
+
+  var html=bdHtml;
+  html+='<div class="sg">';
+  html+='<div class="sc"><div class="sl">Empleados</div><div class="sv" style="color:var(--grn);">'+emps.length+'</div></div>';
+  html+='<div class="sc"><div class="sl">Vac. Usadas ('+yr+')</div><div class="sv" style="color:var(--acc);">'+vU+'</div></div>';
+  html+='<div class="sc"><div class="sl">Faltas No Justif.</div><div class="sv" style="color:var(--red);">'+fNJ+'</div></div>';
+  html+='<div class="sc"><div class="sl">Permisos</div><div class="sv" style="color:var(--pur);">'+perm+'</div></div>';
+  html+='</div>';
+  html+='<div class="card"><div class="ch"><div class="ct">Empleados</div><input type="text" placeholder="Buscar..." style="width:160px;padding:5px 10px;font-size:12.5px;" oninput="fTable(this.value)"></div>';
+  html+='<table><thead><tr><th>Empleado</th><th>Cargo</th><th>Antiguedad</th><th>Vacaciones</th>'+(role==='admin'?'<th>F.NJ</th>':'')+'<th>Permisos</th><th></th></tr></thead><tbody id="mtb"></tbody></table></div>';
+  document.getElementById('dbody').innerHTML=html;
+  rMainTb(emps);
+}
+
+function rMainTb(list){
+  var tb=document.getElementById('mtb'); if(!tb) return;
+  var html='';
+  for(var i=0;i<list.length;i++){
+    var e=list[i], idx=emps.indexOf(e), color=gc(idx>=0?idx:i);
+    var ag=antig(e.i), tot=dxley(ag), us=vacUsadas(e.id), disp=Math.max(0,tot-us);
+    var pct=tot>0?Math.min(100,us/tot*100):0;
+    var barColor=disp<=2?'var(--red)':disp<=5?'var(--yel)':'var(--grn)';
+    var fNJ=cnt(e.id,'falta_no_justificada'), perm=cnt(e.id,'permiso');
+    html+='<tr><td><div class="fx ac g2">';
+    html+='<div class="av" style="background:'+color+'22;color:'+color+';width:32px;height:32px;font-size:11px;">'+gi(e.n,e.a)+'</div>';
+    html+='<div><div style="font-weight:500">'+e.n+' '+e.a+'</div><div style="font-size:11px;color:var(--tx3)">'+e.id+'</div></div></div></td>';
+    html+='<td style="font-size:12.5px;color:var(--tx2)">'+e.c+'</td>';
+    html+='<td>'+yt(ag)+'</td>';
+    html+='<td><div class="dbar"><div class="dbt"><div class="dbf" style="width:'+pct+'%;background:'+barColor+'"></div></div><div class="dbtx">'+disp+'/'+tot+'</div></div></td>';
+    if(role==='admin') html+='<td>'+(fNJ>0?'<span class="badge bre">'+fNJ+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>';
+    html+='<td>'+(perm>0?'<span class="badge bpu2">'+perm+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>';
+    html+='<td><div class="fx g2"><button class="btn bg bsm" onclick="gv(\'perf\',\''+e.id+'\')">Ver</button>'+(role==='admin'?'<button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+Reg.</button>':'')+'</div></td></tr>';
+  }
+  tb.innerHTML=html;
+}
+function fTable(q){ var f=emps.filter(function(e){ return (e.n+' '+e.a+' '+e.id+' '+e.c).toLowerCase().indexOf(q.toLowerCase())>=0; }); rMainTb(f); }
+
+// ---- EMPLEADOS GRID ----
+function rEmps(){
+  rSidebar();
+  var html='';
+  for(var i=0;i<emps.length;i++){
+    var e=emps[i],color=gc(i),ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+    var now=new Date(),b=e.nb?new Date(e.nb+'T00:00:00'):null;
+    var isBday=b&&b.getMonth()===now.getMonth()&&b.getDate()===now.getDate();
+    html+='<div class="card" style="cursor:pointer;" onclick="gv(\'perf\',\''+e.id+'\')"><div style="padding:15px 17px;">';
+    html+='<div class="fx ac g2" style="margin-bottom:11px;"><div class="av" style="background:'+color+'22;color:'+color+';width:40px;height:40px;font-size:14px;">'+gi(e.n,e.a)+'</div>';
+    html+='<div><div style="font-weight:600;font-size:13.5px;">'+e.n+' '+e.a+(isBday?' 🎂':'')+'</div><div style="font-size:11px;color:var(--tx3)">'+e.id+' · '+e.c+'</div></div></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+    html+='<div style="text-align:center;background:var(--bg);border-radius:8px;padding:9px;"><div style="font-size:19px;font-weight:700;color:var(--grn);">'+disp+'</div><div style="font-size:10.5px;color:var(--tx3);">disponibles</div></div>';
+    html+='<div style="text-align:center;background:var(--bg);border-radius:8px;padding:9px;"><div style="font-size:19px;font-weight:700;color:var(--red);">'+us+'</div><div style="font-size:10.5px;color:var(--tx3);">tomados</div></div>';
+    html+='</div><div style="margin-top:9px;font-size:11px;color:var(--tx3);">Ingreso: '+fd(e.i)+' · '+yt(ag)+'</div>';
+    html+='</div></div>';
+  }
+  document.getElementById('egrid').innerHTML=html;
+}
+
+// ---- PERFIL ----
+function rPerf(eid){
+  curEmp=eid; rSidebar();
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
+  if(!e) return;
+  var idx=emps.indexOf(e),color=gc(idx);
+  var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+  var fJ=cnt(e.id,'falta_justificada'),fNJ=cnt(e.id,'falta_no_justificada'),perm=cnt(e.id,'permiso');
+  document.getElementById('ptitle').textContent=e.n+' '+e.a;
+  var pa=document.getElementById('pacts');
+  if(role==='admin') pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button><button class="btn bg bsm" onclick="openEditEmp(\''+e.id+'\')">✏️ Editar</button><button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+ Registro</button>';
+  else if(role==='coord') pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button>';
+  else pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button>';
+
+  var alertH='';
+  if(ag<1) alertH='<div class="ab ai">ℹ '+e.n+' aun no ha cumplido 1 año. Las vacaciones aplican desde el primer aniversario.</div>';
+  else if(disp===0) alertH='<div class="ab ar">No hay dias de vacaciones disponibles este año.</div>';
+  else if(disp<=2) alertH='<div class="ab aw">⚠ Solo quedan '+disp+' dia(s) disponibles este año.</div>';
+
+  var html=alertH;
+  html+='<div class="ph"><div class="pav" style="background:'+color+'22;color:'+color+';">'+gi(e.n,e.a)+'</div>';
+  html+='<div style="flex:1;"><div class="pname">'+e.n+' '+e.a+'</div><div class="prole">'+e.c+' · '+e.dep+'</div>';
+  html+='<div class="pmeta"><span class="pmi">📅 Ingreso: '+fd(e.i)+'</span><span class="pmi">⏳ '+yt(ag)+'</span><span class="pmi">'+e.id+'</span>'+(e.nb?'<span class="pmi">🎂 '+fd(e.nb)+'</span>':'')+'</div></div></div>';
+
+  html+='<div class="do">';
+  html+='<div class="dc"><div class="dn" style="color:var(--grn);">'+disp+'</div><div class="dl">Dias Disponibles</div></div>';
+  html+='<div class="dc"><div class="dn" style="color:var(--red);">'+us+'</div><div class="dl">Dias Tomados</div></div>';
+  html+='<div class="dc"><div class="dn" style="color:var(--tx2);">'+tot+'</div><div class="dl">Total por Ley</div></div>';
+  html+='</div>';
+
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:14px;">';
+  html+='<div class="dc"><div class="dn" style="color:var(--yel);">'+fJ+'</div><div class="dl">Faltas Justif.</div></div>';
+  if(role!=='emp') html+='<div class="dc"><div class="dn" style="color:var(--red);">'+fNJ+'</div><div class="dl">Faltas No Justif.</div></div>';
+  else html+='<div></div>';
+  html+='<div class="dc"><div class="dn" style="color:var(--pur);">'+perm+'</div><div class="dl">Permisos</div></div>';
+  html+='</div>';
+
+  html+='<div class="ig">';
+  html+='<div class="ic"><div class="icl">Info Personal</div>';
+  html+='<div class="ir"><span class="ik">Nacimiento</span><span class="iv">'+fd(e.nb)+'</span></div>';
+  html+='<div class="ir"><span class="ik">Genero</span><span class="iv">'+(e.g||'--')+'</span></div>';
+  html+='<div class="ir"><span class="ik">Estado Civil</span><span class="iv">'+(e.ec||'--')+'</span></div>';
+  html+='<div class="ir"><span class="ik">Identidad</span><span class="iv" style="font-family:monospace;font-size:11px;">'+(e.idn||'--')+'</span></div>';
+  html+='</div>';
+  html+='<div class="ic"><div class="icl">Contacto</div>';
+  html+='<div class="ir"><span class="ik">Telefono</span><span class="iv">'+(e.t||'--')+'</span></div>';
+  html+='<div class="ir"><span class="ik">Email</span><span class="iv" style="font-size:12px;">'+(e.e||'--')+'</span></div>';
+  html+='<div class="ir"><span class="ik">Emergencia</span><span class="iv">'+(e.emg||'--')+'</span></div>';
+  html+='<div class="ir"><span class="ik">Direccion</span><span class="iv" style="font-size:11.5px;">'+(e.dir||'--')+'</span></div>';
+  html+='</div></div>';
+
+  html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">Historial de Registros</div>'+(role==='admin'?'<button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+ Nuevo</button>':'')+'</div>'+rHistTbl(e.id,role==='emp')+'</div>';
+  if(role==='admin'){
+    html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">Historial de Pagos</div></div>'+rSalEmp(e.id)+'</div>';
+    html+='<div class="card"><div class="ch"><div class="ct">📁 Documentos Adjuntos</div>';
+    html+='<label style="cursor:pointer;"><input type="file" accept="image/*,.pdf,.doc,.docx" multiple style="display:none;" onchange="addDoc(\''+e.id+'\',event)"><span class="btn bp bsm">+ Adjuntar</span></label>';
+    html+='</div><div id="dlist-'+e.id+'">'+rDocsList(e.id)+'</div></div>';
+  }
+  document.getElementById('pbody').innerHTML=html;
+}
+
+function rHistTbl(eid,hideNJ){
+  var hist=regs.filter(function(r){ return r.eid===eid; }).sort(function(a,b){ return new Date(b.fi)-new Date(a.fi); });
+  var list=hideNJ?hist.filter(function(r){ return r.t!=='falta_no_justificada'; }):hist;
+  if(!list.length) return '<div class="empty"><div style="font-size:28px;opacity:.3;">📋</div><div style="font-size:13px;margin-top:8px;">Sin registros aun</div></div>';
+  var html='<table><thead><tr><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Dias</th><th>Notas</th><th>Fecha</th>'+(role==='admin'?'<th>Doc</th><th></th>':'')+'</tr></thead><tbody>';
+  for(var i=0;i<list.length;i++){
+    var r=list[i];
+    html+='<tr><td><span class="badge '+(TB[r.t]||'')+'">'+TL[r.t]+'</span></td>';
+    html+='<td>'+fd(r.fi)+'</td><td>'+fd(r.ff)+'</td><td><strong>'+r.d+'</strong></td>';
+    html+='<td style="font-size:12px;color:var(--tx2);max-width:130px;">'+(r.notes||'--')+'</td>';
+    html+='<td style="font-size:11.5px;color:var(--tx3);">'+fd(r.fecha)+'</td>';
+    if(role==='admin'){
+      html+='<td>'+(r.adj?'<button class="btn bg bsm" onclick="viewDoc(\'reg\',\''+r.id+'\')">👁</button>':'<span style="color:var(--tx3)">—</span>')+'</td>';
+      html+='<td><button class="btn bd bsm" onclick="delReg(\''+r.id+'\')">✕</button></td>';
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+function rSalEmp(eid){
+  var list=sals.filter(function(s){ return s.eid===eid; }).sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  if(!list.length) return '<div class="empty"><div style="font-size:28px;opacity:.3;">💳</div><div style="font-size:13px;margin-top:8px;">Sin pagos registrados</div></div>';
+  var html='<table><thead><tr><th>Periodo</th><th>Mes</th><th>Monto Neto</th><th>Notas</th><th></th></tr></thead><tbody>';
+  for(var i=0;i<list.length;i++){
+    var s=list[i];
+    html+='<tr><td><span class="badge bte">'+s.per+'</span></td><td>'+s.mes+'</td>';
+    html+='<td style="font-family:monospace;font-weight:600;color:var(--grn);">'+fm(s.monto)+'</td>';
+    html+='<td style="font-size:12px;color:var(--tx2);">'+(s.notes||'--')+'</td>';
+    html+='<td><button class="btn bpu bsm" onclick="dlBoletin(\''+s.id+'\')">📄</button></td></tr>';
+  }
+  return html+'</tbody></table>';
+}
+
+// ---- REGISTRO FORM ----
+function rRegForm(preEid){
+  var sel=document.getElementById('re-e');
+  var opts='<option value="">Seleccionar...</option>';
+  for(var i=0;i<emps.length;i++) opts+='<option value="'+emps[i].id+'"'+(preEid===emps[i].id?' selected':'')+'>'+emps[i].n+' '+emps[i].a+'</option>';
+  sel.innerHTML=opts;
+  document.getElementById('re-t').value='';
+  document.getElementById('re-fi').value='';
+  document.getElementById('re-ff').value='';
+  document.getElementById('re-d').value='';
+  document.getElementById('re-n').value='';
+  document.getElementById('re-al').classList.add('hidden');
+  regFile=null;
+  document.getElementById('redz-prev').innerHTML='📎 Arrastra o haz clic para adjuntar';
+}
+function calcDias(){
+  var fi=document.getElementById('re-fi').value,ff=document.getElementById('re-ff').value;
+  if(fi&&ff&&fi<=ff) document.getElementById('re-d').value=dh(fi,ff);
+}
+function onRegFile(ev){ var f=ev.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(e){ regFile={name:f.name,type:f.type,data:e.target.result}; var p=document.getElementById('redz-prev'); p.innerHTML=f.type.startsWith('image/')?'<img src="'+e.target.result+'" style="max-height:70px;border-radius:6px;"><div style="font-size:11px;margin-top:4px;color:var(--tx2);">'+f.name+'</div>':'<div>📄 '+f.name+'</div>'; }; rd.readAsDataURL(f); }
+function saveReg(){
+  var eid=document.getElementById('re-e').value;
+  var tipo=document.getElementById('re-t').value;
+  var fi=document.getElementById('re-fi').value;
+  var ff=document.getElementById('re-ff').value;
+  var dias=parseInt(document.getElementById('re-d').value)||0;
+  var notes=document.getElementById('re-n').value;
+  if(!eid||!tipo||!fi||!ff){ toast('Completa todos los campos','err'); return; }
+  var al=document.getElementById('re-al');
+  if(tipo==='vacaciones'){
+    var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
+    var tot=dxley(antig(e.i)),us=vacUsadas(eid),disp=Math.max(0,tot-us);
+    if(dias>disp){ al.textContent='⚠ Solo hay '+disp+' dia(s) disponibles. Guardando de todas formas.'; al.classList.remove('hidden'); }
+    else al.classList.add('hidden');
+  }
+  regs.push({id:Date.now().toString(),eid:eid,t:tipo,fi:fi,ff:ff,d:dias,notes:notes,fecha:new Date().toISOString().split('T')[0],adj:regFile||null});
+  regFile=null;
+  saveAll(); syncSheets();
+  toast('Registro guardado');
+  gv('perf',eid);
+}
+function delReg(id){ if(!confirm('Eliminar este registro?')) return; regs=regs.filter(function(r){ return r.id!==id; }); saveAll(); syncSheets(); toast('Eliminado'); rPerf(curEmp); }
+
+// ---- SALARIOS ----
+function rSal(){
+  var yr=new Date().getFullYear();
+  var total=sals.filter(function(s){ return s.mes&&s.mes.indexOf(yr)>=0; }).reduce(function(t,s){ return t+parseFloat(s.monto||0); },0);
+  var html='<div class="sg" style="grid-template-columns:repeat(3,1fr);">';
+  html+='<div class="sc"><div class="sl">Total Pagado ('+yr+')</div><div class="sv" style="font-size:18px;color:var(--grn);">'+fm(total)+'</div></div>';
+  html+='<div class="sc"><div class="sl">Pagos Registrados</div><div class="sv" style="color:var(--acc);">'+sals.length+'</div></div>';
+  html+='<div class="sc"><div class="sl">Empleados Pagados</div><div class="sv" style="color:var(--pur);">'+Object.keys(sals.reduce(function(o,s){ o[s.eid]=1; return o; },{})).length+'</div></div>';
+  html+='</div>';
+  html+='<div class="card"><div class="ch"><div class="ct">Historial de Pagos</div>';
+  html+='<select onchange="filterSals(this.value)" style="font-size:12.5px;padding:5px 9px;"><option value="">Todos</option>';
+  for(var i=0;i<emps.length;i++) html+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>';
+  html+='</select></div>';
+  if(sals.length===0) html+='<div class="empty"><div style="font-size:28px;opacity:.3;">💳</div><div style="font-size:13px;margin-top:8px;">Sin pagos aun</div></div>';
+  else html+='<table><thead><tr><th>Empleado</th><th>Periodo</th><th>Mes</th><th>Monto</th><th>Notas</th><th></th></tr></thead><tbody id="stb">'+rSalTb(sals)+'</tbody></table>';
+  html+='</div>';
+  document.getElementById('sbody').innerHTML=html;
+}
+function rSalTb(list){
+  var sorted=list.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  var html='';
+  for(var i=0;i<sorted.length;i++){
+    var s=sorted[i],e=null;
+    for(var j=0;j<emps.length;j++) if(emps[j].id===s.eid){ e=emps[j]; break; }
+    html+='<tr><td style="font-weight:500">'+(e?e.n+' '+e.a:s.eid)+'</td>';
+    html+='<td><span class="badge bte">'+s.per+'</span></td>';
+    html+='<td style="font-family:monospace;font-size:12px;">'+s.mes+'</td>';
+    html+='<td style="font-family:monospace;font-weight:600;color:var(--grn);">'+fm(s.monto)+'</td>';
+    html+='<td style="font-size:12px;color:var(--tx2);">'+(s.notes||'--')+'</td>';
+    html+='<td><div class="fx g2"><button class="btn bpu bsm" onclick="dlBoletin(\''+s.id+'\')">📄</button><button class="btn bd bsm" onclick="delSal(\''+s.id+'\')">✕</button></div></td></tr>';
+  }
+  return html;
+}
+function filterSals(eid){ var tb=document.getElementById('stb'); if(!tb) return; tb.innerHTML=rSalTb(eid?sals.filter(function(s){ return s.eid===eid; }):sals); }
+function openAddSal(){
+  var sel=document.getElementById('sf-e');
+  var opts='<option value="">Seleccionar...</option>';
+  for(var i=0;i<emps.length;i++) opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>';
+  sel.innerHTML=opts;
+  document.getElementById('sf-m').value=new Date().toISOString().slice(0,7);
+  document.getElementById('sf-mn').value='';
+  document.getElementById('sf-n').value='';
+  document.getElementById('sf-em').value='';
+  document.getElementById('sf-se').checked=false;
+  om('mo-s');
+}
+function onSalEmp(){ var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===document.getElementById('sf-e').value){ e=emps[i]; break; } if(e) document.getElementById('sf-em').value=e.e||''; }
+function saveSal(){
+  var eid=document.getElementById('sf-e').value;
+  var mes=document.getElementById('sf-m').value;
+  var monto=parseFloat(document.getElementById('sf-mn').value)||0;
+  if(!eid||!mes||!monto){ toast('Completa los campos requeridos','err'); return; }
+  var s={id:Date.now().toString(),eid:eid,per:document.getElementById('sf-p').value,mes:mes,monto:monto,notes:document.getElementById('sf-n').value,fecha:new Date().toISOString().split('T')[0]};
+  sals.push(s); saveAll(); syncSheets();
+  var send=document.getElementById('sf-se').checked, email=document.getElementById('sf-em').value;
+  cm('mo-s'); toast('Pago registrado');
+  if(send&&email) sendSalEmail(s.id,email);
+  rSal();
+}
+function delSal(id){ if(!confirm('Eliminar?')) return; sals=sals.filter(function(s){ return s.id!==id; }); saveAll(); toast('Eliminado'); rSal(); }
+
+// ---- PDF BAC ----
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function openBAC(){
+  bacData=[];
+  document.getElementById('bst1').classList.remove('hidden');
+  document.getElementById('bst2').classList.add('hidden');
+  document.getElementById('bload').classList.add('hidden');
+  document.getElementById('bbtn').classList.add('hidden');
+  document.getElementById('bfi').value='';
+  document.getElementById('bm').value=new Date().toISOString().slice(0,7);
+  om('mo-b');
+}
+function onBACDrop(e){ e.preventDefault(); var f=e.dataTransfer.files[0]; if(f&&f.type==='application/pdf') procBAC(f); }
+function onBACFile(e){ var f=e.target.files[0]; if(f) procBAC(f); }
+async function procBAC(file){
+  document.getElementById('bst1').classList.add('hidden');
+  document.getElementById('bload').classList.remove('hidden');
+  try{
+    var ab=await file.arrayBuffer();
+    var pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    var text='';
+    for(var i=1;i<=pdf.numPages;i++){ var pg=await pdf.getPage(i); var ct=await pg.getTextContent(); text+=ct.items.map(function(it){ return it.str; }).join(' ')+'\n'; }
+    parseBAC(text);
+  }catch(err){ document.getElementById('bload').classList.add('hidden'); document.getElementById('bst1').classList.remove('hidden'); toast('Error leyendo PDF','err'); }
+}
+function parseBAC(text){
+  var lines=text.split('\n'), results=[];
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i].trim();
+    var ids=line.match(/\b\d{13}\b/g);
+    if(!ids) continue;
+    var ref=ids[0];
+    var mM=line.match(/(\d{1,3}(?:,\d{3})*\.\d{2})\s*LPS/i)||line.match(/\b(\d{4,7}\.\d{2})\b/);
+    if(!mM) continue;
+    var monto=parseFloat(mM[1].replace(/,/g,''));
+    var refC=ref.replace(/[-\s]/g,'');
+    var emp=null;
+    for(var j=0;j<emps.length;j++){
+      var idn=(emps[j].idn||'').replace(/[-\s]/g,'');
+      if(idn===refC||idn.endsWith(refC)||refC.endsWith(idn)){ emp=emps[j]; break; }
+    }
+    results.push({ref:ref,monto:monto,emp:emp,matched:!!emp});
+  }
+  document.getElementById('bload').classList.add('hidden');
+  if(!results.length){ document.getElementById('bst1').classList.remove('hidden'); toast('No se encontraron transacciones','err'); return; }
+  bacData=results;
+  var matched=results.filter(function(r){ return r.matched; }).length;
+  document.getElementById('bsum').textContent=results.length+' transacciones encontradas. '+matched+' empleados identificados.';
+  var html='';
+  for(var i=0;i<results.length;i++){
+    var r=results[i];
+    html+='<tr><td>'+(r.emp?'<strong>'+r.emp.n+' '+r.emp.a+'</strong>':'<span style="color:var(--tx3)">'+r.ref+'</span>')+'</td>';
+    html+='<td style="font-family:monospace;font-weight:600;color:var(--grn);">'+fm(r.monto)+'</td>';
+    html+='<td>'+(r.matched?'<span class="badge bgr2">✓</span>':'<span class="badge bre">Sin match</span>')+'</td></tr>';
+  }
+  document.getElementById('btb').innerHTML=html;
+  document.getElementById('bst2').classList.remove('hidden');
+  document.getElementById('bbtn').classList.remove('hidden');
+}
+async function confirmBAC(){
+  var per=document.getElementById('bp').value, mes=document.getElementById('bm').value;
+  var sendAll=document.getElementById('bse').checked, saved=0, emails=0;
+  var fecha=new Date().toISOString().split('T')[0];
+  for(var i=0;i<bacData.length;i++){
+    var r=bacData[i]; if(!r.matched) continue;
+    var s={id:Date.now().toString()+'_'+i,eid:r.emp.id,per:per,mes:mes,monto:r.monto,notes:'Comprobante BAC',fecha:fecha};
+    sals.push(s); saved++;
+    if(sendAll&&r.emp.e&&cfg.salMsg){ await sendSalEmail(s.id,r.emp.e); emails++; }
+  }
+  saveAll(); syncSheets(); cm('mo-b');
+  toast(saved+' pagos registrados. '+emails+' emails enviados.');
+  rSal();
+}
+
+// ---- CONFIG ----
+function rCfg(){
+  if(role!=='admin'){ document.getElementById('cbody').innerHTML='<div style="text-align:center;padding:60px;color:var(--tx3);"><div style="font-size:36px;">🔒</div><div style="font-size:15px;margin-top:12px;">Solo el Administrador puede acceder aqui.</div></div>'; return; }
+  document.getElementById('cbody').innerHTML=
+    '<div style="max-width:600px;display:flex;flex-direction:column;gap:14px;">'
+    +'<div class="card"><div class="ch"><div class="ct">🎂 Mensajes de Cumpleanos</div></div><div class="mb">'
+    +'<div class="fg"><label>Email administrador</label><input id="cfg-adm" value="'+escH(cfg.adminEmail||'')+'" placeholder="rrhh@intellishiphn.com"></div>'
+    +'<div class="fg"><label>Mensaje al cumpleanero (usa {nombre})</label><textarea id="cfg-bday" style="min-height:110px;">'+escH(cfg.bdayMsg||'')+'</textarea></div>'
+    +'<button class="btn bp" onclick="saveCfg()">Guardar</button></div></div>'
+    +'<div class="card"><div class="ch"><div class="ct">💳 Mensaje de Notificacion de Pago</div></div><div class="mb">'
+    +'<div style="font-size:12px;color:var(--tx3);margin-bottom:10px;">Variables: {nombre} {periodo} {mes} {monto}</div>'
+    +'<div class="fg"><textarea id="cfg-sal" style="min-height:130px;">'+escH(cfg.salMsg||'')+'</textarea></div>'
+    +'<button class="btn bp" onclick="saveCfg()">Guardar</button></div></div>'
+    +'<div class="card"><div class="ch"><div class="ct">📊 Google Sheets</div></div><div class="mb">'
+    +'<div class="fg"><label>ID del Google Sheet</label><input id="cfg-sid" value="'+escH(cfg.sheetId||'')+'" placeholder="1BxiMV..."></div>'
+    +'<div class="fg"><label>URL Apps Script</label><input id="cfg-url" value="'+escH(cfg.appsUrl||'')+'" placeholder="https://script.google.com/..."></div>'
+    +'<button class="btn bgr" onclick="saveCfgSync()">Guardar y Sincronizar</button>'
+    +'</div></div></div>';
+}
+function escH(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function saveCfg(){
+  var a=document.getElementById('cfg-adm'),b=document.getElementById('cfg-bday'),s=document.getElementById('cfg-sal');
+  if(a) cfg.adminEmail=a.value.trim();
+  if(b) cfg.bdayMsg=b.value.trim();
+  if(s) cfg.salMsg=s.value.trim();
+  saveAll(); toast('Configuracion guardada');
+}
+function saveCfgSync(){
+  saveCfg();
+  var si=document.getElementById('cfg-sid'),su=document.getElementById('cfg-url');
+  if(si) cfg.sheetId=si.value.trim();
+  if(su) cfg.appsUrl=su.value.trim();
+  saveAll(); syncSheets();
+}
+
+// ---- EMP ADD/EDIT ----
+function openAddEmp(){
+  document.getElementById('mo-et').textContent='Agregar Empleado';
+  document.getElementById('ef-eid').value='';
+  ['ef-n','ef-a','ef-id','ef-dep','ef-c','ef-t','ef-e','ef-idn','ef-dir','ef-emg'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('ef-i').value='';
+  document.getElementById('ef-nb').value='';
+  document.getElementById('ef-g').value='';
+  document.getElementById('ef-ec').value='';
+  document.getElementById('ef-s').value='';
+  om('mo-e');
+}
+function openEditEmp(eid){
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
+  if(!e) return;
+  document.getElementById('mo-et').textContent='Editar Empleado';
+  document.getElementById('ef-eid').value=e.id;
+  document.getElementById('ef-n').value=e.n||'';
+  document.getElementById('ef-a').value=e.a||'';
+  document.getElementById('ef-id').value=e.id||'';
+  document.getElementById('ef-i').value=e.i||'';
+  document.getElementById('ef-nb').value=e.nb||'';
+  document.getElementById('ef-dep').value=e.dep||'';
+  document.getElementById('ef-c').value=e.c||'';
+  document.getElementById('ef-t').value=e.t||'';
+  document.getElementById('ef-e').value=e.e||'';
+  document.getElementById('ef-g').value=e.g||'';
+  document.getElementById('ef-ec').value=e.ec||'';
+  document.getElementById('ef-idn').value=e.idn||'';
+  document.getElementById('ef-dir').value=e.dir||'';
+  document.getElementById('ef-emg').value=e.emg||'';
+  document.getElementById('ef-s').value=e.s||'';
+  om('mo-e');
+}
+function saveEmp(){
+  var nom=document.getElementById('ef-n').value.trim();
+  var ape=document.getElementById('ef-a').value.trim();
+  var ing=document.getElementById('ef-i').value;
+  if(!nom||!ape||!ing){ toast('Nombre, apellidos e ingreso son requeridos','err'); return; }
+  var eid=document.getElementById('ef-eid').value;
+  var newId=document.getElementById('ef-id').value.trim()||('IS-'+String(emps.length+1).padStart(3,'0'));
+  var data={id:eid||newId,n:nom,a:ape,i:ing,nb:document.getElementById('ef-nb').value,dep:document.getElementById('ef-dep').value.trim(),c:document.getElementById('ef-c').value.trim(),t:document.getElementById('ef-t').value.trim(),e:document.getElementById('ef-e').value.trim(),g:document.getElementById('ef-g').value,ec:document.getElementById('ef-ec').value,idn:document.getElementById('ef-idn').value.trim(),dir:document.getElementById('ef-dir').value.trim(),emg:document.getElementById('ef-emg').value.trim(),s:parseFloat(document.getElementById('ef-s').value)||0};
+  if(eid){ for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ emps[i]=data; break; } }
+  else emps.push(data);
+  saveAll(); syncSheets(); cm('mo-e');
+  toast(eid?'Empleado actualizado':'Empleado agregado');
+  rSidebar();
+  if(eid) rPerf(eid); else rEmps();
+}
+
+// ---- DOCUMENTOS ----
+function rDocsList(eid){
+  var list=docs.filter(function(d){ return d.eid===eid; });
+  if(!list.length) return '<div class="empty" style="padding:20px;"><div style="font-size:22px;opacity:.3;">📂</div><div style="font-size:12.5px;margin-top:6px;">Sin documentos adjuntos</div></div>';
+  var html='<div style="padding:8px 10px;">';
+  for(var i=0;i<list.length;i++){
+    var d=list[i];
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:var(--rs);border:1px solid var(--bdr);margin-bottom:6px;background:var(--bg);">';
+    html+='<div style="font-size:20px;">'+(d.type&&d.type.indexOf('image')>=0?'🖼':'📄')+'</div>';
+    html+='<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--tx3);">'+fd(d.fecha)+'</div></div>';
+    html+='<div class="fx g2"><button class="btn bg bsm" onclick="viewDoc(\'emp\',\''+d.id+'\')">👁 Ver</button><button class="btn bd bsm" onclick="delDoc(\''+d.id+'\',\''+eid+'\')">✕</button></div>';
+    html+='</div>';
+  }
+  return html+'</div>';
+}
+function addDoc(eid,ev){
+  var files=ev.target.files;
+  for(var fi=0;fi<files.length;fi++){
+    (function(f){
+      var rd=new FileReader();
+      rd.onload=function(e){
+        docs.push({id:Date.now().toString()+'_'+Math.random().toString(36).slice(2),eid:eid,name:f.name,type:f.type,data:e.target.result,fecha:new Date().toISOString().split('T')[0]});
+        saveAll();
+        var dl=document.getElementById('dlist-'+eid);
+        if(dl) dl.innerHTML=rDocsList(eid);
+        toast('Documento adjuntado');
+      };
+      rd.readAsDataURL(f);
+    })(files[fi]);
+  }
+}
+function viewDoc(src,id){
+  var d=null;
+  if(src==='emp'){ for(var i=0;i<docs.length;i++) if(docs[i].id===id){ d=docs[i]; break; } }
+  else{ for(var i=0;i<regs.length;i++) if(regs[i].id===id&&regs[i].adj){ d=regs[i].adj; break; } }
+  if(!d) return;
+  var win=window.open('','_blank');
+  if(d.type&&d.type.indexOf('image')>=0) win.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="'+d.data+'" style="max-width:100%;max-height:100vh;object-fit:contain;"></body></html>');
+  else win.document.write('<html><body style="margin:0;"><embed src="'+d.data+'" width="100%" height="100%" style="min-height:100vh;"></body></html>');
+  win.document.close();
+}
+function delDoc(docId,eid){ if(!confirm('Eliminar documento?')) return; docs=docs.filter(function(d){ return d.id!==docId; }); saveAll(); var dl=document.getElementById('dlist-'+eid); if(dl) dl.innerHTML=rDocsList(eid); toast('Eliminado'); }
+
+// ---- EMAILS ----
+async function callAPI(to, subject, body){
+  if(!to || !to.trim()){ console.warn('callAPI: destinatario vacío'); return { ok: false }; }
+  try{
+    var result = await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+      to_email: to,
+      subject:  subject,
+      message:  body,
+      reply_to: cfg.adminEmail || to
+    });
+    console.log('EmailJS OK:', result.status, '| To:', to);
+    return { ok: true };
+  }catch(e){
+    console.error('EmailJS error:', e);
+    toast('Error enviando a '+to+': '+((e&&e.text)||e),'err');
+    return { ok: false };
+  }
+}
+async function sendBday(eid){
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
+  if(!e||!e.e){ toast('Empleado sin email registrado','err'); return; }
+  toast('Enviando correos...');
+  var msg=cfg.bdayMsg.replace(/{nombre}/g,e.n+' '+e.a);
+  await callAPI(e.e,'Feliz Cumpleaños, '+e.n+'! 🎂',
+    getEmailTemplate('¡Feliz Cumpleaños, '+e.n+'! 🎂', msg.replace(/\n/g,'<br>')));
+  addEmailLog('🎂 Cumpleaños empleado', e.e, e.n+' '+e.a);
+  for(var i=0;i<emps.length;i++){
+    if(emps[i].id!==eid&&emps[i].e){
+      await callAPI(emps[i].e,'🎂 Hoy cumple años '+e.n+' '+e.a+'!',
+        getEmailTemplate('Cumpleaños de '+e.n+' '+e.a+' 🎂',
+          'Estimado/a '+emps[i].n+',<br><br>Hoy es el cumpleaños de <strong>'+e.n+' '+e.a+'</strong>. Los invitamos a enviarle sus felicitaciones.'));
+      addEmailLog('🎉 Aviso equipo', emps[i].e, 'Cumpleaños de '+e.n);
+    }
+  }
+  if(cfg.adminEmail){
+    await callAPI(cfg.adminEmail,'[RRHH] Cumpleaños: '+e.n+' '+e.a,
+      getEmailTemplate('Recordatorio RRHH','Hoy es el cumpleaños de <strong>'+e.n+' '+e.a+'</strong> ('+e.c+').'));
+    addEmailLog('📋 Aviso admin', cfg.adminEmail, 'Cumpleaños de '+e.n);
+  }
+  saveAll();
+  toast('Emails enviados ✓');
+  if(document.getElementById('abody')) rAuto();
+}
+async function sendSalEmail(salId,emailDest){
+  var s=null; for(var i=0;i<sals.length;i++) if(sals[i].id===salId){ s=sals[i]; break; }
+  if(!s) return;
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===s.eid){ e=emps[i]; break; }
+  if(!e) return;
+  var msg=cfg.salMsg.replace(/{nombre}/g,e.n+' '+e.a).replace(/{periodo}/g,s.per).replace(/{mes}/g,s.mes).replace(/{monto}/g,fm(s.monto));
+  var bodyHtml=getEmailTemplate('Pago Acreditado',
+    msg.replace(/\n/g,'<br>')
+    +'<br><br><div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:10px;padding:18px;text-align:center;margin-top:18px;">'
+    +'<div style="font-size:11px;color:#276749;font-weight:700;text-transform:uppercase;">Monto Acreditado</div>'
+    +'<div style="font-size:28px;font-weight:700;color:#276749;margin-top:6px;">'+fm(s.monto)+'</div>'
+    +'<div style="font-size:13px;color:#48bb78;margin-top:4px;">'+s.per+' &middot; '+s.mes+'</div>'
+    +'</div>');
+  toast('Enviando boletin...');
+  await callAPI(emailDest,'Notificacion de Pago - '+s.per+' '+s.mes+' | INTELLISHIP', bodyHtml);
+  addEmailLog('💳 Pago acreditado', emailDest, e.n+' '+e.a+' - '+fm(s.monto));
+  saveAll();
+  toast('Boletin enviado a '+emailDest);
+}
+function checkBdays(){
+  var hoy=bdays(0);
+  for(var i=0;i<hoy.length;i++){
+    var b=hoy[i];
+    if(b.e&&cfg.bdayMsg){
+      var key='bday_'+b.id+'_'+new Date().toISOString().split('T')[0];
+      if(!localStorage.getItem(key)){ localStorage.setItem(key,'1'); sendBday(b.id); }
+    }
+  }
+  var en3=bdays(3);
+  for(var i=0;i<en3.length;i++){
+    if(cfg.adminEmail){
+      var key='bday3_'+en3[i].id+'_'+new Date().toISOString().split('T')[0];
+      if(!localStorage.getItem(key)){
+        localStorage.setItem(key,'1');
+        callAPI(cfg.adminEmail,'[RRHH] En 3 dias cumple años '+en3[i].n+' '+en3[i].a,
+          getEmailTemplate('Recordatorio RRHH','En 3 días, <strong>'+en3[i].n+' '+en3[i].a+'</strong> cumple años.'));
+        addEmailLog('⏰ Recordatorio 3 dias', cfg.adminEmail, en3[i].n+' '+en3[i].a);
+        saveAll();
+      }
+    }
+  }
+}
+
+// ---- PDF ----
+function dlPDF(eid){
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
+  if(!e) return;
+  var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+  var fJ=cnt(e.id,'falta_justificada'),fNJ=cnt(e.id,'falta_no_justificada'),perm=cnt(e.id,'permiso');
+  var hist=regs.filter(function(r){ return r.eid===eid; }).sort(function(a,b){ return new Date(b.fi)-new Date(a.fi); });
+  var rows='';
+  for(var i=0;i<hist.length;i++) rows+='<tr><td>'+TL[hist[i].t]+'</td><td>'+fd(hist[i].fi)+'</td><td>'+fd(hist[i].ff)+'</td><td>'+hist[i].d+'</td><td>'+(hist[i].notes||'--')+'</td></tr>';
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;color:#1a1a2e;margin:0;padding:28px;}.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #4f8ef7;padding-bottom:12px;margin-bottom:18px;}.brand{font-size:15px;font-weight:700;color:#4f8ef7;letter-spacing:2px;}.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}.sc{background:#f8f9ff;border-radius:8px;padding:11px;text-align:center;}.ig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.ic{background:#f8f9ff;border-radius:8px;padding:12px;}.ict{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}.ir{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #eee;}.ir:last-child{border-bottom:none;}table{width:100%;border-collapse:collapse;}th{background:#1e2333;color:white;padding:7px 10px;font-size:11px;text-align:left;}td{padding:7px 10px;border-bottom:1px solid #eee;font-size:12px;}.footer{text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;margin-top:20px;}</style></head><body>');
+  win.document.write('<div class="hdr"><div><div class="brand">INTELLISHIP</div></div><div style="text-align:right;"><div style="font-size:16px;font-weight:700;">'+e.n+' '+e.a+'</div><div style="font-size:12px;color:#888;">'+e.id+' · '+e.c+'</div><div style="font-size:11px;color:#aaa;">'+fd(new Date().toISOString().split('T')[0])+'</div></div></div>');
+  win.document.write('<div class="sg"><div class="sc"><div style="font-size:24px;font-weight:700;color:#34c87a;">'+disp+'</div><div style="font-size:11px;color:#888;">Disponibles</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#f05252;">'+us+'</div><div style="font-size:11px;color:#888;">Tomados</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#666;">'+tot+'</div><div style="font-size:11px;color:#888;">Por Ley</div></div></div>');
+  win.document.write('<div class="sg"><div class="sc"><div style="font-size:24px;font-weight:700;color:#f05252;">'+fNJ+'</div><div style="font-size:11px;color:#888;">Faltas NJ</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#f5c542;">'+fJ+'</div><div style="font-size:11px;color:#888;">Faltas J</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#a78bfa;">'+perm+'</div><div style="font-size:11px;color:#888;">Permisos</div></div></div>');
+  win.document.write('<div class="ig"><div class="ic"><div class="ict">Info Personal</div><div class="ir"><span>Nacimiento</span><span>'+fd(e.nb)+'</span></div><div class="ir"><span>Genero</span><span>'+(e.g||'--')+'</span></div><div class="ir"><span>Estado Civil</span><span>'+(e.ec||'--')+'</span></div><div class="ir"><span>Identidad</span><span style="font-size:11px;">'+(e.idn||'--')+'</span></div><div class="ir"><span>Ingreso</span><span>'+fd(e.i)+'</span></div><div class="ir"><span>Antiguedad</span><span>'+yt(ag)+'</span></div></div><div class="ic"><div class="ict">Contacto</div><div class="ir"><span>Telefono</span><span>'+(e.t||'--')+'</span></div><div class="ir"><span>Email</span><span>'+(e.e||'--')+'</span></div><div class="ir"><span>Emergencia</span><span>'+(e.emg||'--')+'</span></div><div class="ir"><span>Direccion</span><span style="font-size:11px;">'+(e.dir||'--')+'</span></div></div></div>');
+  win.document.write('<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Historial</div>');
+  win.document.write(rows?'<table><thead><tr><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Dias</th><th>Notas</th></tr></thead><tbody>'+rows+'</tbody></table>':'<p style="color:#aaa;font-size:12px;">Sin registros.</p>');
+  win.document.write('<div class="footer">INTELLISHIP Honduras · '+fd(new Date().toISOString().split('T')[0])+'</div></body></html>');
+  win.document.close(); setTimeout(function(){ win.print(); },400);
+}
+function dlBoletin(salId){
+  var s=null; for(var i=0;i<sals.length;i++) if(sals[i].id===salId){ s=sals[i]; break; }
+  if(!s) return;
+  var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===s.eid){ e=emps[i]; break; }
+  if(!e) return;
+  var msg=cfg.salMsg.replace(/{nombre}/g,e.n+' '+e.a).replace(/{periodo}/g,s.per).replace(/{mes}/g,s.mes).replace(/{monto}/g,fm(s.monto));
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;color:#1a1a2e;margin:0;padding:28px;max-width:600px;margin:0 auto;}</style></head><body>');
+  win.document.write('<div style="display:flex;justify-content:space-between;border-bottom:2px solid #4f8ef7;padding-bottom:12px;margin-bottom:18px;"><div style="font-size:15px;font-weight:700;color:#4f8ef7;letter-spacing:2px;">INTELLISHIP</div><div style="text-align:right;"><div style="font-weight:700;">Boletin de Pago</div><div style="font-size:12px;color:#888;">'+s.per+' - '+s.mes+'</div></div></div>');
+  win.document.write('<div style="background:#f8f9ff;border-radius:8px;padding:14px;margin-bottom:18px;"><div style="font-weight:700;font-size:15px;">'+e.n+' '+e.a+'</div><div style="font-size:12px;color:#888;">'+e.id+' · '+e.c+'</div></div>');
+  win.document.write('<p style="font-size:14px;line-height:1.8;color:#333;margin-bottom:18px;">'+msg+'</p>');
+  win.document.write('<div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:11px;color:#276749;font-weight:700;text-transform:uppercase;">Monto Acreditado</div><div style="font-size:28px;font-weight:700;color:#276749;margin-top:4px;">'+fm(s.monto)+'</div><div style="font-size:12px;color:#48bb78;margin-top:3px;">'+s.per+' · '+s.mes+'</div></div>');
+  win.document.write('<div style="text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;margin-top:20px;">INTELLISHIP Honduras</div></body></html>');
+  win.document.close(); setTimeout(function(){ win.print(); },400);
+}
+
+// ---- SHEETS ----
+async function syncSheets(){
+  if(!cfg.appsUrl||!cfg.sheetId) return;
+  var dot=document.getElementById('sdot'),st=document.getElementById('sst');
+  dot.style.background='var(--yel)'; st.textContent='Sincronizando...';
+  try{
+    var er=emps.map(function(e){ var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id); return[e.id,e.n,e.a,e.i,e.c,e.t,tot,us,Math.max(0,tot-us)]; });
+    var rr=regs.map(function(r){ var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===r.eid){ e=emps[i]; break; } return[e?e.n+' '+e.a:r.eid,r.t,r.fi,r.ff,r.d,r.notes,r.fecha]; });
+    var sr=sals.map(function(s){ var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===s.eid){ e=emps[i]; break; } return[e?e.n+' '+e.a:s.eid,s.per,s.mes,s.monto,s.notes]; });
+    var pairs=[['empleados',er],['registros',rr],['salarios',sr]];
+    for(var i=0;i<pairs.length;i++) await fetch(cfg.appsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify({sheetId:cfg.sheetId,type:pairs[i][0],rows:pairs[i][1]})});
+    dot.style.background='var(--grn)'; st.textContent='Sincronizado';
+  }catch(e){ dot.style.background='var(--red)'; st.textContent='Error sync'; }
+}
+</script>
+</body>
+</html>
+
+<style>
+.bp{
+box-shadow:0 8px 25px rgba(79,142,247,.35);
+}
+.btn{
+border-radius:12px!important;
+}
+textarea{
+background:#0b111d!important;
+}
+.ni{
+border-radius:12px!important;
+margin-bottom:4px!important;
+}
+.ni.active{
+box-shadow:0 0 0 1px rgba(79,142,247,.25);
+}
+.sc{
+background:rgba(255,255,255,.03)!important;
+backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,.05)!important;
+border-radius:18px!important;
+}
+</style>
