@@ -501,34 +501,65 @@ function loadAll(){
 }
 
 var _saveTimer=null;
+var JBIN_KEY='$2a$10$ywTRachW7M6LjwfWaLPoxuMQriAGbsrSWmxCU7J91yytDpGp8XVhq';
+var JBIN_ID=localStorage.getItem('jbin_id')||'';
+
 function saveAll(){
-  // Save to localStorage as backup
   localStorage.setItem('is_e',JSON.stringify(emps));
   localStorage.setItem('is_r',JSON.stringify(regs));
   localStorage.setItem('is_s',JSON.stringify(sals));
   localStorage.setItem('is_d',JSON.stringify(docs));
   localStorage.setItem('is_logs',JSON.stringify(emailLogs));
   localStorage.setItem('is_c',JSON.stringify(cfg));
-  // Debounce cloud save
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(saveCloud, 800);
 }
+
 async function saveCloud(){
   try{
     var data={emps,regs,sals,docs,emailLogs,cfg};
-    await fetch('/.netlify/functions/data',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    });
+    var body=JSON.stringify(data);
+    if(!JBIN_ID){
+      // Create new bin
+      var r=await fetch('https://api.jsonbin.io/v3/b',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY,'X-Bin-Name':'rrhh-intelliship'},
+        body:body
+      });
+      var d=await r.json();
+      JBIN_ID=d.metadata.id;
+      localStorage.setItem('jbin_id',JBIN_ID);
+      console.log('Bin creado:', JBIN_ID);
+    } else {
+      await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},
+        body:body
+      });
+    }
     console.log('Cloud save OK');
-  }catch(e){ console.warn('Cloud save failed, using localStorage', e); }
+  }catch(e){ console.warn('Cloud save error:', e); }
 }
+
 async function loadCloud(){
   try{
-    var r=await fetch('/.netlify/functions/data');
-    if(!r.ok) return false;
-    var data=await r.json();
+    if(!JBIN_ID){
+      // Try to find existing bin by name
+      var r=await fetch('https://api.jsonbin.io/v3/b?name=rrhh-intelliship',{
+        headers:{'X-Master-Key':JBIN_KEY}
+      });
+      if(r.ok){
+        var bins=await r.json();
+        if(bins&&bins.length){ JBIN_ID=bins[0].id; localStorage.setItem('jbin_id',JBIN_ID); }
+      }
+    }
+    if(!JBIN_ID) return false;
+    var r2=await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID+'/latest',{
+      headers:{'X-Master-Key':JBIN_KEY}
+    });
+    if(!r2.ok) return false;
+    var d=await r2.json();
+    var data=d.record;
     if(!data) return false;
     if(data.emps&&data.emps.length) emps=data.emps;
     if(data.regs) regs=data.regs;
@@ -536,9 +567,9 @@ async function loadCloud(){
     if(data.docs) docs=data.docs;
     if(data.emailLogs) emailLogs=data.emailLogs;
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
-    console.log('Cloud load OK');
+    console.log('Cloud load OK, bin:', JBIN_ID);
     return true;
-  }catch(e){ console.warn('Cloud load failed', e); return false; }
+  }catch(e){ console.warn('Cloud load error:', e); return false; }
 }
 
 loadAll(); // load localStorage as initial fallback
