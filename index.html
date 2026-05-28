@@ -178,6 +178,32 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
 .dz{border:2px dashed var(--bdr);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
 .dz:hover{border-color:var(--acc);background:rgba(79,142,247,.04);}
 .dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.hbtn{display:none;background:none;border:none;color:var(--txt);cursor:pointer;padding:4px;margin-right:8px;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:49;}
+@media(max-width:768px){
+  .app{flex-direction:column;}
+  .sidebar{position:fixed;top:0;left:-270px;width:260px;height:100vh;z-index:50;transition:left .25s ease;border-right:1px solid var(--bdr2);}
+  .sidebar.open{left:0;}
+  .overlay.open{display:block;}
+  .main{width:100%;height:100vh;}
+  .hbtn{display:flex;align-items:center;justify-content:center;}
+  .topbar{padding:11px 14px;}
+  .topbar h1{font-size:15px;}
+  .topbar p{font-size:11px;}
+  .content{padding:12px 13px;}
+  .sg{grid-template-columns:repeat(2,1fr)!important;}
+  .fr{grid-template-columns:1fr!important;}
+  .do{grid-template-columns:repeat(3,1fr)!important;}
+  .ig{grid-template-columns:1fr!important;}
+  .md{width:95vw!important;max-width:95vw!important;}
+  .mdlg{width:95vw!important;}
+  th,td{padding:7px 8px!important;font-size:11.5px!important;}
+  .btn{padding:6px 10px;font-size:12px;}
+  .ph{flex-direction:column;text-align:center;}
+  .pav{margin:0 auto;}
+  .pmeta{justify-content:center;}
+  .bday-row{flex-wrap:wrap;gap:8px;}
+}
 </style>
 </head>
 <body>
@@ -209,6 +235,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
 </div>
 
 <!-- APP -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 <div class="app hidden" id="app">
   <div class="sidebar">
     <div class="slogo">
@@ -258,15 +285,15 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
   </div>
   <div class="main">
     <div id="vd" class="hidden">
-      <div class="topbar"><div><h1 id="dtitle">Dashboard</h1><p id="dsub"></p></div><div class="fx g2" id="dacts"></div></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1 id="dtitle">Dashboard</h1><p id="dsub"></p></div><div class="fx g2" id="dacts"></div></div>
       <div class="content" id="dbody"></div>
     </div>
     <div id="ve" class="hidden">
-      <div class="topbar"><div><h1>Empleados</h1><p>Equipo INTELLISHIP Honduras</p></div><button class="btn bp" id="btn-add-emp" onclick="openAddEmp()">+ Agregar</button></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Empleados</h1><p>Equipo INTELLISHIP Honduras</p></div><button class="btn bp" id="btn-add-emp" onclick="openAddEmp()">+ Agregar</button></div>
       <div class="content"><div id="egrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:12px;"></div></div>
     </div>
     <div id="vr" class="hidden">
-      <div class="topbar"><div><h1>Nuevo Registro</h1><p>Vacaciones, permisos y ausencias</p></div></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Nuevo Registro</h1><p>Vacaciones, permisos y ausencias</p></div></div>
       <div class="content">
         <div class="card" style="max-width:560px;">
           <div class="mb">
@@ -303,7 +330,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
       </div>
     </div>
     <div id="vs" class="hidden">
-      <div class="topbar"><div><h1>Salarios</h1><p>Control de pagos y comprobantes</p></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Salarios</h1><p>Control de pagos y comprobantes</p></div>
         <div class="fx g2">
           <button class="btn bgr" onclick="openBAC()">📄 Subir PDF Banco</button>
           <button class="btn bp" onclick="openAddSal()">+ Pago Manual</button>
@@ -312,7 +339,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
       <div class="content" id="sbody"></div>
     </div>
     <div id="vc" class="hidden">
-      <div class="topbar"><div><h1>Configuracion</h1><p>Mensajes y sincronizacion</p></div></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Configuracion</h1><p>Mensajes y sincronizacion</p></div></div>
       <div class="content" id="cbody"></div>
     </div>
     
@@ -328,7 +355,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
 
 
     <div id="vp" class="hidden">
-      <div class="topbar"><div><h1 id="ptitle">Perfil</h1><p>Ficha del empleado</p></div><div class="fx g2" id="pacts"></div></div>
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1 id="ptitle">Perfil</h1><p>Ficha del empleado</p></div><div class="fx g2" id="pacts"></div></div>
       <div class="content" id="pbody"></div>
     </div>
   </div>
@@ -484,6 +511,14 @@ function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t
 function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0&&w!==6) c++; d.setDate(d.getDate()+1); } return c; }
 function bdays(ahead){ var now=new Date(),tgt=new Date(now); tgt.setDate(tgt.getDate()+ahead); var m=tgt.getMonth()+1,d=tgt.getDate(); return emps.filter(function(e){ if(!e.nb) return false; var b=new Date(e.nb+'T00:00:00'); return b.getMonth()+1===m&&b.getDate()===d; }); }
 
+function openSidebar(){
+  document.querySelector('.sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
 function toast(msg,t){
   var el=document.getElementById('toast');
   document.getElementById('tm').textContent=msg;
@@ -563,6 +598,7 @@ function applyRole(){
 
 // ---- NAV ----
 function gv(v,eid){
+  closeSidebar();
   var views=['vd','ve','vr','vs','vc','va','vp'];
   for(var i=0;i<views.length;i++) document.getElementById(views[i]).classList.add('hidden');
   var navs=['dash','emps','reg','sal','cfg','auto'];
