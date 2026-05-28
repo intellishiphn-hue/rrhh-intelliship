@@ -204,6 +204,15 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
   .pmeta{justify-content:center;}
   .bday-row{flex-wrap:wrap;gap:8px;}
 }
+
+@media(max-width:768px){
+  *{ max-width:100% !important; }
+  .app,.main,.content,.topbar,.card,.sg,.fr,.ig,.do{ width:100% !important; min-width:0 !important; }
+  .sidebar{ max-width:260px !important; }
+  table{ display:block; overflow-x:auto; white-space:nowrap; }
+  .sfoot{ position:sticky; bottom:0; background:var(--sur); padding:12px 14px; z-index:10; }
+  .sfoot button{ padding:8px 16px !important; font-size:13px !important; color:var(--red) !important; background:rgba(240,82,82,.1) !important; border:1px solid rgba(240,82,82,.3) !important; border-radius:8px !important; }
+}
 </style>
 </head>
 <body>
