@@ -16,7 +16,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 :root{--bg:#070b14;--sur:#101826;--sur2:#172235;--bdr:#2a2f42;--bdr2:#343b52;--acc:#4f8ef7;--acc2:#3a7be0;--grn:#34c87a;--yel:#f5c542;--red:#f05252;--pur:#a78bfa;--org:#fb923c;--pnk:#f472b6;--tel:#2dd4bf;--txt:#e8eaf0;--tx2:#9099b3;--tx3:#5a6280;--r:12px;--rs:8px;}
-*{box-sizing:border-box;margin:0;padding:0;}
+*{box-sizing:border-box;margin:0;padding:0;}html,body{overflow-x:hidden;max-width:100vw;}
 body{
 font-family:'DM Sans',sans-serif;
 background:
@@ -280,7 +280,7 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
     <div class="sfoot">
       <div class="sdot" id="sdot"></div>
       <span id="sst">Sin sincronizar</span>
-      <button onclick="logout()" style="margin-left:auto;background:none;border:none;color:var(--tx3);cursor:pointer;font-size:12px;">Salir</button>
+      <button onclick="logout()" style="margin-left:auto;background:rgba(240,82,82,.1);border:1px solid rgba(240,82,82,.2);color:var(--red);cursor:pointer;font-size:12px;padding:5px 12px;border-radius:8px;font-family:inherit;">Salir</button>
     </div>
   </div>
   <div class="main">
