@@ -502,7 +502,8 @@ function loadAll(){
 
 var _saveTimer=null;
 var JBIN_KEY='$2a$10$ywTRachW7M6LjwfWaLPoxuMQriAGbsrSWmxCU7J91yytDpGp8XVhq';
-var JBIN_ID=localStorage.getItem('jbin_id')||'';
+var JBIN_ID='6a18820621f9ee59d29650c4';
+localStorage.setItem('jbin_id',JBIN_ID);
 
 function saveAll(){
   localStorage.setItem('is_e',JSON.stringify(emps));
@@ -543,31 +544,20 @@ async function saveCloud(){
 
 async function loadCloud(){
   try{
-    if(!JBIN_ID){
-      // Try to find existing bin by name
-      var r=await fetch('https://api.jsonbin.io/v3/b?name=rrhh-intelliship',{
-        headers:{'X-Master-Key':JBIN_KEY}
-      });
-      if(r.ok){
-        var bins=await r.json();
-        if(bins&&bins.length){ JBIN_ID=bins[0].id; localStorage.setItem('jbin_id',JBIN_ID); }
-      }
-    }
-    if(!JBIN_ID) return false;
-    var r2=await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID+'/latest',{
+    var r=await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID+'/latest',{
       headers:{'X-Master-Key':JBIN_KEY}
     });
-    if(!r2.ok) return false;
-    var d=await r2.json();
+    if(!r.ok){ console.warn('JSONBin load failed:', r.status); return false; }
+    var d=await r.json();
     var data=d.record;
-    if(!data) return false;
+    if(!data||data.init) return false;
     if(data.emps&&data.emps.length) emps=data.emps;
     if(data.regs) regs=data.regs;
     if(data.sals) sals=data.sals;
     if(data.docs) docs=data.docs;
     if(data.emailLogs) emailLogs=data.emailLogs;
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
-    console.log('Cloud load OK, bin:', JBIN_ID);
+    console.log('Cloud load OK');
     return true;
   }catch(e){ console.warn('Cloud load error:', e); return false; }
 }
