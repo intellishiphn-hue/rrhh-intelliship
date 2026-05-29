@@ -555,7 +555,7 @@ async function initApp(){
   }
   // Show login screen
   document.getElementById('loader').classList.add('hidden');
-  document.getElementById('login').classList.remove('hidden');
+  document.getElementById('ls').style.display='flex';
 }
 
 function gc(i){ return COLORS[i%COLORS.length]; }
