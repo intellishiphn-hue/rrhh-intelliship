@@ -544,9 +544,13 @@ async function saveCloud(){
 
 async function loadCloud(){
   try{
+    var controller=new AbortController();
+    var timeout=setTimeout(function(){ controller.abort(); }, 5000);
     var r=await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID+'/latest',{
-      headers:{'X-Master-Key':JBIN_KEY}
+      headers:{'X-Master-Key':JBIN_KEY},
+      signal:controller.signal
     });
+    clearTimeout(timeout);
     if(!r.ok){ console.warn('JSONBin load failed:', r.status); return false; }
     var d=await r.json();
     var data=d.record;
@@ -559,7 +563,7 @@ async function loadCloud(){
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
     console.log('Cloud load OK');
     return true;
-  }catch(e){ console.warn('Cloud load error:', e); return false; }
+  }catch(e){ console.warn('Cloud load error (timeout o fallo):', e); return false; }
 }
 
 loadAll(); // load localStorage as initial fallback
@@ -615,9 +619,8 @@ function selRole(r){
     var html='<div style="font-size:13px;font-weight:600;text-align:center;margin-bottom:12px;">Selecciona tu nombre</div><div class="esl">';
     for(var i=0;i<emps.length;i++){
       var e=emps[i];
-      html+='<div class="esi" onclick=
-      if(e.id==='IS-009') continue;
-      html+='<div class="esi" onclick="askEmpPass(\\''+e.id+'\\')">';
+            if(e.id==='IS-009') continue;
+      html+='<div class="esi" onclick="askEmpPass(\''+e.id+'\')">';
       html+='<div class="av" style="background:'+gc(i)+'22;color:'+gc(i)+';width:34px;height:34px;font-size:12px;">'+gi(e.n,e.a)+'</div>';
       html+='<div><div style="font-size:13.5px;font-weight:500;">'+e.n+' '+e.a+'</div><div style="font-size:11.5px;color:var(--tx3);">'+e.c+'</div></div>';
       html+='</div>';
