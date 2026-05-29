@@ -501,9 +501,7 @@ function loadAll(){
 }
 
 var _saveTimer=null;
-var JBIN_KEY='$2a$10$ywTRachW7M6LjwfWaLPoxuMQriAGbsrSWmxCU7J91yytDpGp8XVhq';
-var JBIN_ID='6a18820621f9ee59d29650c4';
-localStorage.setItem('jbin_id',JBIN_ID);
+var FB_URL='https://rrhh-intelliship-default-rtdb.firebaseio.com/appdata';
 
 function saveAll(){
   localStorage.setItem('is_e',JSON.stringify(emps));
@@ -519,51 +517,32 @@ function saveAll(){
 async function saveCloud(){
   try{
     var data={emps,regs,sals,docs,emailLogs,cfg};
-    var body=JSON.stringify(data);
-    if(!JBIN_ID){
-      // Create new bin
-      var r=await fetch('https://api.jsonbin.io/v3/b',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY,'X-Bin-Name':'rrhh-intelliship'},
-        body:body
-      });
-      var d=await r.json();
-      JBIN_ID=d.metadata.id;
-      localStorage.setItem('jbin_id',JBIN_ID);
-      console.log('Bin creado:', JBIN_ID);
-    } else {
-      await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID,{
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},
-        body:body
-      });
-    }
-    console.log('Cloud save OK');
-  }catch(e){ console.warn('Cloud save error:', e); }
+    await fetch(FB_URL+'.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    });
+    console.log('Firebase save OK');
+  }catch(e){ console.warn('Firebase save error:', e); }
 }
 
 async function loadCloud(){
   try{
-    var controller=new AbortController();
-    var timeout=setTimeout(function(){ controller.abort(); }, 5000);
-    var r=await fetch('https://api.jsonbin.io/v3/b/'+JBIN_ID+'/latest',{
-      headers:{'X-Master-Key':JBIN_KEY},
-      signal:controller.signal
-    });
-    clearTimeout(timeout);
-    if(!r.ok){ console.warn('JSONBin load failed:', r.status); return false; }
-    var d=await r.json();
-    var data=d.record;
-    if(!data||data.init) return false;
+    var fetchPromise=fetch(FB_URL+'.json');
+    var timeoutPromise=new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); },6000); });
+    var r=await Promise.race([fetchPromise, timeoutPromise]);
+    if(!r.ok){ console.warn('Firebase load failed:', r.status); return false; }
+    var data=await r.json();
+    if(!data) return false;
     if(data.emps&&data.emps.length) emps=data.emps;
     if(data.regs) regs=data.regs;
     if(data.sals) sals=data.sals;
     if(data.docs) docs=data.docs;
     if(data.emailLogs) emailLogs=data.emailLogs;
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
-    console.log('Cloud load OK');
+    console.log('Firebase load OK');
     return true;
-  }catch(e){ console.warn('Cloud load error (timeout o fallo):', e); return false; }
+  }catch(e){ console.warn('Firebase load error:', e.message); return false; }
 }
 
 loadAll(); // load localStorage as initial fallback
