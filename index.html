@@ -878,6 +878,7 @@ function rSidebar(){
   var html='';
   for(var i=0;i<emps.length;i++){
     var e=emps[i];
+    if(e.id==='IS-009') continue;
     html+='<div class="ei'+(curEmp===e.id?' active':'')+'" onclick="gv(\'perf\',\''+e.id+'\')">';
     html+='<div class="av" style="background:'+gc(i)+'22;color:'+gc(i)+'">'+gi(e.n,e.a)+'</div>';
     html+='<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.n+'</div>';
