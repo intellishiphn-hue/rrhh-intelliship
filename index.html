@@ -529,7 +529,7 @@ async function saveCloud(){
 async function loadCloud(){
   try{
     var fetchPromise=fetch(FB_URL+'.json');
-    var timeoutPromise=new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); },6000); });
+    var timeoutPromise=new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); },20000); });
     var r=await Promise.race([fetchPromise, timeoutPromise]);
     if(!r.ok){ console.warn('Firebase load failed:', r.status); return false; }
     var data=await r.json();
