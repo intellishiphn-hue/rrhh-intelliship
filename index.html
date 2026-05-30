@@ -1157,10 +1157,10 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
       var msg='Hola '+destName+',<br><br>'+body;
       emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
         to_email: dest,
-        to_name: destName,
+        name: 'INTELLISHIP RRHH',
         subject: '📅 Aviso: '+nombre+' tiene '+tipoLabel+' - '+dateRange,
         message: msg,
-        from_name: 'INTELLISHIP RRHH'
+        email: 'rrhh@intellishiphn.com'
       }).catch(function(e){ console.warn('Vacation email error:', e); });
     })(e.email, e.n);
     sent++;
