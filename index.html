@@ -1125,7 +1125,41 @@ function saveReg(){
   regFile=null;
   saveAll(); syncSheets();
   toast('Registro guardado');
+  // Send vacation notification to all teammates
+  if(tipo==='vacaciones'||tipo==='permiso'){
+    sendVacNotification(eid,tipo,fi,ff,dias);
+  }
   gv('perf',eid);
+}
+
+function sendVacNotification(eid,tipo,fi,ff,dias){
+  var emp=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ emp=emps[i]; break; }
+  if(!emp) return;
+  var nombre=emp.n+' '+emp.a;
+  var tipoLabel=tipo==='vacaciones'?'Vacaciones':'Permiso';
+  var fiF=fi.split('-').reverse().join('/');
+  var ffF=ff.split('-').reverse().join('/');
+  var dateRange=fi===ff?fiF:fiF+' al '+ffF;
+  var body='Tu compañero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas del <b>'+dateRange+'</b> ('+dias+' día'+(dias>1?'s':'')+').<br><br>Por favor tómalo en cuenta para la planificación de ese período.';
+  // Send to all employees that have email, except the one taking vacation
+  var sent=0;
+  for(var i=0;i<emps.length;i++){
+    var e=emps[i];
+    if(e.id===eid) continue;
+    if(!e.email) continue;
+    (function(dest,destName){
+      var msg='Hola '+destName+',<br><br>'+body;
+      emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+        to_email: dest,
+        to_name: destName,
+        subject: '📅 Aviso: '+nombre+' tiene '+tipoLabel+' - '+dateRange,
+        message: msg,
+        from_name: 'INTELLISHIP RRHH'
+      }).catch(function(e){ console.warn('Vacation email error:', e); });
+    })(e.email, e.n);
+    sent++;
+  }
+  if(sent>0) toast('✉️ Notificación enviada a '+sent+' compañero'+(sent>1?'s':''));
 }
 function delReg(id){ if(!confirm('Eliminar este registro?')) return; regs=regs.filter(function(r){ return r.id!==id; }); saveAll(); syncSheets(); toast('Eliminado'); rPerf(curEmp); }
 
@@ -1216,22 +1250,66 @@ async function procBAC(file){
   }catch(err){ document.getElementById('bload').classList.add('hidden'); document.getElementById('bst1').classList.remove('hidden'); toast('Error leyendo PDF','err'); }
 }
 function parseBAC(text){
-  var lines=text.split('\n'), results=[];
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i].trim();
-    var ids=line.match(/\b\d{13}\b/g);
-    if(!ids) continue;
-    var ref=ids[0];
-    var mM=line.match(/(\d{1,3}(?:,\d{3})*\.\d{2})\s*LPS/i)||line.match(/\b(\d{4,7}\.\d{2})\b/);
-    if(!mM) continue;
-    var monto=parseFloat(mM[1].replace(/,/g,''));
-    var refC=ref.replace(/[-\s]/g,'');
-    var emp=null;
-    for(var j=0;j<emps.length;j++){
-      var idn=(emps[j].idn||'').replace(/[-\s]/g,'');
+  // Normalize text: join all lines into one string for better parsing
+  var fullText = text.replace(/\n/g,' ').replace(/\s+/g,' ');
+  var results = [];
+  
+  // Strategy: find each 13-digit identity number, then find the NEXT decimal amount after it
+  // This handles cases where name/amount are on different lines
+  var idPattern = /\b(\d{13})\b/g;
+  var match;
+  var positions = [];
+  
+  while((match = idPattern.exec(fullText)) !== null){
+    positions.push({ref: match[1], pos: match.index});
+  }
+  
+  for(var i=0; i<positions.length; i++){
+    var ref = positions[i].ref;
+    var startPos = positions[i].pos + ref.length;
+    // End position is start of next ID or end of text
+    var endPos = i+1 < positions.length ? positions[i+1].pos : fullText.length;
+    var segment = fullText.substring(startPos, Math.min(startPos+200, endPos));
+    
+    // Find amount: look for pattern like 7,009.86 or 8,284.00 (individual salary amounts)
+    // Exclude large totals (>50,000) which are the batch total
+    var amounts = segment.match(/(\d{1,3}(?:,\d{3})*\.\d{2})/g) || [];
+    var monto = null;
+    for(var k=0; k<amounts.length; k++){
+      var val = parseFloat(amounts[k].replace(/,/g,''));
+      // Individual salary: between 1,000 and 50,000 LPS
+      if(val >= 1000 && val <= 50000){ monto = val; break; }
+    }
+    if(!monto) continue;
+    
+    var refC = ref.replace(/[-\s]/g,'');
+    var emp = null;
+    for(var j=0; j<emps.length; j++){
+      var idn = (emps[j].idn||'').replace(/[-\s]/g,'');
       if(idn===refC||idn.endsWith(refC)||refC.endsWith(idn)){ emp=emps[j]; break; }
     }
-    results.push({ref:ref,monto:monto,emp:emp,matched:!!emp});
+    results.push({ref:ref, monto:monto, emp:emp, matched:!!emp});
+  }
+  
+  // Fallback: if no results with 13-digit IDs, try original method
+  if(!results.length){
+    var lines=text.split('\n');
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i].trim();
+      var ids=line.match(/\b\d{13}\b/g);
+      if(!ids) continue;
+      var ref=ids[0];
+      var amounts2=(line.match(/(\d{1,3}(?:,\d{3})*\.\d{2})/g)||[]).filter(function(a){ var v=parseFloat(a.replace(/,/g,'')); return v>=1000&&v<=50000; });
+      if(!amounts2.length) continue;
+      var monto=parseFloat(amounts2[0].replace(/,/g,''));
+      var refC=ref.replace(/[-\s]/g,'');
+      var emp=null;
+      for(var j=0;j<emps.length;j++){
+        var idn=(emps[j].idn||'').replace(/[-\s]/g,'');
+        if(idn===refC||idn.endsWith(refC)||refC.endsWith(idn)){ emp=emps[j]; break; }
+      }
+      results.push({ref:ref,monto:monto,emp:emp,matched:!!emp});
+    }
   }
   document.getElementById('bload').classList.add('hidden');
   if(!results.length){ document.getElementById('bst1').classList.remove('hidden'); toast('No se encontraron transacciones','err'); return; }
