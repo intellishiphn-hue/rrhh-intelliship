@@ -1143,23 +1143,32 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
   if(!emp) return;
   var nombre=emp.n+' '+emp.a;
   var tipoLabel=tipo==='vacaciones'?'Vacaciones':'Permiso';
-  var fiF=fi.split('-').reverse().join('/');
-  var ffF=ff.split('-').reverse().join('/');
+  var fiF=fi.split('-').reverse().join('.');
+  var ffF=ff.split('-').reverse().join('.');
   var dateRange=fi===ff?fiF:fiF+' al '+ffF;
-  var body='Tu compañero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas del <b>'+dateRange+'</b> ('+dias+' día'+(dias>1?'s':'')+').<br><br>Por favor tómalo en cuenta para la planificación de ese período.';
-  // Send to all employees that have email, except the one taking vacation
+  var subjectClean='Aviso: '+nombre+' tiene '+tipoLabel+' '+dateRange;
   var sent=0;
   for(var i=0;i<emps.length;i++){
     var e=emps[i];
     if(e.id===eid) continue;
     if(!e.e) continue;
     (function(dest,destName){
-      var msg='Hola '+destName+',<br><br>'+body;
+      var bodyHtml=getEmailTemplate(
+        'Vacaciones programadas',
+        'Hola <b>'+destName+'</b>,<br><br>'+
+        'Te informamos que tu compañero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas:<br><br>'+
+        '<div style="background:#e6f1fb;border-left:3px solid #185fa5;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;">'+
+        '<div style="font-size:14px;color:#0c447c;margin-bottom:8px;">&#128197; <b>Fecha:</b> '+dateRange+'</div>'+
+        '<div style="font-size:14px;color:#0c447c;">&#9201; <b>Duración:</b> '+dias+' día'+(dias>1?'s hábiles':'hábil')+'</div>'+
+        '</div>'+
+        'Por favor tómalo en cuenta para la planificación de ese período.<br><br>'+
+        '<span style="font-size:12px;color:#888;">Este es un mensaje automático del sistema de RRHH de INTELLISHIP Honduras.</span>'
+      );
       emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
         to_email: dest,
         name: 'INTELLISHIP RRHH',
-        subject: '📅 Aviso: '+nombre+' tiene '+tipoLabel+' - '+dateRange,
-        message: msg,
+        subject: subjectClean,
+        message: bodyHtml,
         email: 'rrhh@intellishiphn.com'
       }).catch(function(err){ console.warn('Vacation email error:', err); });
     })(e.e, e.n);
