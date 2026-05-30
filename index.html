@@ -1152,7 +1152,7 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
   for(var i=0;i<emps.length;i++){
     var e=emps[i];
     if(e.id===eid) continue;
-    if(!e.email) continue;
+    if(!e.e) continue;
     (function(dest,destName){
       var msg='Hola '+destName+',<br><br>'+body;
       emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
@@ -1161,8 +1161,8 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
         subject: '📅 Aviso: '+nombre+' tiene '+tipoLabel+' - '+dateRange,
         message: msg,
         email: 'rrhh@intellishiphn.com'
-      }).catch(function(e){ console.warn('Vacation email error:', e); });
-    })(e.email, e.n);
+      }).catch(function(err){ console.warn('Vacation email error:', err); });
+    })(e.e, e.n);
     sent++;
   }
   if(sent>0) toast('✉️ Notificación enviada a '+sent+' compañero'+(sent>1?'s':''));
