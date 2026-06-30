@@ -564,7 +564,7 @@ var FB_URL='https://rrhh-intelliship-default-rtdb.firebaseio.com/appdata';
 var _lastSnapshotJSON=null; // used to detect remote changes during polling
 var _outbox=[]; // {collection,id,record} pending cloud writes that failed and need retry
 try{ _outbox=JSON.parse(localStorage.getItem('is_outbox'))||[]; }catch(e){ _outbox=[]; }
-function saveOutbox(){ localStorage.setItem('is_outbox', JSON.stringify(_outbox)); }
+function saveOutbox(){ try{ localStorage.setItem('is_outbox', JSON.stringify(_outbox)); }catch(e){ console.warn('localStorage is_outbox error:',e); } }
 function queueOutbox(collection,id,record){
   // replace any existing pending entry for the same record, then add the latest version
   _outbox=_outbox.filter(function(o){ return !(o.collection===collection&&o.id===id); });
@@ -620,14 +620,20 @@ function toMap(arr){
 
 saveAll._timer=null;
 function saveAll(){
-  // Always persist locally first
-  localStorage.setItem('is_e',JSON.stringify(emps));
-  localStorage.setItem('is_r',JSON.stringify(regs));
-  localStorage.setItem('is_s',JSON.stringify(sals));
-  localStorage.setItem('is_d',JSON.stringify(docs));
-  localStorage.setItem('is_logs',JSON.stringify(emailLogs));
-  localStorage.setItem('is_asis',JSON.stringify(asistencia));
-  localStorage.setItem('is_c',JSON.stringify(cfg));
+  // Always persist locally first. Wrapped individually so a storage-quota error on
+  // one key (e.g. is_asis with photos) never silently blocks the rest from saving.
+  try{ localStorage.setItem('is_e',JSON.stringify(emps)); }catch(e){ console.warn('localStorage is_e error:',e); }
+  try{ localStorage.setItem('is_r',JSON.stringify(regs)); }catch(e){ console.warn('localStorage is_r error:',e); }
+  try{ localStorage.setItem('is_s',JSON.stringify(sals)); }catch(e){ console.warn('localStorage is_s error:',e); }
+  try{ localStorage.setItem('is_d',JSON.stringify(docs)); }catch(e){ console.warn('localStorage is_d error:',e); }
+  try{ localStorage.setItem('is_logs',JSON.stringify(emailLogs)); }catch(e){ console.warn('localStorage is_logs error:',e); }
+  try{
+    // Photos are the cloud's responsibility; strip them from the local mirror so
+    // localStorage (limited to a few MB on mobile Safari) never fills up.
+    var asisLight=asistencia.map(function(a){ var c=Object.assign({},a); delete c.foto; return c; });
+    localStorage.setItem('is_asis',JSON.stringify(asisLight));
+  }catch(e){ console.warn('localStorage is_asis error:',e); }
+  try{ localStorage.setItem('is_c',JSON.stringify(cfg)); }catch(e){ console.warn('localStorage is_c error:',e); }
 }
 
 // Save ONE record to its own slot in the cloud, so other devices editing other
@@ -1147,25 +1153,31 @@ function retryMark(){
 }
 async function confirmMark(){
   if(!_markCapturedPhoto){ toast('Toma una foto primero','err'); return; }
-  var now=new Date();
-  var rec={
-    id:'asis_'+Date.now()+'_'+Math.random().toString(36).slice(2),
-    eid:_markEid,
-    tipo:_markTipo,
-    ts:Date.now(),
-    fecha:now.toISOString().split('T')[0],
-    lat:_markGpsCoords?_markGpsCoords.lat:null,
-    lng:_markGpsCoords?_markGpsCoords.lng:null,
-    distM:_markGpsDist,
-    foto:_markCapturedPhoto
-  };
-  asistencia.push(rec);
-  saveAll(); // saved on this device immediately, regardless of network
-  closeMark();
-  toast((_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}));
-  if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
-  // Upload to the cloud in the background so a slow/flaky connection never blocks the screen
-  cloudPut('asistencia',rec.id,rec);
+  try{
+    var now=new Date();
+    var rec={
+      id:'asis_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      eid:_markEid,
+      tipo:_markTipo,
+      ts:Date.now(),
+      fecha:now.toISOString().split('T')[0],
+      lat:_markGpsCoords?_markGpsCoords.lat:null,
+      lng:_markGpsCoords?_markGpsCoords.lng:null,
+      distM:_markGpsDist,
+      foto:_markCapturedPhoto
+    };
+    asistencia.push(rec);
+    saveAll(); // saved on this device immediately, regardless of network
+    closeMark();
+    toast((_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}));
+    if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
+    // Upload to the cloud in the background so a slow/flaky connection never blocks the screen
+    cloudPut('asistencia',rec.id,rec);
+  }catch(err){
+    console.error('confirmMark error:', err);
+    closeMark();
+    toast('Ocurrio un error al guardar la marcacion. Intenta de nuevo.','err');
+  }
 }
 
 function rAuto(){
