@@ -681,10 +681,26 @@ async function initApp(){
     console.log('Using localStorage data');
     toast('No se pudo conectar a la nube. Usando datos guardados en este dispositivo.','err');
   }
-  // Show login screen
   document.getElementById('loader').classList.add('hidden');
-  document.getElementById('ls').style.display='flex';
   startRealtimeSync();
+  // If this tab already had a session (e.g. page was refreshed), skip the login screen
+  var savedSession=null;
+  try{ savedSession=JSON.parse(sessionStorage.getItem('is_session')); }catch(e){ savedSession=null; }
+  if(savedSession&&savedSession.role){
+    role=savedSession.role;
+    activeEmp=savedSession.activeEmp||null;
+    document.getElementById('app').classList.remove('hidden');
+    var rc=document.getElementById('rc');
+    if(role==='admin'){ rc.className='rchip rca'; rc.textContent='👑 Admin'; }
+    else if(role==='coord'){ rc.className='rchip rcc'; rc.textContent='👁 Coordinador'; }
+    else{ rc.className='rchip rce'; rc.textContent='👤 Empleado'; }
+    applyRole();
+    if(role==='emp') gv('vp-emp');
+    else gv('dash');
+    checkBdays();
+  } else {
+    document.getElementById('ls').style.display='flex';
+  }
 }
 
 function gc(i){ return COLORS[i%COLORS.length]; }
@@ -777,6 +793,7 @@ function backLogin(){
   document.getElementById('ls2').classList.add('hidden');
 }
 function startApp(){
+  sessionStorage.setItem('is_session', JSON.stringify({role:role, activeEmp:activeEmp}));
   document.getElementById('ls').style.display='none';
   document.getElementById('app').classList.remove('hidden');
   var rc=document.getElementById('rc');
@@ -789,6 +806,7 @@ function startApp(){
   checkBdays();
 }
 function logout(){
+  sessionStorage.removeItem('is_session');
   role='admin'; activeEmp=null; curEmp=null;
   document.getElementById('ls').style.display='flex';
   document.getElementById('app').classList.add('hidden');
