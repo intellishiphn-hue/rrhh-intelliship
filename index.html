@@ -689,6 +689,7 @@ async function initApp(){
   if(savedSession&&savedSession.role){
     role=savedSession.role;
     activeEmp=savedSession.activeEmp||null;
+    document.getElementById('ls').style.display='none';
     document.getElementById('app').classList.remove('hidden');
     var rc=document.getElementById('rc');
     if(role==='admin'){ rc.className='rchip rca'; rc.textContent='👑 Admin'; }
