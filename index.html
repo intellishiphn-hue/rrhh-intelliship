@@ -161,6 +161,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55;}
 .bday-row{display:flex;align-items:center;gap:12px;padding:13px 17px;border-radius:var(--r);margin-bottom:12px;background:linear-gradient(135deg,rgba(244,114,182,.1),rgba(167,139,250,.1));border:1px solid rgba(244,114,182,.25);}
 .empty{text-align:center;padding:36px;color:var(--tx3);}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--sur);border:1px solid var(--bdr2);border-radius:var(--rs);padding:10px 16px;font-size:13px;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:all .3s;}
+.mark-result{position:fixed;inset:0;z-index:280;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);padding:20px;transition:opacity .25s;}
+.mark-result.hidden{display:none;}
+.mark-result-box{background:rgba(16,22,34,.97);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:36px 30px;width:min(360px,90vw);text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.5);animation:markPop .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes markPop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.mark-result-icon{font-size:52px;line-height:1;margin-bottom:14px;}
+.mark-result-title{font-size:19px;font-weight:700;color:var(--txt);margin-bottom:8px;}
+.mark-result-sub{font-size:13.5px;color:var(--tx2);line-height:1.5;}
+.mark-result-box.ok .mark-result-icon{color:var(--grn);}
+.mark-result-box.late .mark-result-icon{color:var(--yel);}
+.mark-result-box.late{border-color:rgba(245,197,66,.35);}
 .toast.hidden{transform:translateY(70px);opacity:0;pointer-events:none;}
 .hidden{display:none!important;}
 .fx{display:flex;}.g2{gap:8px;}.ac{align-items:center;}
@@ -521,6 +531,14 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
         <div id="mail-preview-content"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="mark-result hidden" id="mark-result" onclick="closeMarkResult()">
+  <div class="mark-result-box" id="mark-result-box">
+    <div class="mark-result-icon" id="mark-result-icon">✓</div>
+    <div class="mark-result-title" id="mark-result-title">¡Listo!</div>
+    <div class="mark-result-sub" id="mark-result-sub"></div>
   </div>
 </div>
 
@@ -926,6 +944,19 @@ function toast(msg,t){
   el.classList.remove('hidden');
   setTimeout(function(){ el.classList.add('hidden'); },3000);
 }
+// Big centered confirmation shown right after marking entrada/salida.
+// type: 'ok' (on time / normal) or 'late' (arrived late, flagged for management)
+function showMarkResult(type,title,sub){
+  var overlay=document.getElementById('mark-result');
+  var box=document.getElementById('mark-result-box');
+  box.className='mark-result-box '+type;
+  document.getElementById('mark-result-icon').textContent = type==='late' ? '⏰' : '✓';
+  document.getElementById('mark-result-title').textContent=title;
+  document.getElementById('mark-result-sub').textContent=sub;
+  overlay.classList.remove('hidden');
+  setTimeout(function(){ overlay.classList.add('hidden'); }, type==='late' ? 4500 : 2800);
+}
+function closeMarkResult(){ document.getElementById('mark-result').classList.add('hidden'); }
 function cm(id){ document.getElementById(id).classList.add('hidden'); }
 function om(id){ document.getElementById(id).classList.remove('hidden'); }
 
@@ -1191,7 +1222,7 @@ async function confirmMark(){
     saveAll(); // saved on this device immediately, regardless of network
     closeMark();
     var horaTxt=now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'});
-    var msg=(_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+horaTxt;
+    var isLate=false, nombre='';
     // Friendly reminder if clocking in more than 5 minutes after the scheduled start time
     if(_markTipo==='entrada'&&_markEid!==TEST_EMP_ID){
       var sched=schedFor(now);
@@ -1199,13 +1230,20 @@ async function confirmMark(){
         var graceDec=hmDecimal(sched.startH,sched.startM)+(5/60);
         var nowDec=hmDecimal(now.getHours(),now.getMinutes());
         if(nowDec>graceDec){
+          isLate=true;
           var empObj=null; for(var i=0;i<emps.length;i++) if(emps[i].id===_markEid){ empObj=emps[i]; break; }
-          var nombre=empObj?empObj.n:'';
-          msg='Hola '+nombre+', recuerda que la hora de ingreso es a las 8:30AM (marcaste a las '+horaTxt+')';
+          nombre=empObj?empObj.n:'';
         }
       }
     }
-    toast(msg, (msg.indexOf('recuerda')>=0?'err':undefined));
+    if(isLate){
+      showMarkResult('late', 'Llegada tarde registrada',
+        'Hola '+nombre+', marcaste entrada a las '+horaTxt+'. La hora de ingreso es 8:30AM. Esta tardanza quedara registrada en el sistema para gerencia.');
+    } else {
+      showMarkResult('ok',
+        _markTipo==='entrada' ? '¡Entrada marcada!' : '¡Salida marcada!',
+        'Tu asistencia ha sido registrada a las '+horaTxt+'. ¡Que tengas buen '+(_markTipo==='entrada'?'dia':'descanso')+'!');
+    }
     if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
     // Upload to the cloud in the background so a slow/flaky connection never blocks the screen
     cloudPut('asistencia',rec.id,rec);
