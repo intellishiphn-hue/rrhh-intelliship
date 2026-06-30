@@ -114,7 +114,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 .dbt{flex:1;height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;}
 .dbf{height:100%;border-radius:99px;}
 .dbtx{font-size:11px;font-family:'DM Mono',monospace;color:var(--tx2);min-width:44px;text-align:right;}
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:250;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
 .md{background:var(--sur);border:1px solid var(--bdr);border-radius:16px;width:520px;max-height:88vh;overflow-y:auto;}
 .mdlg{width:640px;}
 .mh{padding:17px 22px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--sur);z-index:1;}
@@ -239,6 +239,13 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
         <div class="ri" style="background:rgba(52,200,122,.15);color:var(--grn);">👤</div>
         <div class="rn">Empleado</div>
       </button>
+      <div style="border-top:1px solid var(--bdr);margin:14px 0 12px;padding-top:14px;">
+        <div style="font-size:11.5px;color:var(--tx3);text-align:center;margin-bottom:10px;">Marcar asistencia</div>
+        <div class="fx g2">
+          <button class="btn bgr" style="flex:1;justify-content:center;padding:14px;font-size:13.5px;" onclick="openMark('entrada')">🟢 Marcar Entrada</button>
+          <button class="btn bd" style="flex:1;justify-content:center;padding:14px;font-size:13.5px;" onclick="openMark('salida')">🔴 Marcar Salida</button>
+        </div>
+      </div>
     </div>
     <div id="ls2" class="hidden">
       <div id="ls2i"></div>
@@ -274,6 +281,11 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
       <div class="ni" id="nav-sal" onclick="gv('sal')">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
         Salarios
+      </div>
+
+      <div class="ni" id="nav-asis" onclick="gv('asis')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Asistencia
       </div>
       
       <div class="ni" id="nav-auto" onclick="gv('auto')">
@@ -362,6 +374,11 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
       <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Configuracion</h1><p>Mensajes y sincronizacion</p></div></div>
       <div class="content" id="cbody"></div>
     </div>
+
+    <div id="vas" class="hidden">
+      <div class="topbar"><button class="hbtn" onclick="openSidebar()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div><h1>Asistencia</h1><p>Entradas, salidas y horas extra</p></div></div>
+      <div class="content" id="asbody"></div>
+    </div>
     
     <div id="va" class="hidden">
       <div class="topbar">
@@ -419,7 +436,35 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
   </div>
 </div>
 
+<!-- MODAL MARCAR ASISTENCIA -->
+<div class="mo hidden" id="mo-mark">
+  <div class="md">
+    <div class="mh"><div class="mt" id="mark-title">Marcar Entrada</div><button class="mc" onclick="closeMark()">✕</button></div>
+    <div class="mb">
+      <div id="mark-step1">
+        <div class="fg"><label>Selecciona tu nombre *</label>
+          <select id="mark-emp"><option value="">Seleccionar...</option></select>
+        </div>
+        <div id="mark-gps-status" class="ab ai">📍 Obteniendo tu ubicación...</div>
+        <button class="btn bp" style="width:100%;justify-content:center;" onclick="goMarkStep2()">Continuar</button>
+      </div>
+      <div id="mark-step2" class="hidden" style="text-align:center;">
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:10px;">Tómate una foto para confirmar tu marcación</div>
+        <video id="mark-video" autoplay playsinline style="width:100%;border-radius:12px;background:#000;max-height:280px;object-fit:cover;"></video>
+        <canvas id="mark-canvas" class="hidden"></canvas>
+        <img id="mark-photo-preview" class="hidden" style="width:100%;border-radius:12px;max-height:280px;object-fit:cover;">
+        <div class="fx g2" style="margin-top:14px;">
+          <button class="btn bp" style="flex:1;justify-content:center;" id="mark-capture-btn" onclick="captureMark()">📸 Capturar</button>
+          <button class="btn bg hidden" style="flex:1;justify-content:center;" id="mark-retry-btn" onclick="retryMark()">🔄 Repetir</button>
+        </div>
+        <button class="btn bgr hidden" style="width:100%;justify-content:center;margin-top:10px;" id="mark-confirm-btn" onclick="confirmMark()">✓ Confirmar Marcacion</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL BAC -->
+
 <div class="mo hidden" id="mo-b">
   <div class="md mdlg">
     <div class="mh"><div class="mt">Subir Comprobante BAC</div><button class="mc" onclick="cm('mo-b')">✕</button></div>
@@ -490,6 +535,10 @@ var INIT=[
 ];
 
 var emps,regs,sals,docs,cfg,role,activeEmp,curEmp,bacData,regFile,emailLogs=[];
+var asistencia=[]; // clock in/out records
+var OFFICE_LAT=14.115480711491383, OFFICE_LNG=-87.17280670912903, OFFICE_RADIUS_M=150;
+var TEST_EMP_ID='TEST_SERGIO'; // QA-only option: skips GPS check, never appears in reports
+var _markCamStream=null, _markCapturedPhoto=null, _markEid=null, _markTipo=null;
 role='admin'; activeEmp=null; curEmp=null; bacData=[]; regFile=null;
 
 function loadAll(){
@@ -498,6 +547,7 @@ function loadAll(){
   try{ sals=JSON.parse(localStorage.getItem('is_s'))||[]; }catch(e){ sals=[]; }
   try{ docs=JSON.parse(localStorage.getItem('is_d'))||[]; }catch(e){ docs=[]; }
   try{ emailLogs=JSON.parse(localStorage.getItem('is_logs'))||[]; }catch(e){ emailLogs=[]; }
+  try{ asistencia=JSON.parse(localStorage.getItem('is_asis'))||[]; }catch(e){ asistencia=[]; }
   try{
     cfg=JSON.parse(localStorage.getItem('is_c'))||{};
     if(!cfg.bdayMsg) cfg.bdayMsg='Estimado/a {nombre}, en nombre de todo el equipo de INTELLISHIP Honduras le deseamos un muy feliz cumpleanos. Es un privilegio contar con usted en nuestro equipo. Feliz cumpleanos! Equipo INTELLISHIP Honduras';
@@ -549,6 +599,7 @@ function saveAll(){
   localStorage.setItem('is_s',JSON.stringify(sals));
   localStorage.setItem('is_d',JSON.stringify(docs));
   localStorage.setItem('is_logs',JSON.stringify(emailLogs));
+  localStorage.setItem('is_asis',JSON.stringify(asistencia));
   localStorage.setItem('is_c',JSON.stringify(cfg));
 }
 
@@ -627,12 +678,14 @@ async function loadCloud(silent){
     var wasLegacySals=Array.isArray(data.sals);
     var wasLegacyDocs=Array.isArray(data.docs);
     var wasLegacyLogs=Array.isArray(data.emailLogs);
+    var wasLegacyAsis=Array.isArray(data.asistencia);
 
     if(data.emps) emps=toArr(data.emps); if(!emps.length) emps=JSON.parse(JSON.stringify(INIT));
     if(data.regs) regs=toArr(data.regs);
     if(data.sals) sals=toArr(data.sals);
     if(data.docs) docs=toArr(data.docs);
     if(data.emailLogs){ emailLogs=toArr(data.emailLogs).sort(function(a,b){ return (b._t||0)-(a._t||0); }); }
+    if(data.asistencia) asistencia=toArr(data.asistencia);
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
 
     saveAll(); // keep localStorage mirror up to date
@@ -646,6 +699,7 @@ async function loadCloud(silent){
     if(wasLegacySals) migrateLegacyArray('sals',sals);
     if(wasLegacyDocs) migrateLegacyArray('docs',docs);
     if(wasLegacyLogs) migrateLegacyArray('emailLogs',emailLogs);
+    if(wasLegacyAsis) migrateLegacyArray('asistencia',asistencia);
 
     console.log('Firebase load OK');
     return true;
@@ -659,6 +713,7 @@ function rerenderCurrentView(){
   else if(!document.getElementById('ve').classList.contains('hidden')) rEmps();
   else if(!document.getElementById('vs').classList.contains('hidden')) rSal();
   else if(!document.getElementById('va').classList.contains('hidden')) rAuto();
+  else if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
   else if(!document.getElementById('vp').classList.contains('hidden')&&curEmp) rPerf(curEmp);
   else if(!document.getElementById('vp').classList.contains('hidden')&&activeEmp) rPerf(activeEmp);
 }
@@ -715,6 +770,84 @@ function vacUsadas(eid){ var yr=new Date().getFullYear(); return regs.filter(fun
 function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t; }).length; }
 function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0&&w!==6) c++; d.setDate(d.getDate()+1); } return c; }
 function bdays(ahead){ var now=new Date(),tgt=new Date(now); tgt.setDate(tgt.getDate()+ahead); var m=tgt.getMonth()+1,d=tgt.getDate(); return emps.filter(function(e){ if(!e.nb) return false; var b=new Date(e.nb+'T00:00:00'); return b.getMonth()+1===m&&b.getDate()===d; }); }
+
+// ---- ASISTENCIA (clock in/out, overtime, late arrivals) ----
+// Schedule: Mon-Fri 8:30-17:00, Sat 8:30-14:00, Sun no schedule
+function schedFor(dateObj){
+  var day=dateObj.getDay();
+  if(day===0) return null;
+  if(day===6) return {startH:8,startM:30,endH:14,endM:0};
+  return {startH:8,startM:30,endH:17,endM:0};
+}
+function hmDecimal(h,m){ return h+m/60; }
+function distM(lat1,lng1,lat2,lng2){
+  var R=6371000, toRad=function(d){ return d*Math.PI/180; };
+  var dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function asisForDay(eid,fechaStr){ return asistencia.filter(function(a){ return a.eid===eid&&a.fecha===fechaStr; }); }
+// Pairs up entrada/salida for a given employee+day and computes worked/overtime hours and lateness
+function dayCalc(eid,fechaStr){
+  var recs=asisForDay(eid,fechaStr).sort(function(a,b){ return a.ts-b.ts; });
+  var entrada=recs.find(function(r){ return r.tipo==='entrada'; });
+  var salida=recs.slice().reverse().find(function(r){ return r.tipo==='salida'; });
+  var dateObj=new Date(fechaStr+'T00:00:00');
+  var sched=schedFor(dateObj);
+  var result={fecha:fechaStr,entrada:entrada||null,salida:salida||null,horasTrabajadas:0,horasExtra:0,tarde:false,minutosTarde:0,incompleto:false};
+  if(entrada&&sched){
+    var eDate=new Date(entrada.ts);
+    var schedStartDec=hmDecimal(sched.startH,sched.startM);
+    var entDec=hmDecimal(eDate.getHours(),eDate.getMinutes());
+    if(entDec>schedStartDec){ result.tarde=true; result.minutosTarde=Math.round((entDec-schedStartDec)*60); }
+  }
+  if(entrada&&salida&&salida.ts>entrada.ts){
+    var horas=(salida.ts-entrada.ts)/(1000*60*60);
+    result.horasTrabajadas=Math.round(horas*100)/100;
+    if(sched){
+      var schedHoras=hmDecimal(sched.endH,sched.endM)-hmDecimal(sched.startH,sched.startM);
+      result.horasExtra=Math.max(0,Math.round((horas-schedHoras)*100)/100);
+    }
+  } else if(entrada&&!salida){
+    result.incompleto=true;
+  }
+  return result;
+}
+function dateRangeArr(from,to){
+  var arr=[],d=new Date(from+'T00:00:00'),end=new Date(to+'T00:00:00');
+  while(d<=end){ arr.push(d.toISOString().split('T')[0]); d.setDate(d.getDate()+1); }
+  return arr;
+}
+function quincenaRange(monthStr,quincena){ // monthStr 'YYYY-MM', quincena 1 or 2
+  var y=parseInt(monthStr.slice(0,4)),m=parseInt(monthStr.slice(5,7));
+  if(quincena===1) return {from:monthStr+'-01', to:monthStr+'-15'};
+  var lastDay=new Date(y,m,0).getDate();
+  return {from:monthStr+'-16', to:monthStr+'-'+String(lastDay).padStart(2,'0')};
+}
+function monthRange(monthStr){
+  var y=parseInt(monthStr.slice(0,4)),m=parseInt(monthStr.slice(5,7));
+  var lastDay=new Date(y,m,0).getDate();
+  return {from:monthStr+'-01', to:monthStr+'-'+String(lastDay).padStart(2,'0')};
+}
+// Aggregates dayCalc across a date range for one employee
+function rangeCalc(eid,from,to){
+  var days=dateRangeArr(from,to);
+  var totalHoras=0,totalExtra=0,tardanzas=0,diasTrabajados=0;
+  for(var i=0;i<days.length;i++){
+    var dc=dayCalc(eid,days[i]);
+    if(dc.entrada){ diasTrabajados++; totalHoras+=dc.horasTrabajadas; totalExtra+=dc.horasExtra; if(dc.tarde) tardanzas++; }
+  }
+  return {totalHoras:Math.round(totalHoras*100)/100, totalExtra:Math.round(totalExtra*100)/100, tardanzas:tardanzas, diasTrabajados:diasTrabajados};
+}
+// Removes old photos (90+ days) from attendance records to save space, keeps the rest of the record
+function cleanOldAttendancePhotos(){
+  var cutoff=Date.now()-(90*24*60*60*1000);
+  for(var i=0;i<asistencia.length;i++){
+    var a=asistencia[i];
+    if(a.foto&&a.ts<cutoff){ a.foto=null; cloudPut('asistencia',a.id,a); }
+  }
+  saveAll();
+}
 
 function openSidebar(){
   document.querySelector('.sidebar').classList.add('open');
@@ -824,14 +957,15 @@ function applyRole(){
   document.getElementById('nl-team').style.display=(isAdmin||isCoord)?'':'none';
   document.getElementById('emplist').style.display=(isAdmin||isCoord)?'':'none';
   document.getElementById('nav-emps').style.display=(isAdmin||isCoord)?'':'none';
+  document.getElementById('nav-asis').style.display=(isAdmin||isCoord)?'':'none';
 }
 
 // ---- NAV ----
 function gv(v,eid){
   closeSidebar();
-  var views=['vd','ve','vr','vs','vc','va','vp'];
+  var views=['vd','ve','vr','vs','vc','va','vp','vas'];
   for(var i=0;i<views.length;i++) document.getElementById(views[i]).classList.add('hidden');
-  var navs=['dash','emps','reg','sal','cfg','auto'];
+  var navs=['dash','emps','reg','sal','cfg','auto','asis'];
   for(var i=0;i<navs.length;i++){ var n=document.getElementById('nav-'+navs[i]); if(n) n.classList.remove('active'); }
   if(v==='dash'){ document.getElementById('vd').classList.remove('hidden'); document.getElementById('nav-dash').classList.add('active'); rDash(); }
   else if(v==='emps'){ document.getElementById('ve').classList.remove('hidden'); document.getElementById('nav-emps').classList.add('active'); rEmps(); }
@@ -846,6 +980,12 @@ function gv(v,eid){
     document.getElementById('nav-auto').classList.add('active');
     rAuto();
   }
+  else if(v==='asis'){
+    if(role==='emp'){ toast('Solo el Administrador o Coordinador pueden ver esto','err'); return; }
+    document.getElementById('vas').classList.remove('hidden');
+    document.getElementById('nav-asis').classList.add('active');
+    rAsis();
+  }
 
   else if(v==='cfg'){
     if(role!=='admin'){ toast('Solo el Administrador puede acceder aqui','err'); return; }
@@ -856,6 +996,126 @@ function gv(v,eid){
 }
 
 // ---- SIDEBAR ----
+
+// ---- MARCAR ASISTENCIA (clock in/out) ----
+var _markGpsOk=false, _markGpsCoords=null, _markGpsDist=null;
+function openMark(tipo){
+  _markTipo=tipo; _markEid=null; _markCapturedPhoto=null; _markGpsOk=false; _markGpsCoords=null;
+  document.getElementById('mark-title').textContent=tipo==='entrada'?'🟢 Marcar Entrada':'🔴 Marcar Salida';
+  document.getElementById('mark-step1').classList.remove('hidden');
+  document.getElementById('mark-step2').classList.add('hidden');
+  var sel=document.getElementById('mark-emp');
+  var opts='<option value="">Seleccionar...</option>';
+  if(role==='emp'){
+    var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===activeEmp){ e=emps[i]; break; }
+    opts='<option value="'+activeEmp+'" selected>'+(e?e.n+' '+e.a:'')+'</option>';
+  } else {
+    for(var i=0;i<emps.length;i++){ if(emps[i].id==='IS-009') continue; opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>'; }
+    opts+='<option value="'+TEST_EMP_ID+'">🧪 Sergio Casasola (modo prueba, sin GPS)</option>';
+  }
+  sel.innerHTML=opts;
+  om('mo-mark');
+  var statusEl=document.getElementById('mark-gps-status');
+  statusEl.className='ab ai'; statusEl.textContent='📍 Obteniendo tu ubicacion...';
+  if(!navigator.geolocation){
+    statusEl.className='ab ar'; statusEl.textContent='⚠ Tu navegador no soporta GPS. No se puede marcar.';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    _markGpsCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    var d=distM(pos.coords.latitude,pos.coords.longitude,OFFICE_LAT,OFFICE_LNG);
+    _markGpsDist=Math.round(d);
+    if(d<=OFFICE_RADIUS_M){
+      _markGpsOk=true;
+      statusEl.className='ab ai'; statusEl.textContent='✓ Ubicacion verificada (estas a '+_markGpsDist+'m de la oficina)';
+    } else {
+      _markGpsOk=false;
+      statusEl.className='ab ar'; statusEl.textContent='⚠ Estas a '+_markGpsDist+'m de la oficina. Debes estar dentro de '+OFFICE_RADIUS_M+'m para marcar.';
+    }
+  }, function(err){
+    _markGpsOk=false;
+    statusEl.className='ab ar'; statusEl.textContent='⚠ No se pudo obtener tu ubicacion. Activa el GPS y los permisos de ubicacion para este sitio.';
+  }, {enableHighAccuracy:true, timeout:15000});
+}
+function closeMark(){
+  cm('mo-mark');
+  stopMarkCamera();
+}
+function goMarkStep2(){
+  var eid=document.getElementById('mark-emp').value;
+  if(!eid){ toast('Selecciona tu nombre','err'); return; }
+  if(eid!==TEST_EMP_ID){
+    if(!_markGpsCoords){ toast('Esperando ubicacion GPS, intenta de nuevo en unos segundos','err'); return; }
+    if(!_markGpsOk){ toast('Debes estar dentro del rango de la oficina para marcar','err'); return; }
+  }
+  _markEid=eid;
+  document.getElementById('mark-step1').classList.add('hidden');
+  document.getElementById('mark-step2').classList.remove('hidden');
+  document.getElementById('mark-video').classList.remove('hidden');
+  document.getElementById('mark-photo-preview').classList.add('hidden');
+  document.getElementById('mark-capture-btn').classList.remove('hidden');
+  document.getElementById('mark-retry-btn').classList.add('hidden');
+  document.getElementById('mark-confirm-btn').classList.add('hidden');
+  startMarkCamera();
+}
+function startMarkCamera(){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false}).then(function(stream){
+    _markCamStream=stream;
+    var v=document.getElementById('mark-video');
+    v.srcObject=stream;
+  }).catch(function(err){
+    toast('No se pudo acceder a la camara. Revisa los permisos.','err');
+  });
+}
+function stopMarkCamera(){
+  if(_markCamStream){ _markCamStream.getTracks().forEach(function(t){ t.stop(); }); _markCamStream=null; }
+}
+function captureMark(){
+  var v=document.getElementById('mark-video'), c=document.getElementById('mark-canvas');
+  var w=320, h=Math.round(w*(v.videoHeight/v.videoWidth||0.75));
+  c.width=w; c.height=h;
+  var ctx=c.getContext('2d');
+  ctx.drawImage(v,0,0,w,h);
+  _markCapturedPhoto=c.toDataURL('image/jpeg',0.5); // compressed small jpeg
+  document.getElementById('mark-photo-preview').src=_markCapturedPhoto;
+  document.getElementById('mark-photo-preview').classList.remove('hidden');
+  document.getElementById('mark-video').classList.add('hidden');
+  document.getElementById('mark-capture-btn').classList.add('hidden');
+  document.getElementById('mark-retry-btn').classList.remove('hidden');
+  document.getElementById('mark-confirm-btn').classList.remove('hidden');
+  stopMarkCamera();
+}
+function retryMark(){
+  _markCapturedPhoto=null;
+  document.getElementById('mark-photo-preview').classList.add('hidden');
+  document.getElementById('mark-video').classList.remove('hidden');
+  document.getElementById('mark-capture-btn').classList.remove('hidden');
+  document.getElementById('mark-retry-btn').classList.add('hidden');
+  document.getElementById('mark-confirm-btn').classList.add('hidden');
+  startMarkCamera();
+}
+async function confirmMark(){
+  if(!_markCapturedPhoto){ toast('Toma una foto primero','err'); return; }
+  var now=new Date();
+  var rec={
+    id:'asis_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+    eid:_markEid,
+    tipo:_markTipo,
+    ts:Date.now(),
+    fecha:now.toISOString().split('T')[0],
+    lat:_markGpsCoords?_markGpsCoords.lat:null,
+    lng:_markGpsCoords?_markGpsCoords.lng:null,
+    distM:_markGpsDist,
+    foto:_markCapturedPhoto
+  };
+  asistencia.push(rec);
+  saveAll();
+  var ok=await cloudPut('asistencia',rec.id,rec);
+  closeMark();
+  if(ok) toast((_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}));
+  else toast('Se guardo localmente pero no se pudo subir a la nube todavia','err');
+  if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
+}
 
 function rAuto(){
   var html='';
@@ -1020,6 +1280,108 @@ function saveTpl(field, textareaId){
   toast('Plantilla guardada ✓');
 }
 
+// ---- REPORTE DE ASISTENCIA ----
+var _asisMode='dia'; // 'dia' | 'quincena' | 'mes'
+function rAsis(){
+  rSidebar();
+  cleanOldAttendancePhotos();
+  var today=new Date().toISOString().split('T')[0];
+  var curMonth=new Date().toISOString().slice(0,7);
+  var html='<div class="card" style="margin-bottom:14px;"><div class="mb">';
+  html+='<div class="fx g2" style="margin-bottom:14px;">';
+  html+='<button class="btn '+(_asisMode==='dia'?'bp':'bg')+' bsm" onclick="setAsisMode(\'dia\')">Por Dia</button>';
+  html+='<button class="btn '+(_asisMode==='quincena'?'bp':'bg')+' bsm" onclick="setAsisMode(\'quincena\')">Por Quincena</button>';
+  html+='<button class="btn '+(_asisMode==='mes'?'bp':'bg')+' bsm" onclick="setAsisMode(\'mes\')">Por Mes</button>';
+  html+='</div>';
+  if(_asisMode==='dia'){
+    html+='<div class="fg" style="max-width:220px;"><label>Fecha</label><input type="date" id="asis-fecha" value="'+today+'" onchange="rAsis()"></div>';
+  } else if(_asisMode==='quincena'){
+    html+='<div class="fr" style="max-width:420px;"><div class="fg"><label>Mes</label><input type="month" id="asis-mes" value="'+curMonth+'" onchange="rAsis()"></div><div class="fg"><label>Quincena</label><select id="asis-q" onchange="rAsis()"><option value="1">1ra (1-15)</option><option value="2">2da (16-fin)</option></select></div></div>';
+  } else {
+    html+='<div class="fg" style="max-width:220px;"><label>Mes</label><input type="month" id="asis-mes2" value="'+curMonth+'" onchange="rAsis()"></div>';
+  }
+  html+='</div></div>';
+
+  var from,to;
+  if(_asisMode==='dia'){
+    var fechaInput=document.getElementById('asis-fecha');
+    var fecha=fechaInput?fechaInput.value:today;
+    from=fecha; to=fecha;
+  } else if(_asisMode==='quincena'){
+    var mesInput=document.getElementById('asis-mes'), qInput=document.getElementById('asis-q');
+    var mes=mesInput?mesInput.value:curMonth, q=qInput?parseInt(qInput.value):1;
+    var r=quincenaRange(mes,q); from=r.from; to=r.to;
+  } else {
+    var mesInput2=document.getElementById('asis-mes2');
+    var mes2=mesInput2?mesInput2.value:curMonth;
+    var r2=monthRange(mes2); from=r2.from; to=r2.to;
+  }
+
+  // Per-employee summary table
+  var rows=[];
+  var totGenExtra=0, totGenTarde=0;
+  for(var i=0;i<emps.length;i++){
+    var e=emps[i]; if(e.id==='IS-009') continue;
+    var rc=rangeCalc(e.id,from,to);
+    totGenExtra+=rc.totalExtra; totGenTarde+=rc.tardanzas;
+    rows.push({e:e,rc:rc});
+  }
+  rows.sort(function(a,b){ return b.rc.tardanzas-a.rc.tardanzas; });
+
+  html+='<div class="sg" style="grid-template-columns:repeat(3,1fr);">';
+  html+='<div class="sc"><div class="sl">Horas Extra (total equipo)</div><div class="sv" style="color:var(--pur);">'+Math.round(totGenExtra*100)/100+'h</div></div>';
+  html+='<div class="sc"><div class="sl">Tardanzas (total equipo)</div><div class="sv" style="color:var(--red);">'+totGenTarde+'</div></div>';
+  html+='<div class="sc"><div class="sl">Periodo</div><div class="sv" style="font-size:15px;color:var(--tx2);">'+fd(from)+' - '+fd(to)+'</div></div>';
+  html+='</div>';
+
+  html+='<div class="card"><div class="ch"><div class="ct">Resumen por Empleado</div></div>';
+  html+='<table><thead><tr><th>Empleado</th><th>Dias Marcados</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Tardanzas</th><th></th></tr></thead><tbody>';
+  for(var i=0;i<rows.length;i++){
+    var e=rows[i].e, rc=rows[i].rc;
+    html+='<tr><td><strong>'+e.n+' '+e.a+'</strong></td>';
+    html+='<td>'+rc.diasTrabajados+'</td>';
+    html+='<td style="font-family:monospace;">'+rc.totalHoras+'h</td>';
+    html+='<td style="font-family:monospace;color:var(--pur);font-weight:600;">'+rc.totalExtra+'h</td>';
+    html+='<td>'+(rc.tardanzas>0?'<span class="badge bre">'+rc.tardanzas+'</span>':'<span style="color:var(--tx3)">0</span>')+'</td>';
+    html+='<td><button class="btn bg bsm" onclick="gv(\'perf\',\''+e.id+'\')">Ver perfil</button></td></tr>';
+  }
+  html+='</tbody></table></div>';
+
+  // Daily detail table (only meaningful in 'dia' mode)
+  if(_asisMode==='dia'){
+    html+='<div class="card" style="margin-top:14px;"><div class="ch"><div class="ct">Detalle del Dia ('+fd(from)+')</div></div>';
+    html+='<table><thead><tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th><th>Foto</th></tr></thead><tbody>';
+    for(var i=0;i<emps.length;i++){
+      var e=emps[i]; if(e.id==='IS-009') continue;
+      var dc=dayCalc(e.id,from);
+      if(!dc.entrada&&!dc.salida) continue;
+      html+='<tr><td><strong>'+e.n+' '+e.a+'</strong></td>';
+      html+='<td>'+(dc.entrada?new Date(dc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
+      html+='<td>'+(dc.salida?new Date(dc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):(dc.incompleto?'<span class="badge bye">Sin marcar</span>':'--'))+'</td>';
+      html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':'<span class="badge bgr2">A tiempo</span>')+'</td>';
+      html+='<td>'+((dc.entrada&&dc.entrada.foto)||(dc.salida&&dc.salida.foto)?'<button class="btn bg bsm" onclick="viewAsisPhoto(\''+e.id+'\',\''+from+'\')">👁 Ver</button>':'<span style="color:var(--tx3)">--</span>')+'</td></tr>';
+    }
+    html+='</tbody></table></div>';
+  }
+
+  document.getElementById('asbody').innerHTML=html;
+}
+function setAsisMode(m){ _asisMode=m; rAsis(); }
+function viewAsisPhoto(eid,fecha){
+  var recs=asisForDay(eid,fecha);
+  var win=window.open('','_blank');
+  win.document.write('<html><body style="margin:0;background:#111;font-family:Arial;color:#fff;padding:20px;">');
+  for(var i=0;i<recs.length;i++){
+    var r=recs[i];
+    win.document.write('<div style="margin-bottom:20px;"><div style="margin-bottom:6px;">'+(r.tipo==='entrada'?'Entrada':'Salida')+' - '+new Date(r.ts).toLocaleTimeString('es-HN')+'</div>');
+    if(r.foto) win.document.write('<img src="'+r.foto+'" style="max-width:320px;border-radius:8px;">');
+    else win.document.write('<div style="color:#888;">Foto eliminada (mas de 90 dias)</div>');
+    win.document.write('</div>');
+  }
+  win.document.write('</body></html>');
+  win.document.close();
+}
+
 function rSidebar(){
   if(role==='emp') return;
   var html='';
@@ -1054,6 +1416,19 @@ function rDash(){
     var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
     var html='';
     for(var i=0;i<bd0.length;i++) if(bd0[i].id===e.id) html+='<div class="bday-row">🎂 <div><strong>Feliz Cumpleanos, '+e.n+'!</strong></div></div>';
+    var todayStr=now.toISOString().split('T')[0];
+    var todayCalc=dayCalc(e.id,todayStr);
+    html+='<div class="card" style="margin-bottom:14px;"><div class="mb"><div class="fx g2">';
+    html+='<button class="btn bgr" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'entrada\')">🟢 Marcar Entrada</button>';
+    html+='<button class="btn bd" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'salida\')">🔴 Marcar Salida</button>';
+    html+='</div>';
+    if(todayCalc.entrada||todayCalc.salida){
+      html+='<div style="margin-top:12px;font-size:12.5px;color:var(--tx2);text-align:center;">Hoy: '
+        +(todayCalc.entrada?'Entrada '+new Date(todayCalc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'sin entrada')
+        +(todayCalc.salida?' · Salida '+new Date(todayCalc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'')
+        +(todayCalc.tarde?' <span class="badge bre">Tarde</span>':'')+'</div>';
+    }
+    html+='</div></div>';
     html+='<div class="do">';
     html+='<div class="dc"><div class="dn" style="color:var(--grn);">'+disp+'</div><div class="dl">Dias Disponibles</div></div>';
     html+='<div class="dc"><div class="dn" style="color:var(--red);">'+us+'</div><div class="dl">Dias Tomados</div></div>';
@@ -1082,6 +1457,10 @@ function rDash(){
   }
 
   var html=bdHtml;
+  html+='<div class="card" style="margin-bottom:14px;"><div class="mb"><div class="fx g2">';
+  html+='<button class="btn bgr" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'entrada\')">🟢 Marcar Entrada</button>';
+  html+='<button class="btn bd" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'salida\')">🔴 Marcar Salida</button>';
+  html+='</div></div></div>';
   html+='<div class="sg">';
   html+='<div class="sc"><div class="sl">Empleados</div><div class="sv" style="color:var(--grn);">'+emps.length+'</div></div>';
   html+='<div class="sc"><div class="sl">Vac. Usadas ('+yr+')</div><div class="sv" style="color:var(--acc);">'+vU+'</div></div>';
@@ -1188,7 +1567,27 @@ function rPerf(eid){
   html+='<div class="ir"><span class="ik">Direccion</span><span class="iv" style="font-size:11.5px;">'+(e.dir||'--')+'</span></div>';
   html+='</div></div>';
 
+  if(role!=='emp'){
+    var nowMonth=new Date().toISOString().slice(0,7);
+    var mRange=monthRange(nowMonth);
+    var mCalc=rangeCalc(e.id,mRange.from,mRange.to);
+    var allTimeAsis=asistencia.filter(function(a){ return a.eid===e.id; });
+    var firstAsis=allTimeAsis.length?allTimeAsis.reduce(function(min,a){ return a.ts<min?a.ts:min; },Infinity):null;
+    var allTimeCalc=firstAsis?rangeCalc(e.id,new Date(firstAsis).toISOString().split('T')[0],new Date().toISOString().split('T')[0]):{tardanzas:0,totalExtra:0};
+    html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">⏰ Asistencia</div><button class="btn bg bsm" onclick="gv(\'asis\')">Ver detalle</button></div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:16px;">';
+    html+='<div class="dc"><div class="dn" style="color:'+(mCalc.tardanzas>0?'var(--red)':'var(--grn)')+';">'+mCalc.tardanzas+'</div><div class="dl">Tardanzas (mes)</div></div>';
+    html+='<div class="dc"><div class="dn" style="color:'+(allTimeCalc.tardanzas>2?'var(--red)':'var(--tx2)')+';">'+allTimeCalc.tardanzas+'</div><div class="dl">Tardanzas (total)</div></div>';
+    html+='<div class="dc"><div class="dn" style="color:var(--pur);">'+mCalc.totalExtra+'h</div><div class="dl">Horas Extra (mes)</div></div>';
+    html+='<div class="dc"><div class="dn" style="color:var(--tx2);">'+mCalc.diasTrabajados+'</div><div class="dl">Dias marcados (mes)</div></div>';
+    html+='</div></div>';
+  }
+
+  html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">⏱ Historial de Marcaciones</div></div>'+rAsisHistTbl(e.id)+'</div>';
+
+
   html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">Historial de Registros</div>'+(role==='admin'?'<button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+ Nuevo</button>':'')+'</div>'+rHistTbl(e.id,role==='emp')+'</div>';
+
   if(role==='admin'){
     html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">Historial de Pagos</div></div>'+rSalEmp(e.id)+'</div>';
     html+='<div class="card"><div class="ch"><div class="ct">📁 Documentos Adjuntos</div>';
@@ -1196,6 +1595,26 @@ function rPerf(eid){
     html+='</div><div id="dlist-'+e.id+'">'+rDocsList(e.id)+'</div></div>';
   }
   document.getElementById('pbody').innerHTML=html;
+}
+
+function rAsisHistTbl(eid){
+  var mine=asistencia.filter(function(a){ return a.eid===eid; });
+  if(!mine.length) return '<div class="empty"><div style="font-size:28px;opacity:.3;">⏱</div><div style="font-size:13px;margin-top:8px;">Sin marcaciones aun</div></div>';
+  var byDay={};
+  for(var i=0;i<mine.length;i++){ var f=mine[i].fecha; if(!byDay[f]) byDay[f]=[]; byDay[f].push(mine[i]); }
+  var days=Object.keys(byDay).sort().reverse().slice(0,30); // last 30 days with activity
+  var html='<table><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Estado</th></tr></thead><tbody>';
+  for(var i=0;i<days.length;i++){
+    var dc=dayCalc(eid,days[i]);
+    html+='<tr><td>'+fd(days[i])+'</td>';
+    html+='<td>'+(dc.entrada?new Date(dc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
+    html+='<td>'+(dc.salida?new Date(dc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
+    html+='<td style="font-family:monospace;">'+(dc.horasTrabajadas||'--')+'</td>';
+    html+='<td style="font-family:monospace;color:var(--pur);">'+(dc.horasExtra>0?dc.horasExtra+'h':'--')+'</td>';
+    html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':(dc.entrada?'<span class="badge bgr2">A tiempo</span>':'--'))+'</td></tr>';
+  }
+  html+='</tbody></table>';
+  return html;
 }
 
 function rHistTbl(eid,hideNJ){
