@@ -457,6 +457,10 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
           <button class="btn bp" style="flex:1;justify-content:center;" id="mark-capture-btn" onclick="captureMark()">📸 Capturar</button>
           <button class="btn bg hidden" style="flex:1;justify-content:center;" id="mark-retry-btn" onclick="retryMark()">🔄 Repetir</button>
         </div>
+        <div class="fg hidden" id="mark-nota-row" style="text-align:left;margin-top:12px;">
+          <label>Comentario (opcional, ej: cita medica, trafico, permiso)</label>
+          <textarea id="mark-nota" style="min-height:60px;" placeholder="Escribe aqui si necesitas explicar algo..."></textarea>
+        </div>
         <button class="btn bgr hidden" style="width:100%;justify-content:center;margin-top:10px;" id="mark-confirm-btn" onclick="confirmMark()">✓ Confirmar Marcacion</button>
       </div>
     </div>
@@ -1103,6 +1107,8 @@ function goMarkStep2(){
   document.getElementById('mark-capture-btn').classList.remove('hidden');
   document.getElementById('mark-retry-btn').classList.add('hidden');
   document.getElementById('mark-confirm-btn').classList.add('hidden');
+  document.getElementById('mark-nota-row').classList.add('hidden');
+  document.getElementById('mark-nota').value='';
   startMarkCamera();
 }
 function startMarkCamera(){
@@ -1140,6 +1146,7 @@ function captureMark(){
   document.getElementById('mark-capture-btn').classList.add('hidden');
   document.getElementById('mark-retry-btn').classList.remove('hidden');
   document.getElementById('mark-confirm-btn').classList.remove('hidden');
+  document.getElementById('mark-nota-row').classList.remove('hidden');
   stopMarkCamera();
 }
 function retryMark(){
@@ -1149,12 +1156,14 @@ function retryMark(){
   document.getElementById('mark-capture-btn').classList.remove('hidden');
   document.getElementById('mark-retry-btn').classList.add('hidden');
   document.getElementById('mark-confirm-btn').classList.add('hidden');
+  document.getElementById('mark-nota-row').classList.add('hidden');
   startMarkCamera();
 }
 async function confirmMark(){
   if(!_markCapturedPhoto){ toast('Toma una foto primero','err'); return; }
   try{
     var now=new Date();
+    var notaEl=document.getElementById('mark-nota');
     var rec={
       id:'asis_'+Date.now()+'_'+Math.random().toString(36).slice(2),
       eid:_markEid,
@@ -1164,12 +1173,28 @@ async function confirmMark(){
       lat:_markGpsCoords?_markGpsCoords.lat:null,
       lng:_markGpsCoords?_markGpsCoords.lng:null,
       distM:_markGpsDist,
+      nota:notaEl?notaEl.value.trim():'',
       foto:_markCapturedPhoto
     };
     asistencia.push(rec);
     saveAll(); // saved on this device immediately, regardless of network
     closeMark();
-    toast((_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}));
+    var horaTxt=now.toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'});
+    var msg=(_markTipo==='entrada'?'✓ Entrada marcada':'✓ Salida marcada')+' a las '+horaTxt;
+    // Friendly reminder if clocking in more than 5 minutes after the scheduled start time
+    if(_markTipo==='entrada'&&_markEid!==TEST_EMP_ID){
+      var sched=schedFor(now);
+      if(sched){
+        var graceDec=hmDecimal(sched.startH,sched.startM)+(5/60);
+        var nowDec=hmDecimal(now.getHours(),now.getMinutes());
+        if(nowDec>graceDec){
+          var empObj=null; for(var i=0;i<emps.length;i++) if(emps[i].id===_markEid){ empObj=emps[i]; break; }
+          var nombre=empObj?empObj.n:'';
+          msg='Hola '+nombre+', recuerda que la hora de ingreso es a las 8:30AM (marcaste a las '+horaTxt+')';
+        }
+      }
+    }
+    toast(msg, (msg.indexOf('recuerda')>=0?'err':undefined));
     if(!document.getElementById('vas').classList.contains('hidden')) rAsis();
     // Upload to the cloud in the background so a slow/flaky connection never blocks the screen
     cloudPut('asistencia',rec.id,rec);
@@ -1413,15 +1438,17 @@ function rAsis(){
   // Daily detail table (only meaningful in 'dia' mode)
   if(_asisMode==='dia'){
     html+='<div class="card" style="margin-top:14px;"><div class="ch"><div class="ct">Detalle del Dia ('+fd(from)+')</div></div>';
-    html+='<table><thead><tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th><th>Foto</th></tr></thead><tbody>';
+    html+='<table><thead><tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th><th>Nota</th><th>Foto</th></tr></thead><tbody>';
     for(var i=0;i<emps.length;i++){
       var e=emps[i]; if(e.id==='IS-009') continue;
       var dc=dayCalc(e.id,from);
       if(!dc.entrada&&!dc.salida) continue;
+      var notaTxt=(dc.entrada&&dc.entrada.nota)?dc.entrada.nota:((dc.salida&&dc.salida.nota)?dc.salida.nota:'');
       html+='<tr><td><strong>'+e.n+' '+e.a+'</strong></td>';
       html+='<td>'+(dc.entrada?new Date(dc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
       html+='<td>'+(dc.salida?new Date(dc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):(dc.incompleto?'<span class="badge bye">Sin marcar</span>':'--'))+'</td>';
       html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':'<span class="badge bgr2">A tiempo</span>')+'</td>';
+      html+='<td style="font-size:11.5px;color:var(--tx2);max-width:160px;">'+(notaTxt||'--')+'</td>';
       html+='<td>'+((dc.entrada&&dc.entrada.foto)||(dc.salida&&dc.salida.foto)?'<button class="btn bg bsm" onclick="viewAsisPhoto(\''+e.id+'\',\''+from+'\')">👁 Ver</button>':'<span style="color:var(--tx3)">--</span>')+'</td></tr>';
     }
     html+='</tbody></table></div>';
@@ -1666,15 +1693,17 @@ function rAsisHistTbl(eid){
   var byDay={};
   for(var i=0;i<mine.length;i++){ var f=mine[i].fecha; if(!byDay[f]) byDay[f]=[]; byDay[f].push(mine[i]); }
   var days=Object.keys(byDay).sort().reverse().slice(0,30); // last 30 days with activity
-  var html='<table><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Estado</th></tr></thead><tbody>';
+  var html='<table><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Estado</th><th>Nota</th></tr></thead><tbody>';
   for(var i=0;i<days.length;i++){
     var dc=dayCalc(eid,days[i]);
+    var notaTxt=(dc.entrada&&dc.entrada.nota)?dc.entrada.nota:((dc.salida&&dc.salida.nota)?dc.salida.nota:'');
     html+='<tr><td>'+fd(days[i])+'</td>';
     html+='<td>'+(dc.entrada?new Date(dc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
     html+='<td>'+(dc.salida?new Date(dc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
     html+='<td style="font-family:monospace;">'+(dc.horasTrabajadas||'--')+'</td>';
     html+='<td style="font-family:monospace;color:var(--pur);">'+(dc.horasExtra>0?dc.horasExtra+'h':'--')+'</td>';
-    html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':(dc.entrada?'<span class="badge bgr2">A tiempo</span>':'--'))+'</td></tr>';
+    html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':(dc.entrada?'<span class="badge bgr2">A tiempo</span>':'--'))+'</td>';
+    html+='<td style="font-size:11.5px;color:var(--tx2);max-width:160px;">'+(notaTxt||'--')+'</td></tr>';
   }
   html+='</tbody></table>';
   return html;
