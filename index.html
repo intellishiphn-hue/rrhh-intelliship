@@ -1072,11 +1072,21 @@ function stopMarkCamera(){
 }
 function captureMark(){
   var v=document.getElementById('mark-video'), c=document.getElementById('mark-canvas');
-  var w=320, h=Math.round(w*(v.videoHeight/v.videoWidth||0.75));
-  c.width=w; c.height=h;
-  var ctx=c.getContext('2d');
-  ctx.drawImage(v,0,0,w,h);
-  _markCapturedPhoto=c.toDataURL('image/jpeg',0.5); // compressed small jpeg
+  try{
+    // On some mobile browsers the video's dimensions aren't ready yet at this exact instant
+    var vw=v.videoWidth||0, vh=v.videoHeight||0;
+    var w=320, h=(vw&&vh)?Math.round(w*(vh/vw)):240;
+    if(!h||!isFinite(h)||h<=0) h=240;
+    c.width=w; c.height=h;
+    var ctx=c.getContext('2d');
+    ctx.drawImage(v,0,0,w,h);
+    _markCapturedPhoto=c.toDataURL('image/jpeg',0.5); // compressed small jpeg
+    if(!_markCapturedPhoto||_markCapturedPhoto==='data:,') throw new Error('Imagen vacia');
+  }catch(err){
+    console.error('Error capturando foto:', err);
+    toast('No se pudo tomar la foto. Espera 1 segundo e intenta de nuevo.','err');
+    return; // leave the capture button visible so the person can retry
+  }
   document.getElementById('mark-photo-preview').src=_markCapturedPhoto;
   document.getElementById('mark-photo-preview').classList.remove('hidden');
   document.getElementById('mark-video').classList.add('hidden');
