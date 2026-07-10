@@ -1865,7 +1865,7 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
   var fiF=fi.split('-').reverse().join('.');
   var ffF=ff.split('-').reverse().join('.');
   var dateRange=fi===ff?fiF:fiF+' al '+ffF;
-  var subjectClean='Aviso: '+nombre+' tiene '+tipoLabel+' '+dateRange;
+  var subject='Aviso: '+nombre+' tiene '+tipoLabel+' '+dateRange;
   var sent=0;
   for(var i=0;i<emps.length;i++){
     var e=emps[i];
@@ -1875,25 +1875,21 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
       var bodyHtml=getEmailTemplate(
         'Vacaciones programadas',
         'Hola <b>'+destName+'</b>,<br><br>'+
-        'Te informamos que tu compañero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas:<br><br>'+
+        'Te informamos que tu companero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas:<br><br>'+
         '<div style="background:#e6f1fb;border-left:3px solid #185fa5;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;">'+
         '<div style="font-size:14px;color:#0c447c;margin-bottom:8px;">&#128197; <b>Fecha:</b> '+dateRange+'</div>'+
-        '<div style="font-size:14px;color:#0c447c;">&#9201; <b>Duración:</b> '+dias+' día'+(dias>1?'s hábiles':'hábil')+'</div>'+
+        '<div style="font-size:14px;color:#0c447c;">&#9201; <b>Duracion:</b> '+dias+' dia'+(dias>1?'s habiles':'habil')+'</div>'+
         '</div>'+
-        'Por favor tómalo en cuenta para la planificación de ese período.<br><br>'+
-        '<span style="font-size:12px;color:#888;">Este es un mensaje automático del sistema de RRHH de INTELLISHIP Honduras.</span>'
+        'Por favor tomalo en cuenta para la planificacion de ese periodo.<br><br>'+
+        '<span style="font-size:12px;color:#888;">Este es un mensaje automatico del sistema de RRHH de INTELLISHIP Honduras.</span>'
       );
-      emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-        to_email: dest,
-        name: 'INTELLISHIP RRHH',
-        subject: subjectClean,
-        message: bodyHtml,
-        email: 'rrhh@intellishiphn.com'
-      }).catch(function(err){ console.warn('Vacation email error:', err); });
+      callAPI(dest, subject, bodyHtml).then(function(res){
+        if(res.ok) addEmailLog('\u{1F4C5} Aviso vacaciones', dest, nombre+' - '+dateRange);
+      });
     })(e.e, e.n);
     sent++;
   }
-  if(sent>0) toast('✉️ Notificación enviada a '+sent+' compañero'+(sent>1?'s':''));
+  if(sent>0) toast('\u2709\uFE0F Enviando notificacion a '+sent+' companero'+(sent>1?'s':''));
 }
 function delReg(id){ if(!confirm('Eliminar este registro?')) return; regs=regs.filter(function(r){ return r.id!==id; }); saveAll(); cloudDelete('regs',id); syncSheets(); toast('Eliminado'); rPerf(curEmp); }
 
