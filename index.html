@@ -1757,17 +1757,19 @@ function rAsisHistTbl(eid){
   var byDay={};
   for(var i=0;i<mine.length;i++){ var f=mine[i].fecha; if(!byDay[f]) byDay[f]=[]; byDay[f].push(mine[i]); }
   var days=Object.keys(byDay).sort().reverse().slice(0,30); // last 30 days with activity
-  var html='<table><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Estado</th><th>Nota</th></tr></thead><tbody>';
+  var html='<table><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas Trabajadas</th><th>Horas Extra</th><th>Estado</th><th>Nota</th><th>Foto</th></tr></thead><tbody>';
   for(var i=0;i<days.length;i++){
     var dc=dayCalc(eid,days[i]);
     var notaTxt=(dc.entrada&&dc.entrada.nota)?dc.entrada.nota:((dc.salida&&dc.salida.nota)?dc.salida.nota:'');
+    var tieneFoto=(dc.entrada&&dc.entrada.foto)||(dc.salida&&dc.salida.foto);
     html+='<tr><td>'+fd(days[i])+'</td>';
     html+='<td>'+(dc.entrada?new Date(dc.entrada.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
     html+='<td>'+(dc.salida?new Date(dc.salida.ts).toLocaleTimeString('es-HN',{hour:'2-digit',minute:'2-digit'}):'--')+'</td>';
     html+='<td style="font-family:monospace;">'+(dc.horasTrabajadas||'--')+'</td>';
     html+='<td style="font-family:monospace;color:var(--pur);">'+(dc.horasExtra>0?dc.horasExtra+'h':'--')+'</td>';
     html+='<td>'+(dc.tarde?'<span class="badge bre">Tarde ('+dc.minutosTarde+' min)</span>':(dc.entrada?'<span class="badge bgr2">A tiempo</span>':'--'))+'</td>';
-    html+='<td style="font-size:11.5px;color:var(--tx2);max-width:160px;">'+(notaTxt||'--')+'</td></tr>';
+    html+='<td style="font-size:11.5px;color:var(--tx2);max-width:160px;">'+(notaTxt||'--')+'</td>';
+    html+='<td>'+(tieneFoto?'<button class="btn bg bsm" onclick="viewAsisPhoto(\''+eid+'\',\''+days[i]+'\')">👁 Ver</button>':'<span style="color:var(--tx3)">--</span>')+'</td></tr>';
   }
   html+='</tbody></table>';
   return html;
