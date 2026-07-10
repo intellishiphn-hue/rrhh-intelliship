@@ -1857,7 +1857,7 @@ function saveReg(){
   gv('perf',eid);
 }
 
-function sendVacNotification(eid,tipo,fi,ff,dias){
+async function sendVacNotification(eid,tipo,fi,ff,dias){
   var emp=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ emp=emps[i]; break; }
   if(!emp) return;
   var nombre=emp.n+' '+emp.a;
@@ -1866,30 +1866,32 @@ function sendVacNotification(eid,tipo,fi,ff,dias){
   var ffF=ff.split('-').reverse().join('.');
   var dateRange=fi===ff?fiF:fiF+' al '+ffF;
   var subject='Aviso: '+nombre+' tiene '+tipoLabel+' '+dateRange;
-  var sent=0;
+  var recipients=[];
   for(var i=0;i<emps.length;i++){
     var e=emps[i];
-    if(e.id===eid) continue;
-    if(!e.e) continue;
-    (function(dest,destName){
-      var bodyHtml=getEmailTemplate(
-        'Vacaciones programadas',
-        'Hola <b>'+destName+'</b>,<br><br>'+
-        'Te informamos que tu companero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas:<br><br>'+
-        '<div style="background:#e6f1fb;border-left:3px solid #185fa5;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;">'+
-        '<div style="font-size:14px;color:#0c447c;margin-bottom:8px;">&#128197; <b>Fecha:</b> '+dateRange+'</div>'+
-        '<div style="font-size:14px;color:#0c447c;">&#9201; <b>Duracion:</b> '+dias+' dia'+(dias>1?'s habiles':'habil')+'</div>'+
-        '</div>'+
-        'Por favor tomalo en cuenta para la planificacion de ese periodo.<br><br>'+
-        '<span style="font-size:12px;color:#888;">Este es un mensaje automatico del sistema de RRHH de INTELLISHIP Honduras.</span>'
-      );
-      callAPI(dest, subject, bodyHtml).then(function(res){
-        if(res.ok) addEmailLog('\u{1F4C5} Aviso vacaciones', dest, nombre+' - '+dateRange);
-      });
-    })(e.e, e.n);
-    sent++;
+    if(e.id===eid||!e.e) continue;
+    recipients.push({dest:e.e, destName:e.n});
   }
-  if(sent>0) toast('\u2709\uFE0F Enviando notificacion a '+sent+' companero'+(sent>1?'s':''));
+  if(!recipients.length) return;
+  toast('\u2709\ufe0f Enviando notificacion a '+recipients.length+' companero'+(recipients.length>1?'s':'')+'...');
+  for(var j=0;j<recipients.length;j++){
+    var dest=recipients[j].dest, destName=recipients[j].destName;
+    var bodyHtml=getEmailTemplate(
+      'Vacaciones programadas',
+      'Hola <b>'+destName+'</b>,<br><br>'+
+      'Te informamos que tu companero/a <b>'+nombre+'</b> tiene <b>'+tipoLabel+'</b> aprobadas:<br><br>'+
+      '<div style="background:#e6f1fb;border-left:3px solid #185fa5;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;">'+
+      '<div style="font-size:14px;color:#0c447c;margin-bottom:8px;">&#128197; <b>Fecha:</b> '+dateRange+'</div>'+
+      '<div style="font-size:14px;color:#0c447c;">&#9201; <b>Duracion:</b> '+dias+' dia'+(dias>1?'s habiles':'habil')+'</div>'+
+      '</div>'+
+      'Por favor tomalo en cuenta para la planificacion de ese periodo.<br><br>'+
+      '<span style="font-size:12px;color:#888;">Este es un mensaje automatico del sistema de RRHH de INTELLISHIP Honduras.</span>'
+    );
+    var res=await callAPI(dest, subject, bodyHtml);
+    if(res.ok) addEmailLog('📅 Aviso vacaciones', dest, nombre+' - '+dateRange);
+    if(j<recipients.length-1) await new Promise(function(r){ setTimeout(r,3000); });
+  }
+  toast('\u2705 Notificaciones enviadas');
 }
 function delReg(id){ if(!confirm('Eliminar este registro?')) return; regs=regs.filter(function(r){ return r.id!==id; }); saveAll(); cloudDelete('regs',id); syncSheets(); toast('Eliminado'); rPerf(curEmp); }
 
