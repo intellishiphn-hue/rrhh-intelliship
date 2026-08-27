@@ -2855,8 +2855,18 @@ async function processPlanilla(){
       if(i<planillaData.length-1) await new Promise(function(res){ setTimeout(res,1500); });
     }
     if(sendWA&&r.emp&&r.emp.t&&cfg.waApiUrl){
-      var waMsg='*INTELLISHIP Honduras*\nHola '+r.nombre+' \uD83D\uDC4B\n\nTu pago de *'+per+' '+mesLabel+'* ha sido procesado.\n\n\uD83D\uDCB0 *Neto a recibir: '+fmL(r.neto)+'*\n\nRecibir\xE1s el desglose detallado por correo. \uD83D\uDCE7\n\n_La experiencia lo es todo \u2014 INTELLISHIP_';
-      sendWhatsApp(r.emp.t,waMsg).catch(function(){});
+      var templateParams=[
+        r.nombre,
+        per+' '+mesLabel,
+        fmL(r.baseQ1).replace('L ',''),
+        fmL(r.bonoQ1).replace('L ',''),
+        fmL(r.baseQ2).replace('L ',''),
+        fmL(r.bonoQ2).replace('L ',''),
+        fmL(r.ihss).replace('L ',''),
+        fmL(r.adelQ1+r.adelQ2).replace('L ',''),
+        fmL(r.neto).replace('L ','')
+      ];
+      sendWhatsApp(r.emp.t, null, templateParams).catch(function(){});
     }
   }
   progressBar.style.width='100%';
@@ -2911,16 +2921,38 @@ function buildPayrollEmailHTML(r,per,mesLabel){
   return getEmailTemplate('Desglose de Pago \u2014 '+per+' '+mesLabel,body);
 }
 
-async function sendWhatsApp(phone,message){
+async function sendWhatsApp(phone, message, templateParams){
   if(!cfg.waApiUrl||!cfg.waToken) return;
   var clean=phone.replace(/[^0-9]/g,'');
   if(clean.length===8) clean='504'+clean;
+  var body;
+  if(templateParams){
+    // Use approved template
+    body={
+      messaging_product:'whatsapp',
+      to:clean,
+      type:'template',
+      template:{
+        name:'desglose_pago_intelliship',
+        language:{ code:'es' },
+        components:[{
+          type:'body',
+          parameters: templateParams.map(function(v){ return { type:'text', text:String(v) }; })
+        }]
+      }
+    };
+  } else {
+    body={ messaging_product:'whatsapp', to:clean, type:'text', text:{ body:message } };
+  }
   try{
-    await fetch(cfg.waApiUrl,{
+    var res=await fetch(cfg.waApiUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.waToken},
-      body:JSON.stringify({messaging_product:'whatsapp',to:clean,type:'text',text:{body:message}})
+      body:JSON.stringify(body)
     });
+    var data=await res.json();
+    if(!res.ok) console.warn('WA error:', JSON.stringify(data));
+    return data;
   }catch(e){ console.warn('WA error:',e); }
 }
 
