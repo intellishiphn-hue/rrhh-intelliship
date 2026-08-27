@@ -734,6 +734,11 @@ function loadAll(){
     if(!cfg.appsUrl) cfg.appsUrl='';
     if(!cfg.waApiUrl) cfg.waApiUrl='';
     if(!cfg.waToken) cfg.waToken='';
+    // Override with locally saved WA config (token too large for Firebase)
+    var localWaUrl=localStorage.getItem('is_wa_url');
+    var localWaTok=localStorage.getItem('is_wa_token');
+    if(localWaUrl) cfg.waApiUrl=localWaUrl;
+    if(localWaTok) cfg.waToken=localWaTok;
   }catch(e){ cfg={bdayMsg:'',salMsg:'',adminEmail:'',sheetId:'',appsUrl:'',waApiUrl:'',waToken:''}; }
   if(!localStorage.getItem('is_e')) saveAll();
 }
@@ -2282,7 +2287,10 @@ function saveCfgWA(){
   var url=document.getElementById('cfg-wa-url'),tok=document.getElementById('cfg-wa-token');
   if(url) cfg.waApiUrl=url.value.trim();
   if(tok) cfg.waToken=tok.value.trim();
-  saveAll(); cloudPutCfg();
+  // Save WA config locally only (token is too large for Firebase)
+  localStorage.setItem('is_wa_url', cfg.waApiUrl);
+  localStorage.setItem('is_wa_token', cfg.waToken);
+  saveAll();
   toast('Configuración WhatsApp guardada ✓');
 }
 
@@ -2865,19 +2873,34 @@ async function processPlanilla(){
       addEmailLog('\xf0\x9f\x92\xb0 Planilla '+per,r.emp.e,r.nombre+' — '+fmL(r.neto));
       if(i<planillaData.length-1) await new Promise(function(res){ setTimeout(res,1500); });
     }
-    if(sendWA&&r.emp&&r.emp.t&&cfg.waApiUrl){
-      var templateParams=[
-        r.nombre,
-        per+' '+mesLabel,
-        fmL(r.baseQ1).replace('L ',''),
-        fmL(r.bonoQ1).replace('L ',''),
-        fmL(r.baseQ2).replace('L ',''),
-        fmL(r.bonoQ2).replace('L ',''),
-        fmL(r.ihss).replace('L ',''),
-        fmL(r.adelQ1+r.adelQ2).replace('L ',''),
-        fmL(r.neto).replace('L ','')
-      ];
-      sendWhatsApp(r.emp.t, null, templateParams).catch(function(){});
+    if(sendWA&&cfg.waApiUrl){
+      // Try to find phone: first from matched emp, then search by name in emps array
+      var waPhone=r.emp&&r.emp.t?r.emp.t:null;
+      if(!waPhone){
+        var nameLower=r.nombre.toLowerCase();
+        for(var k=0;k<emps.length;k++){
+          var fullN=(emps[k].n+' '+emps[k].a).toLowerCase();
+          if(fullN===nameLower||fullN.indexOf(nameLower)>=0||nameLower.indexOf(emps[k].n.toLowerCase())>=0){
+            if(emps[k].t) { waPhone=emps[k].t; break; }
+          }
+        }
+      }
+      if(waPhone){
+        var templateParams=[
+          r.nombre,
+          per+' '+mesLabel,
+          fmL(r.baseQ1).replace('L ',''),
+          fmL(r.bonoQ1).replace('L ',''),
+          fmL(r.baseQ2).replace('L ',''),
+          fmL(r.bonoQ2).replace('L ',''),
+          fmL(r.ihss).replace('L ',''),
+          fmL(r.adelQ1+r.adelQ2).replace('L ',''),
+          fmL(r.neto).replace('L ','')
+        ];
+        sendWhatsApp(waPhone, null, templateParams).catch(function(err){ console.warn('WA send error:',err); });
+      } else {
+        console.warn('WA: no phone found for', r.nombre);
+      }
     }
   }
   progressBar.style.width='100%';
