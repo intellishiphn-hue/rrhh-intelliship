@@ -1256,7 +1256,7 @@ function openMark(tipo){
     var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===activeEmp){ e=emps[i]; break; }
     opts='<option value="'+activeEmp+'" selected>'+(e?e.n+' '+e.a:'')+'</option>';
   } else {
-    for(var i=0;i<emps.length;i++){ if(emps[i].id==='IS-009') continue; opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>'; }
+    for(var i=0;i<emps.length;i++){ if(emps[i].id==='IS-009') continue; if(emps[i].hidden) continue; opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>'; }
     opts+='<option value="'+TEST_EMP_ID+'">🧪 Sergio Casasola (modo prueba, sin GPS)</option>';
   }
   sel.innerHTML=opts;
@@ -1786,14 +1786,16 @@ function rMainTb(list){
   }
   tb.innerHTML=html;
 }
-function fTable(q){ var f=emps.filter(function(e){ return (e.n+' '+e.a+' '+e.id+' '+e.c).toLowerCase().indexOf(q.toLowerCase())>=0; }); rMainTb(f); }
+function fTable(q){ var f=activeEmps().filter(function(e){ return (e.n+' '+e.a+' '+e.id+' '+e.c).toLowerCase().indexOf(q.toLowerCase())>=0; }); rMainTb(f); }
 
 // ---- EMPLEADOS GRID ----
 function rEmps(){
   rSidebar();
+  var visible=activeEmps();
+  var hidden=emps.filter(function(e){ return e.hidden; });
   var html='';
-  for(var i=0;i<emps.length;i++){
-    var e=emps[i],color=gc(i),ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+  for(var i=0;i<visible.length;i++){
+    var e=visible[i],color=gc(i),ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
     var now=new Date(),b=e.nb?new Date(e.nb+'T00:00:00'):null;
     var isBday=b&&b.getMonth()===now.getMonth()&&b.getDate()===now.getDate();
     html+='<div class="card" style="cursor:pointer;" onclick="gv(\'perf\',\''+e.id+'\')"><div style="padding:15px 17px;">';
@@ -1804,6 +1806,14 @@ function rEmps(){
     html+='<div style="text-align:center;background:var(--bg);border-radius:8px;padding:9px;"><div style="font-size:19px;font-weight:700;color:var(--red);">'+us+'</div><div style="font-size:10.5px;color:var(--tx3);">tomados</div></div>';
     html+='</div><div style="margin-top:9px;font-size:11px;color:var(--tx3);">Ingreso: '+fd(e.i)+' · '+yt(ag)+'</div>';
     html+='</div></div>';
+  }
+  if(hidden.length){
+    html+='<div style="grid-column:1/-1;margin-top:10px;"><details><summary style="font-size:12px;color:var(--tx3);cursor:pointer;padding:8px 0;">🙈 '+hidden.length+' empleado'+(hidden.length>1?'s':'')+' oculto'+(hidden.length>1?'s':'')+'</summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:10px;">';
+    for(var j=0;j<hidden.length;j++){
+      var h=hidden[j];
+      html+='<div class="card" style="cursor:pointer;opacity:.55;border-style:dashed;" onclick="gv(\'perf\',\''+h.id+'\')"><div style="padding:12px 14px;"><div class="fx ac g2"><div class="av" style="background:#88888822;color:#888;width:36px;height:36px;font-size:13px;">'+gi(h.n,h.a)+'</div><div><div style="font-weight:600;font-size:13px;">'+h.n+' '+h.a+'</div><div style="font-size:11px;color:var(--tx3)">'+h.id+' · Oculto</div></div></div></div></div>';
+    }
+    html+='</div></details></div>';
   }
   document.getElementById('egrid').innerHTML=html;
 }
@@ -1818,7 +1828,7 @@ function rPerf(eid){
   var fJ=cnt(e.id,'falta_justificada'),fNJ=cnt(e.id,'falta_no_justificada'),perm=cnt(e.id,'permiso');
   document.getElementById('ptitle').textContent=e.n+' '+e.a;
   var pa=document.getElementById('pacts');
-  if(role==='admin') pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button><button class="btn bg bsm" onclick="openEditEmp(\''+e.id+'\')">✏️ Editar</button><button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+ Registro</button><button class="btn bd bsm" onclick="delEmp(\''+e.id+'\')" style="margin-left:4px;">🗑 Eliminar</button>';
+  if(role==='admin') pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button><button class="btn bg bsm" onclick="openEditEmp(\''+e.id+'\')">✏️ Editar</button><button class="btn bp bsm" onclick="gv(\'reg\',\''+e.id+'\')">+ Registro</button><button class="btn bpu bsm" onclick="toggleHideEmp(\''+e.id+'\')" style="margin-left:4px;">'+(e.hidden?'👁 Mostrar':'🙈 Ocultar')+'</button><button class="btn bd bsm" onclick="delEmp(\''+e.id+'\')" style="margin-left:4px;">🗑 Eliminar</button>';
   else if(role==='coord') pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button>';
   else pa.innerHTML='<button class="btn bg bsm" onclick="dlPDF(\''+e.id+'\')">📄 PDF</button>';
 
@@ -1967,7 +1977,7 @@ function rSalEmp(eid){
 function rRegForm(preEid){
   var sel=document.getElementById('re-e');
   var opts='<option value="">Seleccionar...</option>';
-  for(var i=0;i<emps.length;i++) opts+='<option value="'+emps[i].id+'"'+(preEid===emps[i].id?' selected':'')+'>'+emps[i].n+' '+emps[i].a+'</option>';
+  for(var i=0;i<emps.length;i++){ if(emps[i].hidden) continue; opts+='<option value="'+emps[i].id+'"'+(preEid===emps[i].id?' selected':'')+'>'+emps[i].n+' '+emps[i].a+'</option>'; }
   sel.innerHTML=opts;
   document.getElementById('re-t').value='';
   document.getElementById('re-fi').value='';
@@ -2542,6 +2552,7 @@ function openPayroll(){
   var opts='<option value="">Seleccionar...</option>';
   for(var i=0;i<emps.length;i++){
     if(emps[i].id==='IS-009') continue;
+    if(emps[i].hidden) continue;
     opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>';
   }
   sel.innerHTML=opts;
@@ -3016,6 +3027,20 @@ function verDetallePlanilla(runId){
 }
 
 function showHistorialPlanilla(){ rPlanillaView(); }
+
+function toggleHideEmp(eid){
+  var emp=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ emp=emps[i]; break; }
+  if(!emp) return;
+  var action=emp.hidden?'mostrar':'ocultar';
+  if(!confirm('¿Confirmas que deseas '+action+' a '+emp.n+' '+emp.a+'? '+(emp.hidden?'Volverá a aparecer en todas las listas.':'No aparecerá en listas ni recibirá notificaciones, pero su historial se conserva.'))) return;
+  emp.hidden=!emp.hidden;
+  saveAll(); cloudPut('emps',emp.id,emp);
+  toast((emp.hidden?'🙈 Empleado ocultado':'👁 Empleado visible nuevamente'));
+  rSidebar(); rPerf(eid);
+}
+
+// Helper: active (non-hidden) employees
+function activeEmps(){ return emps.filter(function(e){ return !e.hidden; }); }
 
 // ===== THEME TOGGLE =====
 function toggleTheme(){
