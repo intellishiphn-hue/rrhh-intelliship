@@ -2953,12 +2953,15 @@ function buildPayrollEmailHTML(r,per,mesLabel){
 }
 
 async function sendWhatsApp(phone, message, templateParams){
-  if(!cfg.waApiUrl||!cfg.waToken) return;
+  // Read token directly from localStorage at call time
+  var waUrl=localStorage.getItem('is_wa_url')||cfg.waApiUrl;
+  var waToken=localStorage.getItem('is_wa_token')||cfg.waToken;
+  if(!waUrl||!waToken){ console.warn('WA: no url or token configured'); return; }
   var clean=phone.replace(/[^0-9]/g,'');
   if(clean.length===8) clean='504'+clean;
+  console.log('WA sending to:', clean, 'url:', waUrl.substring(0,50));
   var body;
   if(templateParams){
-    // Use approved template
     body={
       messaging_product:'whatsapp',
       to:clean,
@@ -2976,15 +2979,16 @@ async function sendWhatsApp(phone, message, templateParams){
     body={ messaging_product:'whatsapp', to:clean, type:'text', text:{ body:message } };
   }
   try{
-    var res=await fetch(cfg.waApiUrl,{
+    var res=await fetch(waUrl,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.waToken},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+waToken},
       body:JSON.stringify(body)
     });
     var data=await res.json();
     if(!res.ok) console.warn('WA error:', JSON.stringify(data));
+    else console.log('WA OK:', JSON.stringify(data));
     return data;
-  }catch(e){ console.warn('WA error:',e); }
+  }catch(e){ console.warn('WA fetch error:',e); }
 }
 
 function rPlanillaView(){
