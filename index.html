@@ -2968,7 +2968,7 @@ async function sendWhatsApp(phone, message, templateParams){
       type:'template',
       template:{
         name:'desglose_pago_intelliship',
-        language:{ code:'es' },
+        language:{ code:'es_ES' },
         components:[{
           type:'body',
           parameters: templateParams.map(function(v){ return { type:'text', text:String(v) }; })
