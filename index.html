@@ -734,11 +734,6 @@ function loadAll(){
     if(!cfg.appsUrl) cfg.appsUrl='';
     if(!cfg.waApiUrl) cfg.waApiUrl='';
     if(!cfg.waToken) cfg.waToken='';
-    // Override with locally saved WA config (token too large for Firebase)
-    var localWaUrl=localStorage.getItem('is_wa_url');
-    var localWaTok=localStorage.getItem('is_wa_token');
-    if(localWaUrl) cfg.waApiUrl=localWaUrl;
-    if(localWaTok) cfg.waToken=localWaTok;
   }catch(e){ cfg={bdayMsg:'',salMsg:'',adminEmail:'',sheetId:'',appsUrl:'',waApiUrl:'',waToken:''}; }
   if(!localStorage.getItem('is_e')) saveAll();
 }
@@ -907,6 +902,10 @@ async function loadCloud(silent){
     if(data.emailLogs){ emailLogs=toArr(data.emailLogs).sort(function(a,b){ return (b._t||0)-(a._t||0); }); }
     if(data.asistencia) asistencia=toArr(data.asistencia);
     if(data.cfg&&Object.keys(data.cfg).length) cfg=Object.assign(cfg,data.cfg);
+    if(data.waCfg&&data.waCfg.config){
+      cfg.waApiUrl=data.waCfg.config.url||cfg.waApiUrl||'';
+      cfg.waToken=data.waCfg.config.token||cfg.waToken||'';
+    }
 
     // Protect any local changes that are still waiting to upload (outbox) from being
     // overwritten by an older snapshot from the server
@@ -2287,21 +2286,9 @@ function saveCfgWA(){
   var url=document.getElementById('cfg-wa-url'),tok=document.getElementById('cfg-wa-token');
   if(url) cfg.waApiUrl=url.value.trim();
   if(tok) cfg.waToken=tok.value.trim();
-  // Save WA config directly without saveAll (token is large, saveAll overflows localStorage)
-  try{
-    localStorage.setItem('is_wa_url', cfg.waApiUrl);
-    localStorage.setItem('is_wa_token', cfg.waToken);
-    toast('Configuración WhatsApp guardada ✓');
-  }catch(e){
-    // If localStorage is full, try clearing non-essential data first
-    localStorage.removeItem('is_r'); localStorage.removeItem('is_a');
-    localStorage.removeItem('emailLogs'); localStorage.removeItem('is_docs');
-    try{
-      localStorage.setItem('is_wa_url', cfg.waApiUrl);
-      localStorage.setItem('is_wa_token', cfg.waToken);
-      toast('Configuración WhatsApp guardada ✓');
-    }catch(e2){ toast('Error guardando config WA: '+e2.message,'err'); }
-  }
+  // Save WA credentials directly to Firebase (bypasses localStorage size limit)
+  cloudPut('waCfg','config',{url:cfg.waApiUrl,token:cfg.waToken});
+  toast('Configuración WhatsApp guardada ✓');
 }
 
 // ---- EMP ADD/EDIT ----
