@@ -2287,11 +2287,21 @@ function saveCfgWA(){
   var url=document.getElementById('cfg-wa-url'),tok=document.getElementById('cfg-wa-token');
   if(url) cfg.waApiUrl=url.value.trim();
   if(tok) cfg.waToken=tok.value.trim();
-  // Save WA config locally only (token is too large for Firebase)
-  localStorage.setItem('is_wa_url', cfg.waApiUrl);
-  localStorage.setItem('is_wa_token', cfg.waToken);
-  saveAll();
-  toast('Configuración WhatsApp guardada ✓');
+  // Save WA config directly without saveAll (token is large, saveAll overflows localStorage)
+  try{
+    localStorage.setItem('is_wa_url', cfg.waApiUrl);
+    localStorage.setItem('is_wa_token', cfg.waToken);
+    toast('Configuración WhatsApp guardada ✓');
+  }catch(e){
+    // If localStorage is full, try clearing non-essential data first
+    localStorage.removeItem('is_r'); localStorage.removeItem('is_a');
+    localStorage.removeItem('emailLogs'); localStorage.removeItem('is_docs');
+    try{
+      localStorage.setItem('is_wa_url', cfg.waApiUrl);
+      localStorage.setItem('is_wa_token', cfg.waToken);
+      toast('Configuración WhatsApp guardada ✓');
+    }catch(e2){ toast('Error guardando config WA: '+e2.message,'err'); }
+  }
 }
 
 // ---- EMP ADD/EDIT ----
