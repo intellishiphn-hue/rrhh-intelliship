@@ -2912,44 +2912,61 @@ async function processPlanilla(){
 
 function buildPayrollEmailHTML(r,per,mesLabel){
   var today=new Date().toLocaleDateString('es-HN',{day:'2-digit',month:'long',year:'numeric'});
-  var totalIngQ1=r.baseQ1+r.bonoQ1;
-  var totalIngQ2=r.baseQ2+r.bonoQ2;
-  var descQ1=r.adelQ1;
-  var descQ2=r.adelQ2+r.ihss;
-  var netoQ1=totalIngQ1-descQ1;
-  var netoQ2=totalIngQ2-descQ2;
-  var body='<b>'+r.nombre+'</b> '+(r.emp?'| '+r.emp.c:'')+'<br><br>'
-    +'<div style="display:table;width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:16px;">'
-    +'<div style="display:table-row;background:#1a3a6b;color:white;">'
-    +'<div style="display:table-cell;padding:8px 12px;font-size:12px;font-weight:700;">Concepto</div>'
-    +'<div style="display:table-cell;padding:8px 12px;font-size:12px;font-weight:700;text-align:right;">1ra Quincena</div>'
-    +'<div style="display:table-cell;padding:8px 12px;font-size:12px;font-weight:700;text-align:right;">2da Quincena</div>'
-    +'<div style="display:table-cell;padding:8px 12px;font-size:12px;font-weight:700;text-align:right;">Total Mes</div>'
-    +'</div>';
-  var rows=[
-    {label:'Salario Base',q1:r.baseQ1,q2:r.baseQ2,cls:''},
-    {label:'Bono / Horas Extra',q1:r.bonoQ1,q2:r.bonoQ2,cls:'color:#16a34a;'},
-    {label:'Adelanto / Pr\xe9stamo',q1:r.adelQ1?-r.adelQ1:0,q2:r.adelQ2?-r.adelQ2:0,cls:'color:#dc2626;'},
-    {label:'IHSS',q1:0,q2:-r.ihss,cls:'color:#dc2626;'},
-  ];
-  for(var k=0;k<rows.length;k++){
-    if(rows[k].q1===0&&rows[k].q2===0) continue;
-    var bg=k%2===0?'#f8fafc':'#ffffff';
-    body+='<div style="display:table-row;background:'+bg+';">'
-      +'<div style="display:table-cell;padding:7px 12px;font-size:12px;">'+rows[k].label+'</div>'
-      +'<div style="display:table-cell;padding:7px 12px;font-size:12px;text-align:right;font-family:monospace;'+rows[k].cls+'">'+(rows[k].q1?fmL(Math.abs(rows[k].q1)):'—')+'</div>'
-      +'<div style="display:table-cell;padding:7px 12px;font-size:12px;text-align:right;font-family:monospace;'+rows[k].cls+'">'+(rows[k].q2?fmL(Math.abs(rows[k].q2)):'—')+'</div>'
-      +'<div style="display:table-cell;padding:7px 12px;font-size:12px;text-align:right;font-family:monospace;'+rows[k].cls+'">'+fmL(Math.abs(rows[k].q1+rows[k].q2))+'</div>'
-      +'</div>';
+  var isQ1=per==='1ra Quincena';
+  var isQ2=per==='2da Quincena';
+  var isMensual=per==='Mensual';
+
+  // Determine which data to show
+  var base = isQ1?r.baseQ1 : isQ2?r.baseQ2 : r.baseQ1+r.baseQ2;
+  var bono = isQ1?r.bonoQ1 : isQ2?r.bonoQ2 : r.bonoQ1+r.bonoQ2;
+  var adelanto = isQ1?r.adelQ1 : isQ2?r.adelQ2 : r.adelQ1+r.adelQ2;
+  var ihss = isQ1?0 : r.ihss; // IHSS only on Q2
+  var neto = isQ1?(r.baseQ1+r.bonoQ1-r.adelQ1) : isQ2?(r.baseQ2+r.bonoQ2-r.adelQ2-r.ihss) : r.neto;
+
+  var periodTitle = isMensual ? 'Mensual — '+mesLabel : per+' '+mesLabel;
+
+  var rows='';
+  // Helper to add row
+  function row(label,amount,color,bg){
+    if(!amount) return '';
+    return '<tr style="background:'+bg+';">'
+      +'<td style="padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f1f5f9;">'+label+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;font-family:monospace;text-align:right;color:'+color+';border-bottom:1px solid #f1f5f9;">'+fmL(amount)+'</td>'
+      +'</tr>';
   }
-  body+='<div style="display:table-row;background:#1a3a6b;color:white;">'
-    +'<div style="display:table-cell;padding:9px 12px;font-size:13px;font-weight:700;">NETO</div>'
-    +'<div style="display:table-cell;padding:9px 12px;font-size:13px;text-align:right;font-family:monospace;font-weight:700;">'+fmL(netoQ1)+'</div>'
-    +'<div style="display:table-cell;padding:9px 12px;font-size:13px;text-align:right;font-family:monospace;font-weight:700;">'+fmL(netoQ2)+'</div>'
-    +'<div style="display:table-cell;padding:9px 12px;font-size:13px;text-align:right;font-family:monospace;font-weight:700;">'+fmL(r.neto)+'</div>'
-    +'</div></div>'
-    +'<p style="font-size:11px;color:#94a3b8;">Emitido el '+today+' por INTELLISHIP Honduras.</p>';
-  return getEmailTemplate('Desglose de Pago \u2014 '+per+' '+mesLabel,body);
+
+  rows += row('Salario Base', base, '#374151', '#f8fafc');
+  if(bono>0) rows += row('Bono / Horas Extra', bono, '#16a34a', '#ffffff');
+  if(adelanto>0) rows += row('Adelanto / Préstamo', -adelanto, '#dc2626', '#f8fafc');
+  if(ihss>0) rows += row('IHSS', -ihss, '#dc2626', '#ffffff');
+
+  // If mensual, show both quincenas breakdown
+  var mensualExtra='';
+  if(isMensual){
+    mensualExtra='<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:8px;font-size:11px;color:#94a3b8;">'
+      +'<tr><td style="padding:4px 14px;">1ra Quincena:</td><td style="padding:4px 14px;text-align:right;font-family:monospace;">'+fmL(r.baseQ1+r.bonoQ1-r.adelQ1)+'</td></tr>'
+      +'<tr><td style="padding:4px 14px;">2da Quincena:</td><td style="padding:4px 14px;text-align:right;font-family:monospace;">'+fmL(r.baseQ2+r.bonoQ2-r.adelQ2-r.ihss)+'</td></tr>'
+      +'</table>';
+  }
+
+  var body='<p style="font-size:14px;color:#374151;margin:0 0 16px;">Hola <b>'+r.nombre+'</b>'+(r.emp&&r.emp.c?' — '+r.emp.c:'')+'</p>'
+    +'<p style="font-size:13px;color:#64748b;margin:0 0 16px;">Aquí está tu desglose de pago correspondiente al período <b>'+periodTitle+'</b>:</p>'
+    // Mobile-friendly table
+    +'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;">'
+    +'<thead><tr style="background:#1a3a6b;">'
+    +'<th style="padding:10px 14px;font-size:12px;color:white;text-align:left;font-weight:700;">Concepto</th>'
+    +'<th style="padding:10px 14px;font-size:12px;color:white;text-align:right;font-weight:700;">Monto</th>'
+    +'</tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr style="background:#1a3a6b;">'
+    +'<td style="padding:12px 14px;font-size:14px;color:white;font-weight:800;">NETO A RECIBIR</td>'
+    +'<td style="padding:12px 14px;font-size:14px;color:#4ade80;text-align:right;font-family:monospace;font-weight:800;">'+fmL(neto)+'</td>'
+    +'</tr></tfoot>'
+    +'</table>'
+    +mensualExtra
+    +'<p style="font-size:11px;color:#94a3b8;margin-top:12px;">Emitido el '+today+' por INTELLISHIP Honduras. Para consultas comunícate con tu coordinador.</p>';
+
+  return getEmailTemplate('Desglose de Pago — '+periodTitle, body);
 }
 
 async function sendWhatsApp(phone, message, templateParams){
@@ -2968,7 +2985,7 @@ async function sendWhatsApp(phone, message, templateParams){
       type:'template',
       template:{
         name:'desglose_pago_intelliship',
-        language:{ code:'es_ES' },
+        language:{ code:'es' },
         components:[{
           type:'body',
           parameters: templateParams.map(function(v){ return { type:'text', text:String(v) }; })
@@ -3017,12 +3034,22 @@ function rPlanillaView(){
         +'<td>'+run.mesLabel+'</td>'
         +'<td>'+run.empleados+'</td>'
         +'<td style="font-family:monospace;font-weight:700;color:var(--grn);">'+fmL(run.totalNeto)+'</td>'
-        +'<td><button class="btn bg bsm" onclick="verDetallePlanilla(\''+run.id+'\')">Ver detalle</button></td>'
+        +'<td><button class="btn bg bsm" onclick="verDetallePlanilla(\''+run.id+'\')">Ver detalle</button> <button class="btn bd bsm" onclick="deletePlanillaRun(\''+run.id+'\')" title="Eliminar">🗑</button></td>'
         +'</tr>';
     }
     html+='</tbody></table></div>';
   }
   document.getElementById('plbody').innerHTML=html;
+}
+
+function deletePlanillaRun(runId){
+  var run=null; for(var i=0;i<planillaRuns.length;i++) if(planillaRuns[i].id===runId){ run=planillaRuns[i]; break; }
+  if(!run) return;
+  if(!confirm('¿Eliminar la planilla de '+run.mesLabel+' ('+run.per+')? Esta acción no se puede deshacer.')) return;
+  planillaRuns=planillaRuns.filter(function(r){ return r.id!==runId; });
+  savePlanillaRuns();
+  toast('Planilla eliminada');
+  rPlanillaView();
 }
 
 function verDetallePlanilla(runId){
