@@ -1507,29 +1507,24 @@ function addEmailLog(tipo,destino,detalle){
 }
 
 function getEmailTemplate(title,body){
-  var logoB64='iVBORw0KGgoAAAANSUhEUgAAAQoAAABOCAYAAADYdVgHAAAXN0lEQVR42u2deZRdRbXGf9+5t7vJTBLGBAiTDAqIuFDw+RxxeM4gIoPwmBSBpwwB8ckUhYWCQSYlICiIggzCAgEVQZRHkEEkAkFFpiAZSDrz2MO9Z78/at/u06fv7SGd4XZS3+KuDuecqlOnqvZXu3bV3qUDXpyNYyvgff53Y4MBM4H/AxZULj606zgiIiKg6H/3AX4EvAtINtK6KAGPACcB/4pdIyKiEwkwFJgE7LcRk0SFND8M/G+GQCMiIpwYtgX2jVXRgfcCW8RqiIjoShRDgKZYFR3YxH8REREZooBgzIuIiIjokSgiIiIiIlFEREREooiIiIhEEREREYkiIiJiUBCFYlVERET0RBTthO3LEQElr5OIiIgMUcwi+jZkMR1ojtUQEdGVKBYD3yV4T27seAm4BGiJVRER0YmK89P9wOeAzwJbb4T1YMAbwF3AC7FbRERUJwqAv/ovgjUai0JmNgZozF1fKWlJB1OZjQSGZe6XJc0H0prsZjaa7n4pqyQtBoaY2aYDLHubpIVA0czGsnpG70oe5nUxmu6+RZUy9wUNXp9dVuw8/ao+jQpmw4CRuctlSQuAco00I4EJwDbApkDBNc9mYJak2cDKKumGAyP6+a5q7doqaZHXY1+/oaGP7Vb2NlhODXeOjgwyAWwiQaxJVSU06I2EmB/lDEHfJGlS5rlzgGPpNCy3AxdIurXWtNHMLgM+nUlTBO6QdJaZHQhcPICiF4DHJR1jZm/1bxhO//yCCsAzwNGSVgBNZnYt8J+5urhD0ll9rM/dgZtcWC2jEZ4h6d4+5nEUcF6GhBNgNnCEpDdyz44DjnCNexcXzqLLTgq0AgsJdr6HgLslvVjJ28xOAM7Mvet1f9ebfWzXAvBHSSd6v+jTN5jZ2/vYbiU3QbwE/An4vaRZVTWKGM1prdqBtgN2zF3fMvf/WwA75K5dYmYzJU2tkfe4KmkqEcpGAW8ZYNlnukBs4nkNW4085tN1GX7bKnXRn6hqTV6WUbnrI/uRx2hgp9y1IUBDjiTeB0ymdhiGAiGey1DXND4EHGZmn5P0qj8zpsq7CvQc86Rau76c0wz68g1D+tlu+wNHAtPN7PuSflkhq34FaNlYtI61QJrWh2vVntkWuNzMDpX0cpX7aQ/5rgmP4LSXd63Ot6d9rJ/eVOV8ehtge6Q5ktgLuM61iP5gNjC3P+/q4/20v9/gz/S33QTsCVxjZmMlXQFYcTUJookNLwpUS6UDHvDi7HrSsN4JXGpmx/r8s79CujY305V6EdAig3OPTgE4tQZJLAbmAG1ue9gso82kwK0+zapnWC0TRAZDgXPNbJqkR/or7KOAo4GPVzHQDGYYYT/JTcDvgLTOyOIzwPk+123tY5rHgGOqjDgH+i+LuYQl8kWZTpNkBKIaWoFvA8+6YNUanRZKWjWoOoPZNsAHq9y6H7gQeNUJcKhrfe8BPu8D6IN1/nkpcCXwpLdxJcrd5wgxc7MY431oan+IotEr6X824FnHx4CvAHfUYdlOMLPXJF3WJ/0xTFVeriIE21UhiiXALZKaexD4aur/oz3YTwYztnAhyaIduFrSE5lrC92O87iZ3QCMlzRnANOfdTUo/lHSr3P94mbgFuA/cs+/28w2749T2D5u6NiQsSnwtTrVlhpdFTxwgPkkNYigv9ql2HCdCstV5vYNwJFuu9ikCjEvlPR8H20CFQNxI52hF7O/wjqYWuXL/2/gzirPjgXG9qdz7ED/LMuDFRN8NFlWh2UbDUw2s1mSnlrPZWkATjazT9UgjALwjKRfMPhCLc7x36a564cCHzSz54Fp/psOvNpPu8RWwI1m1lKDRPZYT9+9qsbAkvSHKDYWl/RkHTB6f+aT+XrfkbAS8iVWfyViTaAIHNLLM3cCNw82opA0x8xudRtMHlv67wCv/wXAC2Z2P/ArSTP68IohhGjv67Nf5THUvymPpcCSeH5FfeNvBKPh/rnr+xM2U9W7hlcexHV/lWuXR/UwLUuAzYEP+O8YMztf0q/q/Nt2MrM9/LsSgtvGFwlG8zymS5obiaK+8QZhNeLndN88dRC1VyTqSTsblJC0yMy+DkwlWP73pnfb1VuBKWa2TNIDdfppBdeUzs600VC6uxjgg9TNQGskijoXNEl/MbOJwA0Ew1JWCNfn+SPtTmCv1iCExOfvNojJYgVwg5ndCexFWAbdxwlhQg2NbjOCQfwRanshrwT+XMMmIH/H2lybH97H566XdA/Eo/MGC1nca2aTCNuJ6+WwpnbgRkmPbugNIGmpaxZTgYI7bb2FsJ/oOGB8LsmeZrZVD/aKucCX3ScjT7KJmf0COHg9fvJC4Fqf3rZEohgk/dQ767Vmtj0wsY7KtaZ2fa7p7eYDL1Bw5nsf8FdJ87J2F/fqnU/YP7EAuCKXvKkXbc+caMt0t+MkrH0jdRthw1il/crACsKmw8eA2yQ9ni1HJIrBg3bChrcJ63m0yRLFeDObQM+rROabkHoKBjTGzPam5y3nSzOOVtWwQ8ZAVwuzethUlsd+Pj9/2cxuB/4AvOau2CUf+UcDu1VJu4SwWtDrALAeUPZ+9EevqwppLQLmekiAbohEMbhU4MVmdibBU3G/9VycJh9JW3sRhlVmdpSPULXwcYLreS0UgAeAw2poHyIY587oQQATf+ZHffi2AsG1fDTBc3RfwjLoq2Y2k7DHpuKZWW3Pw58lza3jrvRcf3fU9ocoFjuTNmzg8rgUWF7HZDHDzE4Ffkl3V+R1rVFs3ofnWvpgV2mkutU9i96WgofRuzv1kD5OO/YCPpm7PNZ/+/aSfCYwhfpeGk7WZoKnCUFINnTcR/0E11UNsnjSR89Fg6A+++Kp2N98tIbKUqtcW7N6Xq+vA6f0YdesBni/P+nWyBSnPxrFXILr7XcJrs8bmmaxjBAzczJrfkmvhWBAykZ1aqtig8genVDsSa2XdJfbByZl2qJavtVsHdmyJF4+62Veu2o1p6qrMu+yKnXRFxQydWGe55B+tlOSqdtS7pvleZrX7QNm9gmCR+hHCe7mo2oMrGXCdu8HgB9K+lvufsnLno1EtaqXsrfm+kKhSl/o8RscKWEptpBLV14TDNQNuXgUm7oBZ/gGRBIGzANezAraGnIzL3hIslG5Rp0p6aWMurszwd03+8x8ST3tRWgys3fQaWEXMEfSP3tQqydUmbKs9A7eViPNSMI+gtUhijLwvMe0TMxsT4IvjfWzny6Q9LyvRrx9NQeqVyS9YWbj6b6BrVXSNHJGVzMbRYgktSvBkDzWp0klwsrHy8Czkl6pJoDurZuP6LXK67vaQCAP97dlri8s8L5QCbHX6zfUaDcDXvCVmzVLFFXIYoNHDA0YERERERERERERsSaxTjZ9DLZpS5x2RESsY6KoYgjdivrb6GWEpcbZkTAiIrpjrQpshiRECN55JsGCXI/uxwsIW3Yvo443XEVEbHBEkcF7gWsIQUvrFZsR/PTbge/FrhER0Yl1NbIfXOckkdV8DqVr3IeIiEgU6+gdWw2iOhnLxhFEOCKi7jSKwQbFKoiIiEQRERERiSIiIiISRURERCSKiIiISBQRERGRKCIiIjY0xOC63WEMMFz6ZhdejpmRqHOVtfmcU7s8M/7SKQAo88zM07/a5ZldrvfzfSWUJCQSKiRIwsxIy2m4H/6j1NaO/APKpXL4t1n4peGvpPCcRJqmmXtpxzNpaliaQj5tEtIUi8UQLlvhbUmhgCSUKPxVgpLwXYmXF39WiGJTQy7etmho6oxDY2ZgRjlNkVW+odI0MOPk49j2smvpvOL1d9oJXepvi4uu8DrofK757FM67o+ZdGmP7bhw0sQ+P9sbFk6aOOA81tR7st9VTxpFSoglOFjwJiGQ8IDZhhpHtY37/tUVkkiA4VIQo21+cE2VnAQhaOxoxGhCZOhNve0agBHlpiaSxAkkvK8SZLbJn62kKaZpikmVAg4N9yybb2XwaOySVhQDMXUI+CZkz66Ql5EuZSz4vSagKRBGR4qO9MWGApamTnyMIsSsHJpIFSKVf1MBYNvLf4w5hRIirYma9dfxnV0iYuWEqYmwKXBsD89UyjEi841j6B4ibzjhlK9RNcrSmKujyr8bc+8ZS4hy1VhFZkdm0o3oocxFwo7ozcmEw1sdwlpXGsUvCfEHd6xzkmgFfjJgojBDqckSvkkItHpf19uGTJjZ+xDngM4Eplk3sjEwGiVdjNnOZlouI0EsljgHKIEuSlpbb0zNpkraBJhkZk8lie6y1A4EvkoI2ZYQzpu4tlhIniiXyglwLvBO0FKwEHNR+g6k/wI+gXQq4YAbYSwDrsOY6iRzLFgZ41pBAeN8YG+E56UVBN+ZVzA+i/gIwSmwUrf/TUh3tf//KCU6keAXZAbtoNtFeruTxMWgq4HpdPLNu824ELNzEE9Y7T7+beA3hLMs8oLyUcLZohWB+ydwJfDvKnmNAq52QW3xOn0DOM/r9kDgSxld6T7gp7k83g2c4sQ1luCM2E44+uBRQpjCr9MZ5m4JcH2l7C70V3v6Ni/D68B1wN8z79kXOJFO14lZhIOXp9fz1GMacDRwGrA7PR8Ys74wF/gZcNOAtQlX2WXshNHl0Jotv3sVAOVyuZgkyWFCjQaHjf3oJ6ctePD+bmqJYQnGTsBtCTwEVgSVQc1g7d65voV0DPAZie0wLrag2o8XmmlBkBowPgVcYHB4ycrzCyQ7SvzWsF95X0iBN322s7UZzcA3EAWMjwEXIA5PzeZI2haj3Vw3AnYyuFfobqCIWYr0pmsEmwdhVLOk8zBKhGP4GgAstSLSeYLtEN8huPvvCexgUgGsILG7WSYcf5IkpHY4WCNwuJXtKRKl3RQAIcze4qNvHh8iBCeeQjgrdLgT62XA8XSPct4AbAdc5AJXcCFf6lrEqcClwOOuFQ2pIQtnEOJvXgr8wAW9meCYeIWT1RmEYLkH+PvOIJzi1eTvOptw7usIwoHVVwFfAV4B3uZ53wXc4+U81AnwWGDGmEmX9msKslaJ4qFdx2VdzR8FnvQGqzcjqhFcy5dnyz5QojAjzU2jO+4B7zRLt0LJ6YILF/z+vt2Af46/dAqzJp7YOVcP/yobtKRpukokRVm6UlJ7EAXdbNhemP1YUtGMs5RokZVTQIZsoZJkhpXLgP1M8HmDcUNHDG1uXd6SYmpFWiloIKGlrKGtlJb6oGiLlOg1KxlmNg84BGM7zOYgpZWpv9s+UsxawFYaagBWFZNCa6fE2h9A+4EdY2bXIVKZUrdlvBXYz7CjMF6pmBygYocJ3Jqr5D2BHQWnGVxAoj2BZ7P1l5kCdmsHF55jgNsJhy1XcDZwB/BBF7Q8yq5NrPJ+vJxOi0uD928DnqvRPZZn0qwAZmSm5gd5Wc+jM8jvT5wYjnKiwDWJ1z0tTlrXAYcQouQfQTha4/LMey8iRBM/yMmpvjSKHFm0+chd1xhwwJrUuhngOsY4wZvPv8KWe+x4CMbDWPq0CoWnEQebcaHUdQrjI3aDxNcJXrhF4KHhY4ZdNeOF1xmzxegScAvwMOIGKZleeaebD0dg6ThJDUifNGjFbE77khapoMSw4wUfstDJn0zKKy5OgzCYxPA0ZbwSJUIfNjPDmBnk3lyRCFMkoQTpBDM+JtEAPFZKy5OLSSH1qctLSrgNNDlN038lhaTcoVHANsIWYZrZSY5Qy+VGqUGSHGKyqcBfMR4DDlGSPBsIMa9VGOo+LxniNoBpuevLgJdqTJPNtY5zCQf5FoDbfGo9mxCe4BjCiWb/Bm4knFrexYjoU5+kip1wR9cm8scvPgO8y+vLqlSOAc/SeWrZBMLxAXlb4bOs5qFRxUEheINt2cSt9pYCCl10zKTJwdiYGlvsvv0ultonSPQYcL6Z7SS0m8RPgdmVUdE6yaKdlCtJeNCnHquWNi9l7FZjgyHO7DiDuzHbA7P9gcddhssY73e1tABaDna+Es2zxiShbCniegujahFosXJa9m6YYrxHcGUKI4W2Bb6mgmZJ3a22ZqTCfqxEd1XymveOndKtn59RWbgpmPGoEqYInY8xF/GKD8Vz3bC3uaSZSkI9mSf0igj/TA0KyfbAZzCeAc4nBEPax8rl64AZ4yZPYfYZJ1a1L292wWWVVZwWF/ZdfdqRNbJOyAp4jrmWE87ufM6JYnkm/18Dvwe2Bz7rxPFFwrkffcEs4CNef9kDiHbN2DLUtea7PDMnY5CvdibqLqu7sFBXy6P1EFtzTZBaZUmRhAQYJamympCuXLpi0ZARQ78oeArTPYiimf0NcbTQQRg/7OwKVlFqE8zKllo7kJJYQUnSkJbL7UmxcLxgC9BxFqKInW3Y8ZLeNKMo2Z8MzgoagpaaWVtaKgcBlCWYypLaDFKMJCkWGsulUpsTy5/BTsEYA1wCDKsssQIJhjr7qwlUNqNNWApKtnzm5UaKhTYf1pM0TSko+TmJdgC+adglpAaJpoP+gZiE+F6Yr9tuwM5Jktzm04+kUyvTwWY2HbgTKCCmkVoT8AWJ73dRSsKRPgnYqNQstIMop+V0UZIktwDf8NH/Sdcyvuwj98M1mld0HtZU0YoSN0y+1/OZAUwFPk3PRyXmp+C/c2I53W1lrYQzWb/gtpSs3I51ohvu79nb7SsAt7qt4wjPM/HFhLflpiODiyjqKfhupSxrwkYh01ywLwDvByUmmpuGbXK5wc6YXY7ZNNGxBLgcONyXGVdUeALMZDST6ATDDhFKQgey7xQbiu1mfMDgIrAlglsM9sA41EKHWAy8rkLSbKUyhlEoFihXiALmgh3uo5hcPZ2cJMmTltpSw2aooGbKabPnd7Sl9pjJmiUtcGNqRRznAUeC/ZdnXja4xFJ7WomWAPPSNKXYUCwTTmObACwOSkPSCpyrsCryo6B6qwHsnqBKkGLMAlZZasMQbxNcCXrc6NgksQD4SpoyylcKslQxz+BowactaAGzCoXCuWma3itpKHAycJIL/ZvAxBpT5JLn/S1vI3kdn+PT6g+40b7Fl2Rv8FURauQ1M6c5zPR3T/TVkrKX/1LXVHCCWuGaVIsT0UJfUaqsaPzF73/Vp0HyNN8E/pGdBg1KjcJZ8kBgH9btkYXmDXoX8EKFMAZCFqlSE7pQaHiwKoKMksRCzM40mG/lMsWGYkWZfARjOup6epQZbRJneMfLlncuogic3NLaNm/M6JEsW7y83bDzgRHFhqJKbaXbgKKUUCjAqycdA8C4yVMgGFq/Te7EN0GzD8h3A79p3KTIyrYSmP0J9Hdgma+oXKeOI/go+7x9eK6MlTNc77Su7bnMhTPb/95EOlNoa2AEYr6lzFenAfB0YAkiBc5CWiBBWuow+j5hxsuEI/TyAvktuh5gXAKWKkwLbwV+S9hH0erqf3uNZl3iqyGb5IybzZ5moq92DHfh7ckeN8eXQfMrK8+5VjM+Q1xLM/fn+dJyY8buN79KmR/06dM4HwBmuwF2tVCslxHcl4aucRVpfeFI4DhfoRkQFKR/of/yWFUxBM4+8yTGTb660nnn1iCx5uoH8KkVbMWQpkZWrWwJc3q0EmxlxsLeExb4rxpWACusU983rEv5lvQjr+WV2VS55OToWlO4VqLY2BDIS8zq0MsFaWoVQ1xzTljCEHzaCZVdruUeBHO+/3KGZVVIZkmV76k26qa9CH+pmgZRY/QuZb8pt6OyDXitxjvKPdk8cvmscMNsX8rTS3+uH6I4ydXO9Y37fE7YEsP1R0RUN6asT+xbJ+XYg7BBKCIios6IQvRsHV6XKK5j+0hERCSKiIiISBQRERGRKCIiIiIiUURERESiiIiIiEQRERERiSIiIiISRRaVIB71gBa6xwOIiIhEUSd4mNrOOOsSU8n4EkRERNQXUdxDiFW4dD29vwT8gRBKrBS7RkREJ1QPhcg4hjUSohTvwbp3M59J8Brt8DKMTmEREQH/D21ZzA4HVCXVAAAAAElFTkSuQmCC';
   return '<div style="background:#f0f4f8;padding:16px;font-family:Arial,sans-serif;">'
     +'<div style="max-width:560px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);">'
-    // Header
-    +'<div style="background:linear-gradient(135deg,#1a3a6b,#2563eb);padding:24px 20px;text-align:center;">'
-    +'<img src="data:image/png;base64,'+logoB64+'" style="height:36px;max-width:180px;" alt="INTELLISHIP">'
+    +'<div style="background:linear-gradient(135deg,#1a3a6b,#2563eb);padding:18px 20px;text-align:center;">'
+    +'<span style="font-size:18px;font-weight:800;color:white;letter-spacing:2px;">INTELLISHIP</span>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px;">La experiencia lo es todo</div>'
     +'</div>'
-    // Title bar
-    +'<div style="background:#1a3a6b;padding:14px 20px;">'
-    +'<h2 style="margin:0;font-size:16px;color:white;font-weight:700;line-height:1.3;">'+title+'</h2>'
+    +'<div style="background:#1a3a6b;padding:12px 20px;">'
+    +'<h2 style="margin:0;font-size:15px;color:white;font-weight:700;line-height:1.3;">'+title+'</h2>'
     +'</div>'
-    // Body
     +'<div style="padding:20px;">'
     +'<div style="font-size:14px;line-height:1.7;color:#374151;">'+body+'</div>'
     +'</div>'
-    // Footer
-    +'<div style="background:#f8fafc;padding:14px 20px;border-top:1px solid #e2e8f0;text-align:center;">'
+    +'<div style="background:#f8fafc;padding:12px 20px;border-top:1px solid #e2e8f0;text-align:center;">'
     +'<p style="margin:0;font-size:11px;color:#94a3b8;">INTELLISHIP Honduras &nbsp;|&nbsp; La experiencia lo es todo</p>'
     +'</div>'
     +'</div>'
     +'</div>';
 }
-
 function previewMail(btn){
   var card = btn.closest('.card');
   var type = card.querySelector('.ct').innerText;
@@ -2917,55 +2912,58 @@ function buildPayrollEmailHTML(r,per,mesLabel){
   var isQ2=per==='2da Quincena';
   var isMensual=per==='Mensual';
 
-  // Determine which data to show
-  var base = isQ1?r.baseQ1 : isQ2?r.baseQ2 : r.baseQ1+r.baseQ2;
-  var bono = isQ1?r.bonoQ1 : isQ2?r.bonoQ2 : r.bonoQ1+r.bonoQ2;
-  var adelanto = isQ1?r.adelQ1 : isQ2?r.adelQ2 : r.adelQ1+r.adelQ2;
-  var ihss = isQ1?0 : r.ihss; // IHSS only on Q2
-  var neto = isQ1?(r.baseQ1+r.bonoQ1-r.adelQ1) : isQ2?(r.baseQ2+r.bonoQ2-r.adelQ2-r.ihss) : r.neto;
-
+  var netoQ1=r.baseQ1+r.bonoQ1-r.adelQ1;
+  var netoQ2=r.baseQ2+r.bonoQ2-r.adelQ2-r.ihss;
   var periodTitle = isMensual ? mesLabel : per+' '+mesLabel;
 
-  var rows='';
-  // Helper to add row
-  function row(label,amount,color,bg){
-    if(!amount) return '';
-    return '<tr style="background:'+bg+';">'
-      +'<td style="padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f1f5f9;">'+label+'</td>'
-      +'<td style="padding:10px 14px;font-size:13px;font-family:monospace;text-align:right;color:'+color+';border-bottom:1px solid #f1f5f9;">'+fmL(amount)+'</td>'
-      +'</tr>';
+  function seccion(titulo, rows, subtotal, color){
+    var html='<div style="margin-bottom:16px;">'
+      +'<div style="background:#1a3a6b;color:white;padding:8px 14px;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;">'+titulo+'</div>'
+      +'<div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">';
+    for(var i=0;i<rows.length;i++){
+      if(!rows[i].val) continue;
+      var bg=i%2===0?'#f8fafc':'#ffffff';
+      html+='<div style="display:flex;justify-content:space-between;padding:8px 14px;background:'+bg+';font-size:13px;">'
+        +'<span style="color:#374151;">'+rows[i].label+'</span>'
+        +'<span style="font-family:monospace;color:'+rows[i].color+';">'+rows[i].txt+'</span>'
+        +'</div>';
+    }
+    html+='<div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f0f4f8;font-size:14px;font-weight:700;border-top:2px solid #e2e8f0;">'
+      +'<span>Subtotal</span><span style="font-family:monospace;color:'+color+';">'+fmL(subtotal)+'</span>'
+      +'</div>';
+    html+='</div></div>';
+    return html;
   }
 
-  rows += row('Salario Base', base, '#374151', '#f8fafc');
-  if(bono>0) rows += row('Bono / Horas Extra', bono, '#16a34a', '#ffffff');
-  if(adelanto>0) rows += row('Adelanto / Préstamo', -adelanto, '#dc2626', '#f8fafc');
-  if(ihss>0) rows += row('IHSS', -ihss, '#dc2626', '#ffffff');
+  var body='<p style="font-size:14px;margin:0 0 16px;">Hola <b>'+r.nombre+'</b>'+(r.emp&&r.emp.c?' — '+r.emp.c:'')+'</p>'
+    +'<p style="font-size:13px;color:#64748b;margin:0 0 20px;">Aquí está el desglose completo de tu pago correspondiente a <b>'+periodTitle+'</b>:</p>';
 
-  // If mensual, show both quincenas breakdown
-  var mensualExtra='';
-  if(isMensual){
-    mensualExtra='<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:8px;font-size:11px;color:#94a3b8;">'
-      +'<tr><td style="padding:4px 14px;">1ra Quincena:</td><td style="padding:4px 14px;text-align:right;font-family:monospace;">'+fmL(r.baseQ1+r.bonoQ1-r.adelQ1)+'</td></tr>'
-      +'<tr><td style="padding:4px 14px;">2da Quincena:</td><td style="padding:4px 14px;text-align:right;font-family:monospace;">'+fmL(r.baseQ2+r.bonoQ2-r.adelQ2-r.ihss)+'</td></tr>'
-      +'</table>';
+  // Q1 section
+  if(!isQ2){
+    body+=seccion('➕ 1ra Quincena — Ingresos y Descuentos',[
+      {label:'Salario Base Q1', val:r.baseQ1, txt:fmL(r.baseQ1), color:'#374151'},
+      {label:'Hrs Extr. / Bono Q1', val:r.bonoQ1, txt:'+'+fmL(r.bonoQ1), color:'#16a34a'},
+      {label:'Adelanto / Préstamo Q1', val:r.adelQ1, txt:'-'+fmL(r.adelQ1), color:'#dc2626'},
+    ], netoQ1, '#2563eb');
   }
 
-  var body='<p style="font-size:14px;color:#374151;margin:0 0 16px;">Hola <b>'+r.nombre+'</b>'+(r.emp&&r.emp.c?' — '+r.emp.c:'')+'</p>'
-    +'<p style="font-size:13px;color:#64748b;margin:0 0 16px;">Aquí está tu desglose de pago correspondiente al período <b>'+periodTitle+'</b>:</p>'
-    // Mobile-friendly table
-    +'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;">'
-    +'<thead><tr style="background:#1a3a6b;">'
-    +'<th style="padding:10px 14px;font-size:12px;color:white;text-align:left;font-weight:700;">Concepto</th>'
-    +'<th style="padding:10px 14px;font-size:12px;color:white;text-align:right;font-weight:700;">Monto</th>'
-    +'</tr></thead>'
-    +'<tbody>'+rows+'</tbody>'
-    +'<tfoot><tr style="background:#1a3a6b;">'
-    +'<td style="padding:12px 14px;font-size:14px;color:white;font-weight:800;">NETO A RECIBIR</td>'
-    +'<td style="padding:12px 14px;font-size:14px;color:#4ade80;text-align:right;font-family:monospace;font-weight:800;">'+fmL(neto)+'</td>'
-    +'</tr></tfoot>'
-    +'</table>'
-    +mensualExtra
-    +'<p style="font-size:11px;color:#94a3b8;margin-top:12px;">Emitido el '+today+' por INTELLISHIP Honduras. Para consultas comunícate con tu coordinador.</p>';
+  // Q2 section
+  if(!isQ1){
+    body+=seccion('➕ 2da Quincena — Ingresos y Descuentos',[
+      {label:'Salario Base Q2', val:r.baseQ2, txt:fmL(r.baseQ2), color:'#374151'},
+      {label:'Hrs Extr. / Bono Q2', val:r.bonoQ2, txt:'+'+fmL(r.bonoQ2), color:'#16a34a'},
+      {label:'Adelanto / Préstamo Q2', val:r.adelQ2, txt:'-'+fmL(r.adelQ2), color:'#dc2626'},
+      {label:'IHSS (solo Q2)', val:r.ihss, txt:'-'+fmL(r.ihss), color:'#dc2626'},
+    ], netoQ2, '#2563eb');
+  }
+
+  // Total
+  var totalPagado=isQ1?netoQ1:isQ2?netoQ2:r.neto;
+  body+='<div style="background:linear-gradient(135deg,#1a3a6b,#2563eb);border-radius:12px;padding:16px 20px;text-align:center;margin-top:4px;">'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">💰 Total Pagado</div>'
+    +'<div style="font-size:26px;font-weight:900;color:#4ade80;font-family:monospace;">'+fmL(totalPagado)+'</div>'
+    +'</div>'
+    +'<p style="font-size:11px;color:#94a3b8;margin-top:16px;">Emitido el '+today+' por INTELLISHIP Honduras. Para consultas comunícate con tu coordinador.</p>';
 
   return getEmailTemplate('Desglose de Pago — '+periodTitle, body);
 }
