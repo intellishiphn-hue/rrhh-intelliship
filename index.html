@@ -2610,7 +2610,7 @@ function genPayrollPDF(){
   var totalDesc=ihss+rap+adelanto+descOtros;
   var neto=totalIng-totalDesc;
   var today=new Date().toLocaleDateString('es-HN',{day:'2-digit',month:'long',year:'numeric'});
-  var mesLabel=new Date(mes+'-01').toLocaleDateString('es-HN',{month:'long',year:'numeric'});
+  var mesLabel=new Date(mes+'-02T12:00:00').toLocaleDateString('es-HN',{month:'long',year:'numeric'});
   // Build the PDF HTML
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
     +'body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1a1a2e;}'
@@ -2708,7 +2708,9 @@ function openPlanillaUpload(){
   document.getElementById('pl-back-btn').classList.add('hidden');
   document.getElementById('pl-process-btn').classList.add('hidden');
   document.getElementById('pl-progress').classList.add('hidden');
-  document.getElementById('pl-mes').value=new Date().toISOString().slice(0,7);
+  var now=new Date();
+  var localMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('pl-mes').value=localMonth;
   document.getElementById('pl-fi').value='';
   om('mo-planilla');
 }
@@ -2842,7 +2844,7 @@ async function processPlanilla(){
   var mes=document.getElementById('pl-mes').value;
   var sendEmail=document.getElementById('pl-send-email').checked;
   var sendWA=document.getElementById('pl-send-wa').checked;
-  var mesLabel=new Date(mes+'-01').toLocaleDateString('es-HN',{month:'long',year:'numeric'});
+  var mesLabel=new Date(mes+'-02T12:00:00').toLocaleDateString('es-HN',{month:'long',year:'numeric'});
   mesLabel=mesLabel.charAt(0).toUpperCase()+mesLabel.slice(1);
   var progressEl=document.getElementById('pl-progress');
   var progressBar=document.getElementById('pl-progress-bar');
