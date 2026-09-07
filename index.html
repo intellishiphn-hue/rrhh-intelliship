@@ -334,6 +334,11 @@ box-shadow:0 25px 60px rgba(0,0,0,.45);
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Configuracion
       </div>
+      <div class="nl" id="nl-envios" style="margin-top:8px;">Envios</div>
+      <div class="ni" id="nav-guias" onclick="location.href='intelliship-rastreo.html'">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+        Envio de Guias
+      </div>
       <div class="nl" id="nl-team" style="margin-top:8px;">Equipo</div>
       <div id="emplist" style="padding:0 8px 10px;"></div>
     </div>
@@ -1202,6 +1207,8 @@ function applyRole(){
   document.getElementById('nav-emps').style.display=(isAdmin||isCoord)?'':'none';
   document.getElementById('nav-asis').style.display=(isAdmin||isCoord)?'':'none';
   var navPl=document.getElementById('nav-planilla'); if(navPl) navPl.style.display=isAdmin?'':'none';
+  var navGuias=document.getElementById('nav-guias'); if(navGuias) navGuias.style.display=(isAdmin||isCoord)?'':'none';
+  var nlEnvios=document.getElementById('nl-envios'); if(nlEnvios) nlEnvios.style.display=(isAdmin||isCoord)?'':'none';
 }
 
 // ---- NAV ----
