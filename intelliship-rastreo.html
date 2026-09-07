@@ -461,28 +461,64 @@ function parseCargoExpreso(text){
   return {nombre:nombre, telefono:telefono, guia:guia};
 }
 
-// FORZA: aún SIN validar contra una guía real (no tengo un PDF de ejemplo todavía).
-// Heurística genérica: busca un teléfono hondureño y el nombre en la línea de arriba,
-// y la secuencia de dígitos más larga como posible número de guía. Cada fila que salga
-// de aquí se marca con sinVerificar=true para advertir al usuario en la tabla de revisión.
+// FORZA: validado contra una guía real. Estructura de la etiqueta (en el orden que
+// entrega pdf.js, columna por columna):
+//   ...Remitente... "Tel.: <telefono remitente>" ...
+//   "NOMBRE DESTINATARIO EN MAYUSCULAS"
+//   "Tel.: <telefono destinatario>"
+//   ...direccion...
+//   "Contacto: Nombre Destinatario"
+//   "Destinatario" "Guía No."
+//   "<numero guia>"  "<codigo con prefijo, ej FD40810433-1>"
 function parseForza(text){
   var lines = text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
   var nombre = null, telefono = null, guia = null;
 
+  // Nombre: la etiqueta "Contacto:" siempre trae el nombre del destinatario tal cual.
   for(var i=0;i<lines.length;i++){
-    var m = lines[i].match(/\b\d{4}-\d{4}\b/) || lines[i].match(/\b\d{8}\b/);
-    if(m){
-      telefono = m[0];
-      if(i>0) nombre = lines[i-1];
-      break;
+    var mc = lines[i].match(/^Contacto:\s*(.+)$/i);
+    if(mc){ nombre = mc[1].trim(); break; }
+  }
+
+  // Telefono: FORZA imprime "Tel.: <numero>" dos veces (remitente y destinatario).
+  // La primera es el telefono de INTELLISHIP (remitente); la segunda es del destinatario.
+  var telMatches = [];
+  for(var i=0;i<lines.length;i++){
+    var mt = lines[i].match(/Tel\.?:\s*(\+?\d{7,12})/i);
+    if(mt) telMatches.push({idx:i, num:mt[1]});
+  }
+  var telRaw = null;
+  if(telMatches.length >= 2) telRaw = telMatches[1].num;
+  else if(telMatches.length === 1) telRaw = telMatches[0].num;
+  if(telRaw){
+    var digits = telRaw.replace(/\D/g,'');
+    if(digits.length===11 && digits.slice(0,3)==='504') digits = digits.slice(3);
+    telefono = digits.length===8 ? (digits.slice(0,4)+'-'+digits.slice(4)) : digits;
+  }
+
+  // Nombre de respaldo (si no aparecio "Contacto:"): la linea justo antes del telefono
+  // del destinatario suele ser su nombre en mayusculas.
+  if(!nombre && telMatches.length >= 2){
+    var pidx = telMatches[1].idx;
+    if(pidx>0) nombre = lines[pidx-1];
+  }
+
+  // Guia: codigo con prefijo de letras + digitos + guion + digito, ej "FD40810433-1"
+  // (el mismo texto que aparece impreso bajo el codigo de barras).
+  var guideMatches = text.match(/\b[A-Z]{1,4}\d{6,10}-\d\b/g) || [];
+  if(guideMatches.length){
+    guia = guideMatches[0];
+  } else {
+    for(var i=0;i<lines.length;i++){
+      if(/gu[ií]a\s*no\.?/i.test(lines[i])){
+        if(i+1<lines.length) guia = lines[i+1];
+        break;
+      }
     }
   }
-  var guideMatches = text.match(/\b\d{7,12}[A-Z]?(-\d)?\b/g) || [];
-  if(guideMatches.length){
-    guia = guideMatches.slice().sort(function(a,b){ return b.length-a.length; })[0];
-  }
+
   if(!nombre && !telefono && !guia) return null;
-  return {nombre:nombre, telefono:telefono, guia:guia, sinVerificar:true};
+  return {nombre:nombre, telefono:telefono, guia:guia};
 }
 
 var COURIERS = {
@@ -597,7 +633,7 @@ async function processFiles(){
   renderReviewTable();
   document.getElementById('reviewCard').style.display='block';
   document.getElementById('previewCard').style.display='block';
-  showToast(rows.length+' guía(s) detectada(s) de '+courier.label+(courierId==='forza'?' (sin verificar, revisa cada fila).':'.'));
+  showToast(rows.length+' guía(s) detectada(s) de '+courier.label+'.');
 }
 
 /* ============================================================
