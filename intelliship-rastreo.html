@@ -334,7 +334,7 @@ var cfg = {
   waTemplate:'rastreo_intelliship', waLang:'es',
   courierTemplates: {
     cargoexpreso: 'https://tracking.caexlogistics.com/componentes/siscaexhn/Tracking?aid=3d0aea44-9cb5-424a-9b80-3b44b7a62b29&ordno={guia}',
-    forza: ''
+    forza: 'https://rastreo.forzadelivery.com/{guia}'
   },
   shortDomain:'',
   pass: DEFAULT_PASS
@@ -550,7 +550,13 @@ async function extractFromPdf(file, courierId){
 function buildLink(courierId, guia){
   var template = cfg.courierTemplates[courierId];
   if(!template) return '';
-  return template.split('{guia}').join(encodeURIComponent(guia));
+  var val = guia;
+  if(courierId === 'forza'){
+    // El sitio de rastreo de FORZA no acepta el sufijo "-N" del codigo de guia
+    // (ej. FD40707137-1 debe quedar como FD40707137).
+    val = String(guia).replace(/-\d+$/, '');
+  }
+  return template.split('{guia}').join(encodeURIComponent(val));
 }
 
 /* ============================================================
