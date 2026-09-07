@@ -1053,6 +1053,19 @@ function dateRangeArr(from,to){
   while(d<=end){ arr.push(d.toISOString().split('T')[0]); d.setDate(d.getDate()+1); }
   return arr;
 }
+// Fecha/mes en hora LOCAL (Honduras), no UTC. new Date().toISOString() convierte a UTC
+// primero, y como Honduras es UTC-6, cualquier marca desde las 6pm en adelante cae
+// en el dia UTC siguiente y quedaba mal guardada como "el dia de manana".
+function localDateStr(d){
+  d=d||new Date();
+  var y=d.getFullYear(),m=(d.getMonth()+1),day=d.getDate();
+  return y+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
+}
+function localMonthStr(d){
+  d=d||new Date();
+  var y=d.getFullYear(),m=(d.getMonth()+1);
+  return y+'-'+(m<10?'0':'')+m;
+}
 function quincenaRange(monthStr,quincena){ // monthStr 'YYYY-MM', quincena 1 or 2
   var y=parseInt(monthStr.slice(0,4)),m=parseInt(monthStr.slice(5,7));
   if(quincena===1) return {from:monthStr+'-01', to:monthStr+'-15'};
@@ -1375,7 +1388,7 @@ async function confirmMark(){
       eid:_markEid,
       tipo:_markTipo,
       ts:Date.now(),
-      fecha:now.toISOString().split('T')[0],
+      fecha:localDateStr(now),
       lat:_markGpsCoords?_markGpsCoords.lat:null,
       lng:_markGpsCoords?_markGpsCoords.lng:null,
       distM:_markGpsDist,
@@ -1577,8 +1590,8 @@ var _asisMode='dia'; // 'dia' | 'quincena' | 'mes'
 function rAsis(){
   rSidebar();
   cleanOldAttendancePhotos();
-  var today=new Date().toISOString().split('T')[0];
-  var curMonth=new Date().toISOString().slice(0,7);
+  var today=localDateStr();
+  var curMonth=localMonthStr();
   var html='<div class="card" style="margin-bottom:14px;"><div class="mb">';
   html+='<div class="fx g2" style="margin-bottom:14px;">';
   html+='<button class="btn '+(_asisMode==='dia'?'bp':'bg')+' bsm" onclick="setAsisMode(\'dia\')">Por Dia</button>';
@@ -1710,7 +1723,7 @@ function rDash(){
     var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
     var html='';
     for(var i=0;i<bd0.length;i++) if(bd0[i].id===e.id) html+='<div class="bday-row">🎂 <div><strong>Feliz Cumpleanos, '+e.n+'!</strong></div></div>';
-    var todayStr=now.toISOString().split('T')[0];
+    var todayStr=localDateStr(now);
     var todayCalc=dayCalc(e.id,todayStr);
     html+='<div class="card" style="margin-bottom:14px;"><div class="mb"><div class="fx g2">';
     html+='<button class="btn bgr" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'entrada\')">🟢 Marcar Entrada</button>';
@@ -1841,7 +1854,7 @@ function rPerf(eid){
 
   var html=alertH;
   if(role==='emp'&&eid===activeEmp){
-    var todayStr=new Date().toISOString().split('T')[0];
+    var todayStr=localDateStr();
     var todayCalcEmp=dayCalc(e.id,todayStr);
     html+='<div class="card" style="margin-bottom:14px;"><div class="mb"><div class="fx g2">';
     html+='<button class="btn bgr" style="flex:1;justify-content:center;padding:16px;font-size:14px;" onclick="openMark(\'entrada\')">🟢 Marcar Entrada</button>';
@@ -1887,12 +1900,12 @@ function rPerf(eid){
   html+='</div></div>';
 
   if(role!=='emp'){
-    var nowMonth=new Date().toISOString().slice(0,7);
+    var nowMonth=localMonthStr();
     var mRange=monthRange(nowMonth);
     var mCalc=rangeCalc(e.id,mRange.from,mRange.to);
     var allTimeAsis=asistencia.filter(function(a){ return a.eid===e.id; });
     var firstAsis=allTimeAsis.length?allTimeAsis.reduce(function(min,a){ return a.ts<min?a.ts:min; },Infinity):null;
-    var allTimeCalc=firstAsis?rangeCalc(e.id,new Date(firstAsis).toISOString().split('T')[0],new Date().toISOString().split('T')[0]):{tardanzas:0,totalExtra:0};
+    var allTimeCalc=firstAsis?rangeCalc(e.id,localDateStr(new Date(firstAsis)),localDateStr()):{tardanzas:0,totalExtra:0};
     html+='<div class="card" style="margin-bottom:14px;"><div class="ch"><div class="ct">⏰ Asistencia</div><button class="btn bg bsm" onclick="gv(\'asis\')">Ver detalle</button></div>';
     html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:16px;">';
     html+='<div class="dc"><div class="dn" style="color:'+(mCalc.tardanzas>0?'var(--red)':'var(--grn)')+';">'+mCalc.tardanzas+'</div><div class="dl">Tardanzas (mes)</div></div>';
@@ -2010,7 +2023,7 @@ function saveReg(){
     if(dias>disp){ al.textContent='⚠ Solo hay '+disp+' dia(s) disponibles. Guardando de todas formas.'; al.classList.remove('hidden'); }
     else al.classList.add('hidden');
   }
-  regs.push({id:Date.now().toString(),eid:eid,t:tipo,fi:fi,ff:ff,d:dias,notes:notes,fecha:new Date().toISOString().split('T')[0],adj:regFile||null});
+  regs.push({id:Date.now().toString(),eid:eid,t:tipo,fi:fi,ff:ff,d:dias,notes:notes,fecha:localDateStr(),adj:regFile||null});
   var _newReg=regs[regs.length-1];
   regFile=null;
   saveAll(); cloudPut('regs',_newReg.id,_newReg); syncSheets();
@@ -2099,7 +2112,7 @@ function openAddSal(){
   var opts='<option value="">Seleccionar...</option>';
   for(var i=0;i<emps.length;i++) opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>';
   sel.innerHTML=opts;
-  document.getElementById('sf-m').value=new Date().toISOString().slice(0,7);
+  document.getElementById('sf-m').value=localMonthStr();
   document.getElementById('sf-mn').value='';
   document.getElementById('sf-n').value='';
   document.getElementById('sf-em').value='';
@@ -2112,7 +2125,7 @@ function saveSal(){
   var mes=document.getElementById('sf-m').value;
   var monto=parseFloat(document.getElementById('sf-mn').value)||0;
   if(!eid||!mes||!monto){ toast('Completa los campos requeridos','err'); return; }
-  var s={id:Date.now().toString(),eid:eid,per:document.getElementById('sf-p').value,mes:mes,monto:monto,notes:document.getElementById('sf-n').value,fecha:new Date().toISOString().split('T')[0]};
+  var s={id:Date.now().toString(),eid:eid,per:document.getElementById('sf-p').value,mes:mes,monto:monto,notes:document.getElementById('sf-n').value,fecha:localDateStr()};
   sals.push(s); saveAll(); cloudPut('sals',s.id,s); syncSheets();
   var send=document.getElementById('sf-se').checked, email=document.getElementById('sf-em').value;
   cm('mo-s'); toast('Pago registrado');
@@ -2130,7 +2143,7 @@ function openBAC(){
   document.getElementById('bload').classList.add('hidden');
   document.getElementById('bbtn').classList.add('hidden');
   document.getElementById('bfi').value='';
-  document.getElementById('bm').value=new Date().toISOString().slice(0,7);
+  document.getElementById('bm').value=localMonthStr();
   om('mo-b');
 }
 function onBACDrop(e){ e.preventDefault(); var f=e.dataTransfer.files[0]; if(f&&f.type==='application/pdf') procBAC(f); }
@@ -2227,7 +2240,7 @@ function parseBAC(text){
 async function confirmBAC(){
   var per=document.getElementById('bp').value, mes=document.getElementById('bm').value;
   var sendAll=document.getElementById('bse').checked, saved=0, emails=0;
-  var fecha=new Date().toISOString().split('T')[0];
+  var fecha=localDateStr();
   for(var i=0;i<bacData.length;i++){
     var r=bacData[i]; if(!r.matched) continue;
     var s={id:Date.now().toString()+'_'+i,eid:r.emp.id,per:per,mes:mes,monto:r.monto,notes:'Comprobante BAC',fecha:fecha};
@@ -2388,7 +2401,7 @@ function addDoc(eid,ev){
     (function(f){
       var rd=new FileReader();
       rd.onload=function(e){
-        var _newDoc={id:Date.now().toString()+'_'+Math.random().toString(36).slice(2),eid:eid,name:f.name,type:f.type,data:e.target.result,fecha:new Date().toISOString().split('T')[0]};
+        var _newDoc={id:Date.now().toString()+'_'+Math.random().toString(36).slice(2),eid:eid,name:f.name,type:f.type,data:e.target.result,fecha:localDateStr()};
         docs.push(_newDoc);
         saveAll(); cloudPut('docs',_newDoc.id,_newDoc);
         var dl=document.getElementById('dlist-'+eid);
@@ -2480,14 +2493,14 @@ function checkBdays(){
   for(var i=0;i<hoy.length;i++){
     var b=hoy[i];
     if(b.e&&cfg.bdayMsg){
-      var key='bday_'+b.id+'_'+new Date().toISOString().split('T')[0];
+      var key='bday_'+b.id+'_'+localDateStr();
       if(!localStorage.getItem(key)){ localStorage.setItem(key,'1'); sendBday(b.id); }
     }
   }
   var en3=bdays(3);
   for(var i=0;i<en3.length;i++){
     if(cfg.adminEmail){
-      var key='bday3_'+en3[i].id+'_'+new Date().toISOString().split('T')[0];
+      var key='bday3_'+en3[i].id+'_'+localDateStr();
       if(!localStorage.getItem(key)){
         localStorage.setItem(key,'1');
         callAPI(cfg.adminEmail,'[RRHH] En 3 dias cumple años '+en3[i].n+' '+en3[i].a,
@@ -2510,13 +2523,13 @@ function dlPDF(eid){
   for(var i=0;i<hist.length;i++) rows+='<tr><td>'+TL[hist[i].t]+'</td><td>'+fd(hist[i].fi)+'</td><td>'+fd(hist[i].ff)+'</td><td>'+hist[i].d+'</td><td>'+(hist[i].notes||'--')+'</td></tr>';
   var win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;color:#1a1a2e;margin:0;padding:28px;}.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #4f8ef7;padding-bottom:12px;margin-bottom:18px;}.brand{font-size:15px;font-weight:700;color:#4f8ef7;letter-spacing:2px;}.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}.sc{background:#f8f9ff;border-radius:8px;padding:11px;text-align:center;}.ig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}.ic{background:#f8f9ff;border-radius:8px;padding:12px;}.ict{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}.ir{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #eee;}.ir:last-child{border-bottom:none;}table{width:100%;border-collapse:collapse;}th{background:#1e2333;color:white;padding:7px 10px;font-size:11px;text-align:left;}td{padding:7px 10px;border-bottom:1px solid #eee;font-size:12px;}.footer{text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;margin-top:20px;}</style></head><body>');
-  win.document.write('<div class="hdr"><div><div class="brand">INTELLISHIP</div></div><div style="text-align:right;"><div style="font-size:16px;font-weight:700;">'+e.n+' '+e.a+'</div><div style="font-size:12px;color:#888;">'+e.id+' · '+e.c+'</div><div style="font-size:11px;color:#aaa;">'+fd(new Date().toISOString().split('T')[0])+'</div></div></div>');
+  win.document.write('<div class="hdr"><div><div class="brand">INTELLISHIP</div></div><div style="text-align:right;"><div style="font-size:16px;font-weight:700;">'+e.n+' '+e.a+'</div><div style="font-size:12px;color:#888;">'+e.id+' · '+e.c+'</div><div style="font-size:11px;color:#aaa;">'+fd(localDateStr())+'</div></div></div>');
   win.document.write('<div class="sg"><div class="sc"><div style="font-size:24px;font-weight:700;color:#34c87a;">'+disp+'</div><div style="font-size:11px;color:#888;">Disponibles</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#f05252;">'+us+'</div><div style="font-size:11px;color:#888;">Tomados</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#666;">'+tot+'</div><div style="font-size:11px;color:#888;">Por Ley</div></div></div>');
   win.document.write('<div class="sg"><div class="sc"><div style="font-size:24px;font-weight:700;color:#f05252;">'+fNJ+'</div><div style="font-size:11px;color:#888;">Faltas NJ</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#f5c542;">'+fJ+'</div><div style="font-size:11px;color:#888;">Faltas J</div></div><div class="sc"><div style="font-size:24px;font-weight:700;color:#a78bfa;">'+perm+'</div><div style="font-size:11px;color:#888;">Permisos</div></div></div>');
   win.document.write('<div class="ig"><div class="ic"><div class="ict">Info Personal</div><div class="ir"><span>Nacimiento</span><span>'+fd(e.nb)+'</span></div><div class="ir"><span>Genero</span><span>'+(e.g||'--')+'</span></div><div class="ir"><span>Estado Civil</span><span>'+(e.ec||'--')+'</span></div><div class="ir"><span>Identidad</span><span style="font-size:11px;">'+(e.idn||'--')+'</span></div><div class="ir"><span>Ingreso</span><span>'+fd(e.i)+'</span></div><div class="ir"><span>Antiguedad</span><span>'+yt(ag)+'</span></div></div><div class="ic"><div class="ict">Contacto</div><div class="ir"><span>Telefono</span><span>'+(e.t||'--')+'</span></div><div class="ir"><span>Email</span><span>'+(e.e||'--')+'</span></div><div class="ir"><span>Emergencia</span><span>'+(e.emg||'--')+'</span></div><div class="ir"><span>Direccion</span><span style="font-size:11px;">'+(e.dir||'--')+'</span></div></div></div>');
   win.document.write('<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Historial</div>');
   win.document.write(rows?'<table><thead><tr><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Dias</th><th>Notas</th></tr></thead><tbody>'+rows+'</tbody></table>':'<p style="color:#aaa;font-size:12px;">Sin registros.</p>');
-  win.document.write('<div class="footer">INTELLISHIP Honduras · '+fd(new Date().toISOString().split('T')[0])+'</div></body></html>');
+  win.document.write('<div class="footer">INTELLISHIP Honduras · '+fd(localDateStr())+'</div></body></html>');
   win.document.close(); setTimeout(function(){ win.print(); },400);
 }
 function dlBoletin(salId){
@@ -2559,7 +2572,7 @@ function openPayroll(){
     opts+='<option value="'+emps[i].id+'">'+emps[i].n+' '+emps[i].a+'</option>';
   }
   sel.innerHTML=opts;
-  document.getElementById('pr-mes').value=new Date().toISOString().slice(0,7);
+  document.getElementById('pr-mes').value=localMonthStr();
   ['pr-base','pr-extra','pr-bono','pr-otros-ing','pr-ihss','pr-rap','pr-adelanto','pr-desc-otros'].forEach(function(id){
     var el=document.getElementById(id); if(el&&id!=='pr-base') el.value='0';
   });
@@ -2855,7 +2868,7 @@ async function processPlanilla(){
   var totalNeto=0;
   for(var i=0;i<planillaData.length;i++) totalNeto+=planillaData[i].neto;
   // Save payroll run to system
-  var run={id:'plrun_'+Date.now(),fecha:new Date().toISOString().split('T')[0],per:per,mes:mes,mesLabel:mesLabel,empleados:planillaData.length,totalNeto:totalNeto,registros:planillaData.map(function(r){ return {nombre:r.nombre,neto:r.neto,email:r.emp?r.emp.e:''}; })};
+  var run={id:'plrun_'+Date.now(),fecha:localDateStr(),per:per,mes:mes,mesLabel:mesLabel,empleados:planillaData.length,totalNeto:totalNeto,registros:planillaData.map(function(r){ return {nombre:r.nombre,neto:r.neto,email:r.emp?r.emp.e:''}; })};
   planillaRuns.unshift(run);
   savePlanillaRuns();
   // Process each employee
