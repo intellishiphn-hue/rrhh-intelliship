@@ -349,7 +349,14 @@ var selectedFiles = [];
 function loadCfg(){
   try{
     var saved = JSON.parse(localStorage.getItem('ish_rastreo_cfg')||'{}');
+    var savedTemplates = saved.courierTemplates;
     cfg = Object.assign(cfg, saved);
+    // merge profundo de courierTemplates para no perder los nuevos por defecto
+    // (ej. el link de FORZA) cuando ya habia una configuracion guardada antes.
+    cfg.courierTemplates = Object.assign({}, cfg.courierTemplates, savedTemplates);
+    if(!cfg.courierTemplates.forza){
+      cfg.courierTemplates.forza = 'https://rastreo.forzadelivery.com/{guia}';
+    }
   }catch(e){}
 }
 function saveCfgLocal(){ localStorage.setItem('ish_rastreo_cfg', JSON.stringify(cfg)); }
