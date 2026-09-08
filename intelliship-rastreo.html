@@ -221,13 +221,26 @@
         <div class="card">
           <h2>Historial de envíos</h2>
           <div class="desc">Sincronizado en la nube (Firebase) — visible desde cualquier equipo.</div>
-          <div class="searchbar">
-            <input type="text" id="histSearch" placeholder="Buscar por nombre, teléfono o número de guía..." oninput="renderHistorial()">
-            <button class="btn sec" onclick="loadHistorialCloud()">🔄 Actualizar</button>
+          <div class="searchbar" style="flex-wrap:wrap;">
+            <input type="text" id="histSearch" placeholder="Buscar por nombre, teléfono o número de guía..." oninput="renderHistorial()" style="min-width:220px;">
+            <input type="date" id="histFrom" onchange="renderHistorial()" title="Desde" style="max-width:150px;flex:none;">
+            <span style="align-self:center;color:var(--tx3);font-size:12.5px;">a</span>
+            <input type="date" id="histTo" onchange="renderHistorial()" title="Hasta" style="max-width:150px;flex:none;">
+            <button class="btn sec" id="btnClearHistFilter" onclick="clearHistFilter()" style="flex:none;">Limpiar filtro</button>
+            <button class="btn sec" onclick="loadHistorialCloud()" style="flex:none;">🔄 Actualizar</button>
+          </div>
+          <div class="searchbar" style="flex-wrap:wrap;margin-top:-4px;">
+            <span style="align-self:center;color:var(--tx3);font-size:12.5px;">Eliminar registros antiguos:</span>
+            <input type="date" id="delFrom" title="Desde" style="max-width:150px;flex:none;">
+            <span style="align-self:center;color:var(--tx3);font-size:12.5px;">a</span>
+            <input type="date" id="delTo" title="Hasta" style="max-width:150px;flex:none;">
+            <button class="btn sec" style="flex:none;border-color:#e5484d;color:#e5484d;" onclick="deleteHistorialRange()">Eliminar por rango de fechas</button>
+            <span style="flex:1;"></span>
+            <button class="btn sec" style="flex:none;border-color:#e5484d;color:#e5484d;" onclick="deleteHistorialSelected()">Eliminar seleccionados</button>
           </div>
           <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>Fecha</th><th>Empresa</th><th>Nombre</th><th>Teléfono</th><th>N° guía</th><th>Guía (foto)</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th style="width:26px;"><input type="checkbox" class="checkbox" id="selAllHist" onclick="toggleAllHist(this)"></th><th>Fecha</th><th>Empresa</th><th>Nombre</th><th>Teléfono</th><th>N° guía</th><th>Guía (foto)</th><th>Estado</th><th></th><th></th></tr></thead>
             <tbody id="histBody"></tbody>
           </table>
           </div>
@@ -346,6 +359,7 @@ var cfg = {
 };
 var rows = [];      // filas de la tabla de revisión actual
 var historial = []; // registros cargados desde Firebase
+var histSel = new Set(); // ids de historial seleccionados para borrar
 var selectedFiles = [];
 
 /* ============================================================
@@ -661,7 +675,8 @@ async function processFiles(){
           foto: e.foto || null,
           sinVerificar: !!e.sinVerificar,
           estado: 'pendiente',
-          error: ''
+          error: '',
+          sel: true
         });
       }
     }
@@ -686,8 +701,9 @@ function renderReviewTable(){
   var body = document.getElementById('reviewBody');
   body.innerHTML = rows.map(function(r, idx){
     var empresaTag = escAttr(r.empresa) + (r.sinVerificar ? ' <span class="badge pend" title="Formato de FORZA aún sin validar con un PDF real">revisar</span>' : '');
+    var isSel = r.sel !== false;
     return '<tr>'+
-      '<td><input type="checkbox" class="checkbox rowSel" data-i="'+idx+'" checked onchange="updatePreview()"></td>'+
+      '<td><input type="checkbox" class="checkbox rowSel" data-i="'+idx+'" '+(isSel?'checked':'')+' onchange="rows['+idx+'].sel=this.checked;updatePreview()"></td>'+
       '<td style="white-space:nowrap;">'+empresaTag+'</td>'+
       '<td><input type="text" value="'+escAttr(r.nombre)+'" onchange="editRow('+idx+',\'nombre\',this.value)"></td>'+
       '<td><input type="text" value="'+escAttr(r.telefono)+'" onchange="editRow('+idx+',\'telefono\',this.value)"></td>'+
@@ -717,6 +733,7 @@ async function editRow(idx, field, value){
   renderReviewTable();
 }
 function toggleAll(cb){
+  rows.forEach(function(r){ r.sel = cb.checked; });
   document.querySelectorAll('.rowSel').forEach(function(el){ el.checked = cb.checked; });
   updatePreview();
 }
@@ -810,9 +827,8 @@ async function sendRow(idx){
 }
 
 async function sendSelected(){
-  var checks = document.querySelectorAll('.rowSel');
   var indices = [];
-  checks.forEach(function(c){ if(c.checked) indices.push(parseInt(c.dataset.i,10)); });
+  rows.forEach(function(r, i){ if(r.sel !== false) indices.push(i); });
   if(!indices.length){ showToast('Selecciona al menos una guía.', true); return; }
   for(var i=0;i<indices.length;i++){ await sendRow(indices[i]); }
   reportSendSummary(indices);
@@ -889,15 +905,49 @@ async function loadHistorialCloud(){
   renderHistorial();
 }
 
-function renderHistorial(){
+// Convierte un input type=date (YYYY-MM-DD) al inicio/fin de ese día en hora local,
+// para poder comparar contra r.fecha (ISO) sin problemas de huso horario.
+function dateInputStart(id){
+  var v = document.getElementById(id).value;
+  if(!v) return null;
+  var d = new Date(v+'T00:00:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+function dateInputEnd(id){
+  var v = document.getElementById(id).value;
+  if(!v) return null;
+  var d = new Date(v+'T23:59:59.999');
+  return isNaN(d.getTime()) ? null : d;
+}
+function clearHistFilter(){
+  document.getElementById('histSearch').value = '';
+  document.getElementById('histFrom').value = '';
+  document.getElementById('histTo').value = '';
+  renderHistorial();
+}
+function getFilteredHistorial(){
   var q = (document.getElementById('histSearch').value||'').toLowerCase();
-  var filtered = historial.filter(function(r){
-    if(!q) return true;
-    return (r.nombre||'').toLowerCase().indexOf(q)>-1 ||
-           (r.telefono||'').toLowerCase().indexOf(q)>-1 ||
-           (r.guia||'').toLowerCase().indexOf(q)>-1 ||
-           (r.empresa||'').toLowerCase().indexOf(q)>-1;
+  var from = dateInputStart('histFrom');
+  var to = dateInputEnd('histTo');
+  return historial.filter(function(r){
+    if(q){
+      var matches = (r.nombre||'').toLowerCase().indexOf(q)>-1 ||
+             (r.telefono||'').toLowerCase().indexOf(q)>-1 ||
+             (r.guia||'').toLowerCase().indexOf(q)>-1 ||
+             (r.empresa||'').toLowerCase().indexOf(q)>-1;
+      if(!matches) return false;
+    }
+    if(from || to){
+      var f = r.fecha ? new Date(r.fecha) : null;
+      if(!f || isNaN(f.getTime())) return false;
+      if(from && f < from) return false;
+      if(to && f > to) return false;
+    }
+    return true;
   });
+}
+function renderHistorial(){
+  var filtered = getFilteredHistorial();
   var body = document.getElementById('histBody');
   document.getElementById('histEmpty').style.display = filtered.length? 'none':'block';
   body.innerHTML = filtered.map(function(r){
@@ -908,10 +958,15 @@ function renderHistorial(){
     var foto = r.foto
       ? '<img src="'+r.foto+'" alt="Guía original" title="Click para ver en grande" style="width:42px;height:42px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--bd);" onclick="openFotoModal(this.src)">'
       : '<span style="color:var(--tx3);font-size:11.5px;">—</span>';
+    var checked = histSel.has(r._id) ? 'checked' : '';
     return '<tr>'+
+      '<td><input type="checkbox" class="checkbox" '+checked+' onchange="toggleHistSel(\''+r._id+'\',this.checked)"></td>'+
       '<td>'+fecha+'</td><td>'+escAttr(r.empresa)+'</td><td>'+escAttr(r.nombre)+'</td><td>'+escAttr(r.telefono)+'</td>'+
       '<td>'+escAttr(r.guia)+'</td><td>'+foto+'</td><td>'+badge+'</td>'+
       '<td>'+(r.link?'<a href="'+r.link+'" target="_blank">Ver link</a>':'')+'</td>'+
+      '<td><button class="btn sec" style="padding:5px 9px;font-size:12px;border-color:#e5484d;color:#e5484d;" title="Eliminar esta guía" onclick="deleteHistorialOne(\''+r._id+'\')">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'+
+      '</button></td>'+
     '</tr>';
   }).join('');
 
@@ -920,6 +975,64 @@ function renderHistorial(){
   document.getElementById('statErr').textContent = historial.filter(function(r){return r.estado==='error';}).length;
   var today = new Date().toDateString();
   document.getElementById('statHoy').textContent = historial.filter(function(r){ return r.fecha && new Date(r.fecha).toDateString()===today; }).length;
+}
+function toggleHistSel(id, checked){
+  if(checked) histSel.add(id); else histSel.delete(id);
+}
+function toggleAllHist(cb){
+  var filtered = getFilteredHistorial();
+  filtered.forEach(function(r){ if(cb.checked) histSel.add(r._id); else histSel.delete(r._id); });
+  renderHistorial();
+}
+// Borra un registro puntual del historial (Firebase + vista local).
+async function deleteHistorialOne(id){
+  if(!confirm('¿Eliminar esta guía del historial? Esta acción no se puede deshacer.')) return;
+  await deleteHistorialIds([id]);
+}
+// Borra todos los registros actualmente marcados con checkbox.
+async function deleteHistorialSelected(){
+  var ids = Array.from(histSel);
+  if(!ids.length){ showToast('Selecciona al menos un registro del historial para eliminar.', true); return; }
+  if(!confirm('¿Eliminar '+ids.length+' registro(s) seleccionado(s) del historial? Esta acción no se puede deshacer.')) return;
+  await deleteHistorialIds(ids);
+}
+// Borra todos los registros cuya fecha caiga dentro del rango indicado (para liberar espacio).
+async function deleteHistorialRange(){
+  var from = dateInputStart('delFrom');
+  var to = dateInputEnd('delTo');
+  if(!from && !to){ showToast('Elige al menos una fecha (desde y/o hasta) para eliminar por rango.', true); return; }
+  var toDelete = historial.filter(function(r){
+    var f = r.fecha ? new Date(r.fecha) : null;
+    if(!f || isNaN(f.getTime())) return false;
+    if(from && f < from) return false;
+    if(to && f > to) return false;
+    return true;
+  });
+  if(!toDelete.length){ showToast('No hay registros del historial en ese rango de fechas.', true); return; }
+  if(!confirm('¿Eliminar '+toDelete.length+' registro(s) del historial en el rango de fechas indicado? Esta acción no se puede deshacer.')) return;
+  await deleteHistorialIds(toDelete.map(function(r){ return r._id; }));
+  document.getElementById('delFrom').value = '';
+  document.getElementById('delTo').value = '';
+}
+// Elimina en Firebase (una petición DELETE por id) y actualiza la vista local/estadísticas.
+async function deleteHistorialIds(ids){
+  var okCount = 0, errCount = 0;
+  for(var i=0;i<ids.length;i++){
+    try{
+      await fetch(FB_URL+'/historial/'+ids[i]+'.json', {method:'DELETE'});
+      okCount++;
+    }catch(e){
+      errCount++;
+    }
+    histSel.delete(ids[i]);
+  }
+  historial = historial.filter(function(r){ return ids.indexOf(r._id) === -1; });
+  renderHistorial();
+  if(errCount===0){
+    showToast(okCount+' registro(s) del historial eliminado(s).');
+  } else {
+    showToast(okCount+' eliminado(s), '+errCount+' con error de red. Vuelve a intentar con "Actualizar".', true);
+  }
 }
 
 /* ============================================================
