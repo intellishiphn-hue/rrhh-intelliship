@@ -227,12 +227,17 @@
           </div>
           <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>Fecha</th><th>Empresa</th><th>Nombre</th><th>Teléfono</th><th>N° guía</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Empresa</th><th>Nombre</th><th>Teléfono</th><th>N° guía</th><th>Guía (foto)</th><th>Estado</th><th></th></tr></thead>
             <tbody id="histBody"></tbody>
           </table>
           </div>
           <div class="empty" id="histEmpty" style="display:none;">Sin registros todavía.</div>
         </div>
+      </div>
+
+      <!-- LIGHTBOX: foto de la guia original -->
+      <div id="fotoModal" onclick="closeFotoModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center;padding:24px;cursor:zoom-out;">
+        <img id="fotoModalImg" src="" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);">
       </div>
 
       <!-- VIEW: CONFIG -->
@@ -533,6 +538,27 @@ var COURIERS = {
   forza: { label:'FORZA', parse: parseForza }
 };
 
+// Convierte una pagina del PDF (= una guia) en una imagen JPEG comprimida, para
+// poder identificar visualmente la etiqueta original en el Historial. Se limita
+// el ancho maximo para que cada imagen pese poco al guardarla en Firebase.
+async function renderPageThumb(page){
+  try{
+    var base = page.getViewport({scale:1});
+    var maxW = 900;
+    var scale = base.width>0 ? Math.min(1.6, maxW/base.width) : 1.2;
+    var viewport = page.getViewport({scale:scale});
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(viewport.width));
+    canvas.height = Math.max(1, Math.round(viewport.height));
+    var ctx = canvas.getContext('2d');
+    await page.render({canvasContext:ctx, viewport:viewport}).promise;
+    return canvas.toDataURL('image/jpeg', 0.62);
+  }catch(e){
+    console.warn('No se pudo generar la imagen de la guia', e);
+    return null;
+  }
+}
+
 async function extractFromPdf(file, courierId){
   if(!window.pdfjsLib){
     throw new Error('No se pudo cargar la librería de lectura de PDF (pdf.js). Verifica tu conexión a internet y recarga la página.');
@@ -549,7 +575,10 @@ async function extractFromPdf(file, courierId){
     var content = await page.getTextContent();
     var text = content.items.map(function(it){return it.str;}).join('\n');
     var parsed = courier.parse(text);
-    if(parsed) out.push(parsed);
+    if(parsed){
+      parsed.foto = await renderPageThumb(page);
+      out.push(parsed);
+    }
   }
   return out;
 }
@@ -629,6 +658,7 @@ async function processFiles(){
           guia: e.guia || '',
           fullLink: fullLink,
           link: shortLink || fullLink,
+          foto: e.foto || null,
           sinVerificar: !!e.sinVerificar,
           estado: 'pendiente',
           error: ''
@@ -670,7 +700,7 @@ function renderReviewTable(){
 }
 function badgeFor(r){
   if(r.estado==='enviado') return '<span class="badge ok">Enviado</span>';
-  if(r.estado==='error') return '<span class="badge err">Error</span>';
+  if(r.estado==='error') return '<span class="badge err" style="cursor:help;" title="'+escAttr(r.error||'Error desconocido')+'">Error ⓘ</span>';
   if(r.estado==='enviando') return '<span class="badge sending">Enviando…</span>';
   return '<span class="badge pend">Pendiente</span>';
 }
@@ -785,11 +815,28 @@ async function sendSelected(){
   checks.forEach(function(c){ if(c.checked) indices.push(parseInt(c.dataset.i,10)); });
   if(!indices.length){ showToast('Selecciona al menos una guía.', true); return; }
   for(var i=0;i<indices.length;i++){ await sendRow(indices[i]); }
-  showToast('Proceso de envío finalizado.');
+  reportSendSummary(indices);
 }
 async function sendAll(){
+  var indices = rows.map(function(r,i){ return i; });
   for(var i=0;i<rows.length;i++){ await sendRow(i); }
-  showToast('Proceso de envío finalizado.');
+  reportSendSummary(indices);
+}
+// Resumen al final de un envío masivo: cuántos salieron bien y cuántos con error,
+// para no tener que revisar fila por fila cuando se manda a muchas personas.
+function reportSendSummary(indices){
+  var ok=0, err=0;
+  indices.forEach(function(i){
+    var r = rows[i];
+    if(!r) return;
+    if(r.estado==='enviado') ok++;
+    else if(r.estado==='error') err++;
+  });
+  if(err===0){
+    showToast(ok+' mensaje(s) enviado(s) correctamente.');
+  } else {
+    showToast(ok+' enviado(s), '+err+' con error. Revisa la columna Estado (pasa el mouse sobre "Error" para ver el motivo) o el Historial.', true);
+  }
 }
 
 /* ============================================================
@@ -801,6 +848,7 @@ async function saveHistorialEntry(r){
     fecha: new Date().toISOString(),
     empresa: r.empresa||'', courierId: r.courierId||'',
     nombre: r.nombre, telefono: r.telefono, guia: r.guia, link: r.link, fullLink: r.fullLink||r.link,
+    foto: r.foto||null,
     estado: r.estado, error: r.error||''
   };
   try{
@@ -813,6 +861,15 @@ async function saveHistorialEntry(r){
   record._id = id;
   historial.unshift(record);
   if(document.getElementById('viewHistorial').classList.contains('active')) renderHistorial();
+}
+
+function openFotoModal(src){
+  document.getElementById('fotoModalImg').src = src;
+  document.getElementById('fotoModal').style.display = 'flex';
+}
+function closeFotoModal(){
+  document.getElementById('fotoModal').style.display = 'none';
+  document.getElementById('fotoModalImg').src = '';
 }
 
 async function loadHistorialCloud(){
@@ -848,9 +905,12 @@ function renderHistorial(){
     var badge = r.estado==='enviado' ? '<span class="badge ok">Enviado</span>' :
                 r.estado==='error' ? '<span class="badge err">Error</span>' :
                 '<span class="badge pend">'+(r.estado||'—')+'</span>';
+    var foto = r.foto
+      ? '<img src="'+r.foto+'" alt="Guía original" title="Click para ver en grande" style="width:42px;height:42px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--bd);" onclick="openFotoModal(this.src)">'
+      : '<span style="color:var(--tx3);font-size:11.5px;">—</span>';
     return '<tr>'+
       '<td>'+fecha+'</td><td>'+escAttr(r.empresa)+'</td><td>'+escAttr(r.nombre)+'</td><td>'+escAttr(r.telefono)+'</td>'+
-      '<td>'+escAttr(r.guia)+'</td><td>'+badge+'</td>'+
+      '<td>'+escAttr(r.guia)+'</td><td>'+foto+'</td><td>'+badge+'</td>'+
       '<td>'+(r.link?'<a href="'+r.link+'" target="_blank">Ver link</a>':'')+'</td>'+
     '</tr>';
   }).join('');
