@@ -174,9 +174,10 @@
       <!-- VIEW: PENDIENTES -->
       <div class="view active" id="viewPendientes">
         <div class="statrow">
-          <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Pendientes</div></div>
+          <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Pendientes del rango</div></div>
           <div class="stat warnstat"><div class="n" id="statWarn">0</div><div class="l">Código sospechoso</div></div>
           <div class="stat warnstat"><div class="n" id="statDup">0</div><div class="l">Posibles duplicados</div></div>
+          <div class="stat warnstat"><div class="n" id="statFechaWarn">0</div><div class="l">Revisar fecha</div></div>
           <div class="stat"><div class="n" id="statSel">0</div><div class="l">Seleccionadas</div></div>
           <div class="stat"><div class="n" id="statUltima">&mdash;</div><div class="l">Última actualización</div></div>
         </div>
@@ -211,6 +212,13 @@
             <input type="text" id="pendSearch" placeholder="Buscar por nombre, teléfono, código o municipio..." oninput="renderPendientes()">
             <span class="pill" id="pillOnlyWarn" onclick="toggleOnlyWarn()">Solo con código sospechoso</span>
             <span class="pill" id="pillOnlyDup" onclick="toggleOnlyDup()">Solo posibles duplicados</span>
+            <span class="pill" id="pillOnlyFechaWarn" onclick="toggleOnlyFechaWarn()">Solo revisar fecha</span>
+          </div>
+
+          <div class="btnrow" style="margin-top:0;margin-bottom:14px;">
+            <span class="hint" style="margin:0;">Selección rápida por peso (los precios cambian arriba de 25 lbs):</span>
+            <button class="btn sec" style="padding:7px 14px;" onclick="seleccionarPorPeso('le25')">Seleccionar ≤ 25 lbs</button>
+            <button class="btn sec" style="padding:7px 14px;" onclick="seleccionarPorPeso('gt25')">Seleccionar &gt; 25 lbs</button>
           </div>
 
           <div style="overflow-x:auto;">
@@ -223,6 +231,7 @@
                 <th>Teléfono</th>
                 <th>Municipio / Código</th>
                 <th>Dirección</th>
+                <th>Peso</th>
                 <th>Piezas</th>
                 <th>Referencia 1</th>
                 <th></th>
@@ -242,8 +251,12 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
               Descargar Excel (seleccionadas)
             </button>
+            <button class="btn sec" onclick="marcarSeleccionadasComoCreadas()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Marcar seleccionadas como ya creadas
+            </button>
           </div>
-          <div class="hint">Al exportar, las guías seleccionadas se marcan como &quot;Exportadas&quot; y pasan a esa pestaña &mdash; ya no aparecerán aquí. El archivo queda listo para subir directo a Cargo Expreso.</div>
+          <div class="hint">Al exportar, las guías seleccionadas se marcan como &quot;Exportadas&quot; y pasan a esa pestaña &mdash; ya no aparecerán aquí. El archivo queda listo para subir directo a Cargo Expreso. Si alguna guía ya la crearon directo en Manager Cargo/Cargo Expreso (sin pasar por aquí), usa &quot;Marcar como ya creada&quot; en esa fila, o selecciona varias y usa el botón de arriba &mdash; no genera ningún archivo, solo la saca de pendientes.</div>
         </div>
       </div>
 
@@ -303,6 +316,7 @@
                 <th>Código</th>
                 <th>Piezas</th>
                 <th>Referencia 1</th>
+                <th>Método</th>
                 <th></th>
               </tr>
             </thead>
@@ -482,12 +496,32 @@ function findCol(headers, candidates){
   }
   return -1;
 }
+// Igual que findCol pero exige coincidencia EXACTA (no substring). Necesario para
+// encabezados de una sola letra como "F" (fecha), donde una busqueda por substring
+// no funcionaria o seria demasiado riesgosa (podria matchear cualquier columna).
+function findColExact(headers, candidatesExact){
+  for(var i=0;i<headers.length;i++){
+    var h = normTxt(headers[i]);
+    for(var j=0;j<candidatesExact.length;j++){
+      if(h === normTxt(candidatesExact[j])) return i;
+    }
+  }
+  return -1;
+}
 
 // Convierte las filas crudas del sheet (con encabezados) a nuestro modelo interno.
 function rowsToPedidos(matrix){
   if(!matrix.length) return [];
   var headers = matrix[0];
-  var idxFecha = findCol(headers, ['fecha']);
+  // El sheet de Manager Cargo trae una primera columna en blanco (sin encabezado,
+  // sin uso). Si esta ahi, todas las columnas reales quedan una posicion despues;
+  // lo detectamos para que el fallback posicional no apunte a la columna vacia.
+  var blankOffset = ((headers[0]||'').toString().trim()==='') ? 1 : 0;
+
+  // La columna de fecha en el sheet real suele venir con el encabezado abreviado "F",
+  // no "Fecha" completo, por eso se busca primero como coincidencia exacta.
+  var idxFecha = findColExact(headers, ['f','fecha']);
+  if(idxFecha===-1) idxFecha = findCol(headers, ['fecha']);
   var idxNombre = findCol(headers, ['nombre']);
   var idxEmail = findCol(headers, ['correo','email']);
   var idxTel = findCol(headers, ['telefono','tel']);
@@ -497,15 +531,16 @@ function rowsToPedidos(matrix){
   if(idxCodigo > -1 && idxCodigo+1 < headers.length) idxMuni = idxCodigo+1;
   var idxDir = findCol(headers, ['direccion']);
   var idxPeso = findCol(headers, ['peso']);
-  // fallback posicional si no se encontro por nombre (estructura tipica: F,Nombre,Email,Tel,Codigo,Municipio,Direccion,Peso)
-  if(idxFecha===-1) idxFecha=0;
-  if(idxNombre===-1) idxNombre=1;
-  if(idxEmail===-1) idxEmail=2;
-  if(idxTel===-1) idxTel=3;
-  if(idxCodigo===-1) idxCodigo=4;
-  if(idxMuni===-1) idxMuni=5;
-  if(idxDir===-1) idxDir=6;
-  if(idxPeso===-1) idxPeso=7;
+  // fallback posicional si no se encontro por nombre (estructura tipica: F,Nombre,Email,Tel,Codigo,Municipio,Direccion,Peso),
+  // corregido por blankOffset si la primera columna del sheet esta vacia.
+  if(idxFecha===-1) idxFecha=0+blankOffset;
+  if(idxNombre===-1) idxNombre=1+blankOffset;
+  if(idxEmail===-1) idxEmail=2+blankOffset;
+  if(idxTel===-1) idxTel=3+blankOffset;
+  if(idxCodigo===-1) idxCodigo=4+blankOffset;
+  if(idxMuni===-1) idxMuni=5+blankOffset;
+  if(idxDir===-1) idxDir=6+blankOffset;
+  if(idxPeso===-1) idxPeso=7+blankOffset;
 
   var out = [];
   for(var i=1;i<matrix.length;i++){
@@ -532,6 +567,9 @@ function rowsToPedidos(matrix){
     };
     p.key = makeKey(p);
     p.codeWarn = checkCodigo(p.codigo, p.municipio);
+    // si no logramos interpretar la fecha como una fecha real, la marcamos para
+    // que se revise a mano -- igual la incluimos siempre (nunca se oculta por esto).
+    p.fechaWarn = !parseFechaLoose(p.fecha);
     out.push(p);
   }
   return out;
@@ -563,6 +601,14 @@ function parseFechaLoose(str){
     var d2 = new Date(y, month-1, day);
     return isNaN(d2.getTime())?null:d2;
   }
+  m = str.match(/^(\d{4,6})(?:[.,](\d+))?$/); // numero de serie de Google Sheets (a veces con coma decimal en vez de punto)
+  if(m){
+    var serial = parseFloat(m[1]+(m[2]?'.'+m[2]:''));
+    // los numeros de serie de Sheets/Excel cuentan dias desde 1899-12-30
+    var ms = Math.round((serial - 25569) * 86400 * 1000);
+    var d4 = new Date(ms);
+    if(!isNaN(d4.getTime()) && d4.getFullYear()>2015 && d4.getFullYear()<2100) return d4; // solo si cae en un rango de años razonable
+  }
   var d3 = new Date(str); // ultimo recurso, lo que entienda el navegador
   return isNaN(d3.getTime())?null:d3;
 }
@@ -588,6 +634,23 @@ function setRangoHoy(){
 function limpiarRango(){
   document.getElementById('fechaDesde').value = '';
   document.getElementById('fechaHasta').value = '';
+}
+
+// Separa los pedidos leidos en 2 grupos: los que tienen fecha reconocible y caen
+// dentro del rango pedido ("enRango"), y los que tienen fecha sin identificar
+// ("ambiguas", ej. alguien escribio "TODO AEREO" en vez de una fecha) -- estas
+// ultimas SIEMPRE se incluyen igual (nunca se pierde una guia por esto), pero se
+// cuentan aparte para que el numero de "Pendientes" refleje el dia real y no se
+// infle con un backlog viejo de fechas sin identificar.
+function filtrarPorFecha(todos, desde, hasta){
+  var conFiltro = !!(desde || hasta);
+  var enRango = todos.filter(function(p){
+    if(p.fechaWarn) return false;
+    if(!conFiltro) return true;
+    return fechaEnRango(p.fecha, desde, hasta);
+  });
+  var ambiguas = todos.filter(function(p){ return p.fechaWarn; });
+  return { pedidos: enRango.concat(ambiguas), enRango: enRango, ambiguas: ambiguas, conFiltro: conFiltro };
 }
 
 /* ============================================================
@@ -678,11 +741,16 @@ async function fetchFromSheet(){
     var todos = rowsToPedidos(matrix);
     var desde = document.getElementById('fechaDesde').value;
     var hasta = document.getElementById('fechaHasta').value;
-    var pedidos = todos.filter(function(p){ return fechaEnRango(p.fecha, desde, hasta); });
-    await applyNuevosPedidos(pedidos);
-    var rangoTxt = (desde||hasta) ? (' ('+pedidos.length+' de '+todos.length+' filas están en el rango de fechas)') : '';
-    statusEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN') + rangoTxt;
+    var desglose = filtrarPorFecha(todos, desde, hasta);
+    var resumen = await applyNuevosPedidos(desglose.pedidos);
+    var rangoTxt = desglose.conFiltro
+      ? (desglose.enRango.length+' de '+todos.length+' filas leídas están en el rango de fechas. ')
+      : (todos.length+' filas leídas del Sheets. ');
+    var ambTxt = desglose.ambiguas.length ? (desglose.ambiguas.length+' más tienen fecha sin identificar (se muestran aparte, en "Revisar fecha", para que no se pierdan). ') : '';
+    var resumenTxt = rangoTxt+ambTxt+resumen.yaExportadas+' ya estaban exportadas. '+resumen.nuevasDeVerdad+' son nuevas. Quedan '+resumen.pendientesAhora+' filas en la tabla en total.';
+    statusEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN') + ' — ' + resumenTxt;
     document.getElementById('statUltima').textContent = new Date().toLocaleTimeString('es-HN');
+    showToast(resumenTxt);
   }catch(err){
     statusEl.textContent = 'No se pudo leer en vivo (' + err.message + '). Usa "subir archivo" como respaldo.';
     showToast('No se pudo leer el Google Sheets en vivo. Sube el archivo exportado como respaldo.', true);
@@ -708,11 +776,15 @@ function handleFileFallback(files){
       var todosArch = rowsToPedidos(matrix);
       var desdeArch = document.getElementById('fechaDesde').value;
       var hastaArch = document.getElementById('fechaHasta').value;
-      var pedidosArch = todosArch.filter(function(p){ return fechaEnRango(p.fecha, desdeArch, hastaArch); });
-      await applyNuevosPedidos(pedidosArch);
-      var rangoTxtArch = (desdeArch||hastaArch) ? (' ('+pedidosArch.length+' de '+todosArch.length+' filas están en el rango de fechas)') : '';
-      document.getElementById('sheetStatus').textContent = 'Archivo cargado: '+file.name+rangoTxtArch;
-      showToast('Archivo procesado correctamente.');
+      var desgloseArch = filtrarPorFecha(todosArch, desdeArch, hastaArch);
+      var resumenArch = await applyNuevosPedidos(desgloseArch.pedidos);
+      var rangoTxtArch = desgloseArch.conFiltro
+        ? (desgloseArch.enRango.length+' de '+todosArch.length+' filas leídas están en el rango de fechas. ')
+        : (todosArch.length+' filas leídas. ');
+      var ambTxtArch = desgloseArch.ambiguas.length ? (desgloseArch.ambiguas.length+' más tienen fecha sin identificar (se muestran aparte, en "Revisar fecha"). ') : '';
+      var resumenTxtArch = rangoTxtArch+ambTxtArch+resumenArch.yaExportadas+' ya estaban exportadas. '+resumenArch.nuevasDeVerdad+' son nuevas. Quedan '+resumenArch.pendientesAhora+' filas en la tabla en total.';
+      document.getElementById('sheetStatus').textContent = 'Archivo cargado: '+file.name+' — '+resumenTxtArch;
+      showToast(resumenTxtArch);
     }catch(err){
       showToast('No se pudo leer el archivo: '+err.message, true);
     }
@@ -730,6 +802,7 @@ async function applyNuevosPedidos(nuevos){
     var data = await res.json();
     if(data) estadoMap = data;
   }catch(e){}
+  var yaExportadas = nuevos.filter(function(p){ return !!estadoMap[p.key]; }).length;
   var nuevosFiltrados = nuevos.filter(function(p){ return !estadoMap[p.key]; });
 
   // Merge en vez de reemplazo total: si ya tenias una guia pendiente (con
@@ -738,12 +811,16 @@ async function applyNuevosPedidos(nuevos){
   // perderla. Solo se agregan las que realmente son nuevas.
   var existentes = {};
   pendientes.forEach(function(p){ existentes[p.key] = p; });
+  var nuevasDeVerdad = 0;
   var merged = nuevosFiltrados.map(function(p){
-    return existentes[p.key] || p;
+    if(existentes[p.key]) return existentes[p.key];
+    nuevasDeVerdad++;
+    return p;
   });
   pendientes = merged;
   marcarDuplicados(pendientes);
   renderPendientes();
+  return { total: nuevos.length, yaExportadas: yaExportadas, pendientesAhora: pendientes.length, nuevasDeVerdad: nuevasDeVerdad };
 }
 
 /* ============================================================
@@ -760,11 +837,18 @@ function toggleOnlyDup(){
   document.getElementById('pillOnlyDup').classList.toggle('active', onlyDup);
   renderPendientes();
 }
+var onlyFechaWarn = false;
+function toggleOnlyFechaWarn(){
+  onlyFechaWarn = !onlyFechaWarn;
+  document.getElementById('pillOnlyFechaWarn').classList.toggle('active', onlyFechaWarn);
+  renderPendientes();
+}
 function getFilteredPendientes(){
   var q = (document.getElementById('pendSearch').value||'').toLowerCase();
   return pendientes.filter(function(p){
     if(onlyWarn && !p.codeWarn.bad) return false;
     if(onlyDup && !(p.dupWarn && p.dupWarn.bad)) return false;
+    if(onlyFechaWarn && !p.fechaWarn) return false;
     if(!q) return true;
     return (p.nombre||'').toLowerCase().indexOf(q)>-1 ||
            (p.telefono||'').toLowerCase().indexOf(q)>-1 ||
@@ -785,20 +869,26 @@ function renderPendientes(){
       : '';
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox rowSelP" data-key="'+escAttr(p.key)+'" onchange="updateSelStat()"></td>'+
-      '<td style="white-space:nowrap;">'+escAttr(p.fecha)+'</td>'+
+      '<td style="white-space:nowrap;">'+escAttr(p.fecha||'&mdash;')+
+        (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
+      '</td>'+
       '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)">'+dupBadge+'</td>'+
       '<td><input type="text" value="'+escAttr(p.telefono)+'" onchange="editPend(\''+p.key+'\',\'telefono\',this.value)"></td>'+
       '<td>'+escAttr(p.municipio)+'<br>'+codeBadge+
         '<input type="text" style="margin-top:4px;" value="'+escAttr(p.codigo)+'" onchange="editCodigo(\''+p.key+'\',this.value)"></td>'+
       '<td><span class="addr-cell" title="'+escAttr(p.direccion)+'">'+escAttr(p.direccion)+'</span></td>'+
+      '<td style="width:72px;"><input type="number" min="0" step="0.01" value="'+escAttr(p.peso)+'" onchange="editPend(\''+p.key+'\',\'peso\',this.value)"></td>'+
       '<td style="width:64px;"><input type="number" min="1" value="'+p.piezas+'" onchange="editPend(\''+p.key+'\',\'piezas\',this.value)"></td>'+
       '<td><input type="text" value="'+escAttr(p.referencia1)+'" onchange="editPend(\''+p.key+'\',\'referencia1\',this.value)"></td>'+
-      '<td></td>'+
+      '<td><button class="btn sec" style="padding:5px 8px;white-space:nowrap;" title="Ya la crearon directo en Manager Cargo/Cargo Expreso: quítala de pendientes sin generar archivo" onclick="marcarComoCreada(\''+p.key+'\')">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ya creada'+
+      '</button></td>'+
     '</tr>';
   }).join('');
-  document.getElementById('statTotal').textContent = pendientes.length;
+  document.getElementById('statTotal').textContent = pendientes.filter(function(p){return !p.fechaWarn;}).length;
   document.getElementById('statWarn').textContent = pendientes.filter(function(p){return p.codeWarn.bad;}).length;
   document.getElementById('statDup').textContent = pendientes.filter(function(p){return p.dupWarn && p.dupWarn.bad;}).length;
+  document.getElementById('statFechaWarn').textContent = pendientes.filter(function(p){return p.fechaWarn;}).length;
   updateSelStat();
 }
 function findPend(key){
@@ -831,6 +921,24 @@ function editCodigo(key, value){
 function toggleAllPend(cb){
   document.querySelectorAll('.rowSelP').forEach(function(el){ el.checked = cb.checked; });
   updateSelStat();
+}
+// Selecciona (entre lo que se ve actualmente en la tabla, respetando busqueda/filtros)
+// solo las guias de 25 lbs o menos, o solo las de mas de 25 lbs -- para exportarlas
+// aparte, ya que el precio de Cargo Expreso cambia arriba de ese peso.
+function seleccionarPorPeso(bracket){
+  var visibles = getFilteredPendientes();
+  var matchKeys = {};
+  visibles.forEach(function(p){
+    var peso = parseFloat((p.peso||'').toString().replace(',','.')) || 0;
+    var matches = bracket==='le25' ? peso<=25 : peso>25;
+    if(matches) matchKeys[p.key] = true;
+  });
+  document.querySelectorAll('.rowSelP').forEach(function(el){
+    el.checked = !!matchKeys[el.dataset.key];
+  });
+  updateSelStat();
+  var n = Object.keys(matchKeys).length;
+  showToast(n+' guía(s) '+(bracket==='le25'?'de 25 lbs o menos':'de más de 25 lbs')+' seleccionada(s). Ya puedes descargar el CSV/Excel solo con esas.');
 }
 function updateSelStat(){
   var n = document.querySelectorAll('.rowSelP:checked').length;
@@ -890,8 +998,27 @@ async function exportSelected(kind){
     XLSX.writeFile(wb, 'CargoExpreso_Guias_'+stampStr+'.xlsx');
   }
 
-  await marcarExportadas(selRows);
+  await marcarExportadas(selRows, kind);
   showToast(selRows.length+' guía(s) exportada(s) y movida(s) a "Exportadas".');
+}
+
+// Para guias que alguien ya creo directo en Manager Cargo/Cargo Expreso (fuera de
+// este panel) y las marco de color en el Sheets -- las sacamos de pendientes sin
+// generar ningun archivo, para que dejen de aparecer aqui como pendientes.
+async function marcarComoCreada(key){
+  var p = findPend(key);
+  if(!p) return;
+  if(!confirm('¿Marcar la guía de "'+p.nombre+'" como ya creada? No se va a generar ningún archivo, solo se va a quitar de pendientes.')) return;
+  await marcarExportadas([p], 'manual');
+  showToast('Guía de "'+p.nombre+'" marcada como ya creada.');
+}
+async function marcarSeleccionadasComoCreadas(){
+  var keys = Array.from(document.querySelectorAll('.rowSelP:checked')).map(function(el){ return el.dataset.key; });
+  if(!keys.length){ showToast('Selecciona al menos una guía.', true); return; }
+  var selRows = keys.map(findPend).filter(Boolean);
+  if(!confirm('¿Marcar '+selRows.length+' guía(s) seleccionada(s) como ya creadas? No se va a generar ningún archivo, solo se van a quitar de pendientes.')) return;
+  await marcarExportadas(selRows, 'manual');
+  showToast(selRows.length+' guía(s) marcada(s) como ya creada(s).');
 }
 
 function downloadBlob(blob, filename){
@@ -902,7 +1029,7 @@ function downloadBlob(blob, filename){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
 }
 
-async function marcarExportadas(rowsSel){
+async function marcarExportadas(rowsSel, metodo){
   var now = new Date().toISOString();
   for(var i=0;i<rowsSel.length;i++){
     var p = rowsSel[i];
@@ -911,7 +1038,8 @@ async function marcarExportadas(rowsSel){
       fecha_pedido: p.fecha||'',
       nombre: p.nombre||'', telefono: p.telefono||'', email: p.email||'',
       codigo: p.codigo||'', municipio: p.municipio||'', direccion: p.direccion||'',
-      piezas: p.piezas||1, referencia1: p.referencia1||'', referencia2: p.referencia2||'.'
+      piezas: p.piezas||1, referencia1: p.referencia1||'', referencia2: p.referencia2||'.',
+      metodo: metodo||'csv'
     };
     try{
       await fetch(FB_URL+'/estado/'+encodeURIComponent(p.key)+'.json', {
@@ -971,10 +1099,12 @@ function renderExportadas(){
   body.innerHTML = filtered.map(function(r){
     var fecha = r.fecha_exportacion ? new Date(r.fecha_exportacion).toLocaleString('es-HN') : '';
     var checked = expSel.has(r._id) ? 'checked' : '';
+    var metodoTxt = r.metodo==='xlsx' ? 'Excel' : r.metodo==='manual' ? 'Marcado a mano' : 'CSV';
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox" '+checked+' onchange="toggleExpSel(\''+r._id+'\',this.checked)"></td>'+
       '<td>'+fecha+'</td><td>'+escAttr(r.nombre)+'</td><td>'+escAttr(r.telefono)+'</td>'+
       '<td>'+escAttr(r.codigo)+'</td><td>'+escAttr(r.piezas)+'</td><td>'+escAttr(r.referencia1)+'</td>'+
+      '<td>'+escAttr(metodoTxt)+'</td>'+
       '<td><button class="btn sec" style="padding:5px 9px;" title="Volver a pendientes" onclick="revertirExportada(\''+r._id+'\')">'+
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>'+
       '</button></td>'+
