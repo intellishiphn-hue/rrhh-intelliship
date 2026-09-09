@@ -251,7 +251,7 @@
             <thead>
               <tr>
                 <th><input type="checkbox" class="checkbox" id="selAllPend" onclick="toggleAllPend(this)"></th>
-                <th style="cursor:pointer;" onclick="toggleSortFecha()" title="Ordenar por fecha y hora">Fecha <span id="sortFechaArrow">▲</span></th>
+                <th style="cursor:pointer;" onclick="toggleSortFecha()" title="Por defecto muestra el orden tal como viene del Sheets. Clic para probar ordenar por la hora de la columna F (puede no venir en orden real).">Fecha <span id="sortFechaArrow">⇅</span></th>
                 <th>Nombre</th>
                 <th>Teléfono</th>
                 <th>Municipio / Código</th>
@@ -406,7 +406,11 @@ var pendientes = [];   // filas activas leidas del sheet, sin exportar aun
 var exportadas = [];   // registros cargados desde Firebase
 var expSel = new Set();
 var onlyWarn = false;
-var sortFechaAsc = true; // orden de la tabla de pendientes: true = mas antigua primero (por hora)
+// Orden de la tabla de pendientes: 'natural' = tal como viene del Sheets (por defecto,
+// porque la hora de la columna F del Sheets real no siempre llega en orden cronologico
+// -- confirmado con el usuario), 'asc'/'desc' = ordenar por esa hora si el usuario lo
+// pide a mano dando clic en el encabezado "Fecha".
+var sortMode = 'natural';
 
 /* ============================================================
    LOGIN / CONFIG LOCAL
@@ -919,23 +923,25 @@ function getFilteredPendientes(){
            (p.codigo||'').toLowerCase().indexOf(q)>-1 ||
            (p.municipio||'').toLowerCase().indexOf(q)>-1;
   });
-  // Orden por fecha/hora: las que tienen fecha reconocible primero (de mas antigua a
-  // mas reciente, o al reves si se invierte el orden desde el encabezado "Fecha"),
-  // y al final las de fecha sin identificar (no tienen hora con la que ordenarlas).
-  filtradas.sort(function(a,b){
-    var av = (typeof a.fechaMs === 'number') ? a.fechaMs : null;
-    var bv = (typeof b.fechaMs === 'number') ? b.fechaMs : null;
-    if(av===null && bv===null) return 0;
-    if(av===null) return 1;
-    if(bv===null) return -1;
-    return sortFechaAsc ? (av-bv) : (bv-av);
-  });
+  // Por defecto se deja el orden natural del Sheets (tal como llegan las filas), porque
+  // la hora de la columna F puede no venir en orden cronologico real. Solo si el usuario
+  // pide ordenar a mano (clic en el encabezado "Fecha") se reordena por esa hora.
+  if(sortMode !== 'natural'){
+    filtradas.sort(function(a,b){
+      var av = (typeof a.fechaMs === 'number') ? a.fechaMs : null;
+      var bv = (typeof b.fechaMs === 'number') ? b.fechaMs : null;
+      if(av===null && bv===null) return 0;
+      if(av===null) return 1;
+      if(bv===null) return -1;
+      return sortMode==='asc' ? (av-bv) : (bv-av);
+    });
+  }
   return filtradas;
 }
 function toggleSortFecha(){
-  sortFechaAsc = !sortFechaAsc;
+  sortMode = sortMode==='natural' ? 'asc' : (sortMode==='asc' ? 'desc' : 'natural');
   var arrow = document.getElementById('sortFechaArrow');
-  if(arrow) arrow.textContent = sortFechaAsc ? '▲' : '▼';
+  if(arrow) arrow.textContent = sortMode==='asc' ? '▲' : (sortMode==='desc' ? '▼' : '⇅');
   renderPendientes();
 }
 function renderPendientes(){
