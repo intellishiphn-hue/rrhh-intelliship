@@ -567,10 +567,38 @@ function rowsToPedidos(matrix){
     };
     p.key = makeKey(p);
     p.codeWarn = checkCodigo(p.codigo, p.municipio);
-    // si no logramos interpretar la fecha como una fecha real, la marcamos para
-    // que se revise a mano -- igual la incluimos siempre (nunca se oculta por esto).
-    p.fechaWarn = !parseFechaLoose(p.fecha);
     out.push(p);
+  }
+
+  // Segunda pasada: a veces alguien escribe un comentario en la columna de fecha
+  // (ej. "TODO AEREO", "FORZA", "AGREGAR SOBRES") en vez de dejar la fecha automática,
+  // y eso rompe el parseo directo. Como Manager Cargo va agregando las guías en orden
+  // al Sheets, usamos las guías vecinas (justo antes y justo después en el Sheets) para
+  // inferir el día real: si ambas caen el mismo día, asumimos que esta también es de
+  // ese día. Si las vecinas no coinciden o no hay suficiente contexto, NO se adivina
+  // -- se deja marcada para revisar a mano, pero se sigue mostrando igual (nunca se
+  // pierde una guía por esto).
+  for(var idx=0; idx<out.length; idx++){
+    var pedido = out[idx];
+    var directa = parseFechaLoose(pedido.fecha);
+    if(directa){
+      pedido.fechaISOEfectiva = fechaISO(directa);
+      pedido.fechaInferida = false;
+    } else {
+      var antes=null, despues=null;
+      for(var a=idx-1; a>=0; a--){ var da=parseFechaLoose(out[a].fecha); if(da){ antes=da; break; } }
+      for(var d2=idx+1; d2<out.length; d2++){ var dd=parseFechaLoose(out[d2].fecha); if(dd){ despues=dd; break; } }
+      var candidatos = [antes, despues].filter(Boolean).map(fechaISO);
+      var mismoDia = candidatos.length>0 && candidatos.every(function(x){ return x===candidatos[0]; });
+      if(mismoDia){
+        pedido.fechaISOEfectiva = candidatos[0];
+        pedido.fechaInferida = true;
+      } else {
+        pedido.fechaISOEfectiva = '';
+        pedido.fechaInferida = false;
+      }
+    }
+    pedido.fechaWarn = !pedido.fechaISOEfectiva;
   }
   return out;
 }
@@ -617,13 +645,13 @@ function fechaISO(d){
   var y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), day=('0'+d.getDate()).slice(-2);
   return y+'-'+m+'-'+day;
 }
-function fechaEnRango(fechaStr, desde, hasta){
+// Compara fechas ya resueltas a texto ISO (YYYY-MM-DD) -- el orden lexicografico
+// de ese formato coincide con el orden cronologico, asi que alcanza con comparar texto.
+function fechaISOEnRango(fechaISOStr, desde, hasta){
   if(!desde && !hasta) return true; // sin filtro configurado = traer todo
-  var d = parseFechaLoose(fechaStr);
-  if(!d) return true; // si no logramos interpretar la fecha, mejor mostrarla que perderla
-  d.setHours(0,0,0,0);
-  if(desde){ var ds = new Date(desde+'T00:00:00'); if(d<ds) return false; }
-  if(hasta){ var hs = new Date(hasta+'T00:00:00'); if(d>hs) return false; }
+  if(!fechaISOStr) return true; // sin fecha resuelta: no se oculta, mejor mostrarla que perderla
+  if(desde && fechaISOStr<desde) return false;
+  if(hasta && fechaISOStr>hasta) return false;
   return true;
 }
 function setRangoHoy(){
@@ -647,7 +675,7 @@ function filtrarPorFecha(todos, desde, hasta){
   var enRango = todos.filter(function(p){
     if(p.fechaWarn) return false;
     if(!conFiltro) return true;
-    return fechaEnRango(p.fecha, desde, hasta);
+    return fechaISOEnRango(p.fechaISOEfectiva, desde, hasta);
   });
   var ambiguas = todos.filter(function(p){ return p.fechaWarn; });
   return { pedidos: enRango.concat(ambiguas), enRango: enRango, ambiguas: ambiguas, conFiltro: conFiltro };
@@ -663,15 +691,13 @@ function filtrarPorFecha(todos, desde, hasta){
 function marcarDuplicados(list){
   var grupos = {};
   list.forEach(function(p){
-    var d = parseFechaLoose(p.fecha);
-    var fkey = d ? fechaISO(d) : (p.fecha||'');
+    var fkey = p.fechaISOEfectiva || p.fecha || '';
     var k = normTxt(p.nombre)+'|'+fkey;
     if(!grupos[k]) grupos[k] = [];
     if(p.nombre) grupos[k].push(p);
   });
   list.forEach(function(p){
-    var d = parseFechaLoose(p.fecha);
-    var fkey = d ? fechaISO(d) : (p.fecha||'');
+    var fkey = p.fechaISOEfectiva || p.fecha || '';
     var k = normTxt(p.nombre)+'|'+fkey;
     var grupo = grupos[k];
     if(p.nombre && grupo && grupo.length>1){
@@ -870,7 +896,8 @@ function renderPendientes(){
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox rowSelP" data-key="'+escAttr(p.key)+'" onchange="updateSelStat()"></td>'+
       '<td style="white-space:nowrap;">'+escAttr(p.fecha||'&mdash;')+
-        (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
+        (p.fechaInferida ? '<div class="badge ok" style="margin-top:4px;" title="Manager Cargo no dejó una fecha válida aquí (escribió: &quot;'+escAttr(p.fecha)+'&quot;). Se infirió el '+escAttr(p.fechaISOEfectiva)+' porque las guías justo antes y después en el Sheets son de ese mismo día.">&#128269; '+escAttr(p.fechaISOEfectiva)+' (inferida)</div>' : '')+
+        (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar ni inferir esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
       '</td>'+
       '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)">'+dupBadge+'</td>'+
       '<td><input type="text" value="'+escAttr(p.telefono)+'" onchange="editPend(\''+p.key+'\',\'telefono\',this.value)"></td>'+
