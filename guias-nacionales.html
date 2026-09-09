@@ -64,7 +64,13 @@
   th{text-align:left;color:var(--tx2);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:9px 10px;border-bottom:1px solid var(--bd);white-space:nowrap;}
   td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
-  td input[type=text],td input[type=number]{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--sur2);color:var(--tx);font-size:12.5px;}
+  td input[type=text],td input[type=number]{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--sur2);color:var(--tx);font-size:12.5px;box-sizing:border-box;}
+  td input[type=number]{padding:6px 4px;text-align:center;}
+  /* La tabla de pendientes usa columnas de ancho fijo (ver <colgroup>) para que el
+     Nombre siempre tenga espacio suficiente y se vea completo, sin que otras
+     columnas se lo quiten. Ancho mínimo + scroll horizontal en pantallas angostas. */
+  #pendTable{table-layout:fixed;min-width:1195px;}
+  #pendTable td:nth-child(3) input[type=text]{font-size:13.5px;font-weight:600;}
   .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
   .badge.pend{background:rgba(148,163,184,.18);color:var(--tx2);}
   .badge.ok{background:rgba(34,197,94,.15);color:var(--ok);}
@@ -222,10 +228,22 @@
           </div>
 
           <div style="overflow-x:auto;">
-          <table>
+          <table id="pendTable">
+            <colgroup>
+              <col style="width:26px;">
+              <col style="width:96px;">
+              <col style="width:250px;">
+              <col style="width:105px;">
+              <col style="width:145px;">
+              <col style="width:165px;">
+              <col style="width:88px;">
+              <col style="width:64px;">
+              <col style="width:140px;">
+              <col style="width:112px;">
+            </colgroup>
             <thead>
               <tr>
-                <th style="width:26px;"><input type="checkbox" class="checkbox" id="selAllPend" onclick="toggleAllPend(this)"></th>
+                <th><input type="checkbox" class="checkbox" id="selAllPend" onclick="toggleAllPend(this)"></th>
                 <th>Fecha</th>
                 <th>Nombre</th>
                 <th>Teléfono</th>
@@ -572,32 +590,19 @@ function rowsToPedidos(matrix){
 
   // Segunda pasada: a veces alguien escribe un comentario en la columna de fecha
   // (ej. "TODO AEREO", "FORZA", "AGREGAR SOBRES") en vez de dejar la fecha automática,
-  // y eso rompe el parseo directo. Como Manager Cargo va agregando las guías en orden
-  // al Sheets, usamos las guías vecinas (justo antes y justo después en el Sheets) para
-  // inferir el día real: si ambas caen el mismo día, asumimos que esta también es de
-  // ese día. Si las vecinas no coinciden o no hay suficiente contexto, NO se adivina
-  // -- se deja marcada para revisar a mano, pero se sigue mostrando igual (nunca se
-  // pierde una guía por esto).
+  // y eso rompe el parseo directo. Por pedido del equipo, esas filas NO se adivinan:
+  // solo se usa la fecha si se pudo interpretar directamente, para que "Pendientes
+  // del rango" sea siempre exacto. La fila con fecha sin identificar se sigue
+  // mostrando igual (nunca se pierde una guía), pero queda aparte en "Revisar fecha".
   for(var idx=0; idx<out.length; idx++){
     var pedido = out[idx];
     var directa = parseFechaLoose(pedido.fecha);
     if(directa){
       pedido.fechaISOEfectiva = fechaISO(directa);
-      pedido.fechaInferida = false;
     } else {
-      var antes=null, despues=null;
-      for(var a=idx-1; a>=0; a--){ var da=parseFechaLoose(out[a].fecha); if(da){ antes=da; break; } }
-      for(var d2=idx+1; d2<out.length; d2++){ var dd=parseFechaLoose(out[d2].fecha); if(dd){ despues=dd; break; } }
-      var candidatos = [antes, despues].filter(Boolean).map(fechaISO);
-      var mismoDia = candidatos.length>0 && candidatos.every(function(x){ return x===candidatos[0]; });
-      if(mismoDia){
-        pedido.fechaISOEfectiva = candidatos[0];
-        pedido.fechaInferida = true;
-      } else {
-        pedido.fechaISOEfectiva = '';
-        pedido.fechaInferida = false;
-      }
+      pedido.fechaISOEfectiva = '';
     }
+    pedido.fechaInferida = false;
     pedido.fechaWarn = !pedido.fechaISOEfectiva;
   }
   return out;
@@ -895,17 +900,16 @@ function renderPendientes(){
       : '';
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox rowSelP" data-key="'+escAttr(p.key)+'" onchange="updateSelStat()"></td>'+
-      '<td style="white-space:nowrap;">'+escAttr(p.fecha||'&mdash;')+
-        (p.fechaInferida ? '<div class="badge ok" style="margin-top:4px;" title="Manager Cargo no dejó una fecha válida aquí (escribió: &quot;'+escAttr(p.fecha)+'&quot;). Se infirió el '+escAttr(p.fechaISOEfectiva)+' porque las guías justo antes y después en el Sheets son de ese mismo día.">&#128269; '+escAttr(p.fechaISOEfectiva)+' (inferida)</div>' : '')+
-        (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar ni inferir esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
+      '<td>'+escAttr(p.fecha||'&mdash;')+
+        (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
       '</td>'+
       '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)">'+dupBadge+'</td>'+
       '<td><input type="text" value="'+escAttr(p.telefono)+'" onchange="editPend(\''+p.key+'\',\'telefono\',this.value)"></td>'+
       '<td>'+escAttr(p.municipio)+'<br>'+codeBadge+
         '<input type="text" style="margin-top:4px;" value="'+escAttr(p.codigo)+'" onchange="editCodigo(\''+p.key+'\',this.value)"></td>'+
       '<td><span class="addr-cell" title="'+escAttr(p.direccion)+'">'+escAttr(p.direccion)+'</span></td>'+
-      '<td style="width:72px;"><input type="number" min="0" step="0.01" value="'+escAttr(p.peso)+'" onchange="editPend(\''+p.key+'\',\'peso\',this.value)"></td>'+
-      '<td style="width:64px;"><input type="number" min="1" value="'+p.piezas+'" onchange="editPend(\''+p.key+'\',\'piezas\',this.value)"></td>'+
+      '<td><input type="number" min="0" step="0.01" value="'+escAttr(p.peso)+'" onchange="editPend(\''+p.key+'\',\'peso\',this.value)"></td>'+
+      '<td><input type="number" min="1" value="'+p.piezas+'" onchange="editPend(\''+p.key+'\',\'piezas\',this.value)"></td>'+
       '<td><input type="text" value="'+escAttr(p.referencia1)+'" onchange="editPend(\''+p.key+'\',\'referencia1\',this.value)"></td>'+
       '<td><button class="btn sec" style="padding:5px 8px;white-space:nowrap;" title="Ya la crearon directo en Manager Cargo/Cargo Expreso: quítala de pendientes sin generar archivo" onclick="marcarComoCreada(\''+p.key+'\')">'+
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ya creada'+
