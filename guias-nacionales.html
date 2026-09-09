@@ -176,6 +176,7 @@
         <div class="statrow">
           <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Pendientes</div></div>
           <div class="stat warnstat"><div class="n" id="statWarn">0</div><div class="l">Código sospechoso</div></div>
+          <div class="stat warnstat"><div class="n" id="statDup">0</div><div class="l">Posibles duplicados</div></div>
           <div class="stat"><div class="n" id="statSel">0</div><div class="l">Seleccionadas</div></div>
           <div class="stat"><div class="n" id="statUltima">&mdash;</div><div class="l">Última actualización</div></div>
         </div>
@@ -183,6 +184,15 @@
         <div class="card">
           <h2>Pedidos desde Manager Cargo</h2>
           <div class="desc">Se leen en vivo desde el Google Sheets configurado. Revisa el código de zona (⚠) y la referencia antes de exportar &mdash; ambos son editables.</div>
+
+          <div class="btnrow" style="margin-top:0;margin-bottom:10px;align-items:center;">
+            <span class="hint" style="margin:0;">Traer guías con fecha entre</span>
+            <input type="date" id="fechaDesde" style="max-width:150px;">
+            <span class="hint" style="margin:0;">y</span>
+            <input type="date" id="fechaHasta" style="max-width:150px;">
+            <span class="pill" id="pillHoy" onclick="setRangoHoy()">Solo hoy</span>
+            <span class="pill" id="pillTodo" onclick="limpiarRango()">Traer todas</span>
+          </div>
 
           <div class="btnrow" style="margin-top:0;margin-bottom:14px;">
             <button class="btn sec" onclick="fetchFromSheet()" id="btnRefresh">
@@ -200,6 +210,7 @@
           <div class="searchbar">
             <input type="text" id="pendSearch" placeholder="Buscar por nombre, teléfono, código o municipio..." oninput="renderPendientes()">
             <span class="pill" id="pillOnlyWarn" onclick="toggleOnlyWarn()">Solo con código sospechoso</span>
+            <span class="pill" id="pillOnlyDup" onclick="toggleOnlyDup()">Solo posibles duplicados</span>
           </div>
 
           <div style="overflow-x:auto;">
@@ -531,6 +542,83 @@ function makeKey(p){
   return raw.replace(/[.#$\[\]\/\s]/g,'_').slice(0,180) || ('k'+Date.now()+Math.random().toString(36).slice(2,6));
 }
 
+/* ============================================================
+   FECHAS: parseo flexible + filtro por rango
+   ============================================================ */
+// Manager Cargo puede mandar la fecha en distintos formatos segun el
+// formato de celda del Sheets. Intentamos varias formas comunes antes
+// de rendirnos, para no ocultar guias por un formato inesperado.
+function parseFechaLoose(str){
+  if(!str) return null;
+  str = (''+str).trim();
+  var m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // ISO: 2026-09-08
+  if(m){ var d = new Date(+m[1], +m[2]-1, +m[3]); return isNaN(d.getTime())?null:d; }
+  m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/); // DD/MM/YYYY o MM/DD/YYYY
+  if(m){
+    var a=+m[1], b=+m[2], y=+m[3];
+    var day, month;
+    if(a>12){ day=a; month=b; } // el primero no puede ser mes -> es dia
+    else if(b>12){ day=b; month=a; } // el segundo no puede ser mes -> es dia
+    else { day=a; month=b; } // ambiguo: asumimos DD/MM/YYYY (formato Honduras)
+    var d2 = new Date(y, month-1, day);
+    return isNaN(d2.getTime())?null:d2;
+  }
+  var d3 = new Date(str); // ultimo recurso, lo que entienda el navegador
+  return isNaN(d3.getTime())?null:d3;
+}
+function fechaISO(d){
+  if(!d) return '';
+  var y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), day=('0'+d.getDate()).slice(-2);
+  return y+'-'+m+'-'+day;
+}
+function fechaEnRango(fechaStr, desde, hasta){
+  if(!desde && !hasta) return true; // sin filtro configurado = traer todo
+  var d = parseFechaLoose(fechaStr);
+  if(!d) return true; // si no logramos interpretar la fecha, mejor mostrarla que perderla
+  d.setHours(0,0,0,0);
+  if(desde){ var ds = new Date(desde+'T00:00:00'); if(d<ds) return false; }
+  if(hasta){ var hs = new Date(hasta+'T00:00:00'); if(d>hs) return false; }
+  return true;
+}
+function setRangoHoy(){
+  var hoy = fechaISO(new Date());
+  document.getElementById('fechaDesde').value = hoy;
+  document.getElementById('fechaHasta').value = hoy;
+}
+function limpiarRango(){
+  document.getElementById('fechaDesde').value = '';
+  document.getElementById('fechaHasta').value = '';
+}
+
+/* ============================================================
+   DUPLICADOS: mismo nombre, mismo dia
+   ============================================================ */
+// Si el mismo nombre aparece mas de una vez el mismo dia entre las
+// guias pendientes, es probable que Manager Cargo la haya mandado
+// repetida (o que se haya creado sin querer 2 veces) -- avisamos
+// para que el equipo revise antes de crear ambas.
+function marcarDuplicados(list){
+  var grupos = {};
+  list.forEach(function(p){
+    var d = parseFechaLoose(p.fecha);
+    var fkey = d ? fechaISO(d) : (p.fecha||'');
+    var k = normTxt(p.nombre)+'|'+fkey;
+    if(!grupos[k]) grupos[k] = [];
+    if(p.nombre) grupos[k].push(p);
+  });
+  list.forEach(function(p){
+    var d = parseFechaLoose(p.fecha);
+    var fkey = d ? fechaISO(d) : (p.fecha||'');
+    var k = normTxt(p.nombre)+'|'+fkey;
+    var grupo = grupos[k];
+    if(p.nombre && grupo && grupo.length>1){
+      p.dupWarn = { bad:true, motivo:'El nombre "'+p.nombre+'" aparece '+grupo.length+' veces el '+(fkey||'mismo día')+'. Revisa si es una guía repetida antes de crearla.' };
+    } else {
+      p.dupWarn = { bad:false, motivo:'' };
+    }
+  });
+}
+
 // Compara el codigo de zona que manda Manager Cargo contra la lista oficial:
 // si el municipio real de ese codigo no coincide con el municipio que tambien
 // mando Manager Cargo, es probable que el codigo este mal (bug conocido de MC).
@@ -587,8 +675,13 @@ async function fetchFromSheet(){
     var text = await res.text();
     if(text.trim().indexOf('<') === 0) throw new Error('La hoja no es pública o el link no es correcto.');
     var matrix = parseCsv(text);
-    await applyNuevosPedidos(rowsToPedidos(matrix));
-    statusEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN');
+    var todos = rowsToPedidos(matrix);
+    var desde = document.getElementById('fechaDesde').value;
+    var hasta = document.getElementById('fechaHasta').value;
+    var pedidos = todos.filter(function(p){ return fechaEnRango(p.fecha, desde, hasta); });
+    await applyNuevosPedidos(pedidos);
+    var rangoTxt = (desde||hasta) ? (' ('+pedidos.length+' de '+todos.length+' filas están en el rango de fechas)') : '';
+    statusEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN') + rangoTxt;
     document.getElementById('statUltima').textContent = new Date().toLocaleTimeString('es-HN');
   }catch(err){
     statusEl.textContent = 'No se pudo leer en vivo (' + err.message + '). Usa "subir archivo" como respaldo.';
@@ -612,8 +705,13 @@ function handleFileFallback(files){
         var ws = wb.Sheets[wb.SheetNames[0]];
         matrix = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       }
-      await applyNuevosPedidos(rowsToPedidos(matrix));
-      document.getElementById('sheetStatus').textContent = 'Archivo cargado: '+file.name;
+      var todosArch = rowsToPedidos(matrix);
+      var desdeArch = document.getElementById('fechaDesde').value;
+      var hastaArch = document.getElementById('fechaHasta').value;
+      var pedidosArch = todosArch.filter(function(p){ return fechaEnRango(p.fecha, desdeArch, hastaArch); });
+      await applyNuevosPedidos(pedidosArch);
+      var rangoTxtArch = (desdeArch||hastaArch) ? (' ('+pedidosArch.length+' de '+todosArch.length+' filas están en el rango de fechas)') : '';
+      document.getElementById('sheetStatus').textContent = 'Archivo cargado: '+file.name+rangoTxtArch;
       showToast('Archivo procesado correctamente.');
     }catch(err){
       showToast('No se pudo leer el archivo: '+err.message, true);
@@ -632,7 +730,19 @@ async function applyNuevosPedidos(nuevos){
     var data = await res.json();
     if(data) estadoMap = data;
   }catch(e){}
-  pendientes = nuevos.filter(function(p){ return !estadoMap[p.key]; });
+  var nuevosFiltrados = nuevos.filter(function(p){ return !estadoMap[p.key]; });
+
+  // Merge en vez de reemplazo total: si ya tenias una guia pendiente (con
+  // ediciones tuyas, ej. corregiste el codigo o la referencia) y vuelves a
+  // actualizar desde el Sheets, conservamos tu version editada en vez de
+  // perderla. Solo se agregan las que realmente son nuevas.
+  var existentes = {};
+  pendientes.forEach(function(p){ existentes[p.key] = p; });
+  var merged = nuevosFiltrados.map(function(p){
+    return existentes[p.key] || p;
+  });
+  pendientes = merged;
+  marcarDuplicados(pendientes);
   renderPendientes();
 }
 
@@ -644,10 +754,17 @@ function toggleOnlyWarn(){
   document.getElementById('pillOnlyWarn').classList.toggle('active', onlyWarn);
   renderPendientes();
 }
+var onlyDup = false;
+function toggleOnlyDup(){
+  onlyDup = !onlyDup;
+  document.getElementById('pillOnlyDup').classList.toggle('active', onlyDup);
+  renderPendientes();
+}
 function getFilteredPendientes(){
   var q = (document.getElementById('pendSearch').value||'').toLowerCase();
   return pendientes.filter(function(p){
     if(onlyWarn && !p.codeWarn.bad) return false;
+    if(onlyDup && !(p.dupWarn && p.dupWarn.bad)) return false;
     if(!q) return true;
     return (p.nombre||'').toLowerCase().indexOf(q)>-1 ||
            (p.telefono||'').toLowerCase().indexOf(q)>-1 ||
@@ -663,10 +780,13 @@ function renderPendientes(){
     var codeBadge = p.codeWarn.bad
       ? '<span class="badge warn" title="'+escAttr(p.codeWarn.motivo)+'">&#9888; '+escAttr(p.codigo||'&mdash;')+'</span>'
       : '<span class="badge ok">'+escAttr(p.codigo)+'</span>';
+    var dupBadge = (p.dupWarn && p.dupWarn.bad)
+      ? '<div class="badge warn" style="margin-top:4px;" title="'+escAttr(p.dupWarn.motivo)+'">&#9888; Posible duplicado</div>'
+      : '';
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox rowSelP" data-key="'+escAttr(p.key)+'" onchange="updateSelStat()"></td>'+
       '<td style="white-space:nowrap;">'+escAttr(p.fecha)+'</td>'+
-      '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)"></td>'+
+      '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)">'+dupBadge+'</td>'+
       '<td><input type="text" value="'+escAttr(p.telefono)+'" onchange="editPend(\''+p.key+'\',\'telefono\',this.value)"></td>'+
       '<td>'+escAttr(p.municipio)+'<br>'+codeBadge+
         '<input type="text" style="margin-top:4px;" value="'+escAttr(p.codigo)+'" onchange="editCodigo(\''+p.key+'\',this.value)"></td>'+
@@ -678,6 +798,7 @@ function renderPendientes(){
   }).join('');
   document.getElementById('statTotal').textContent = pendientes.length;
   document.getElementById('statWarn').textContent = pendientes.filter(function(p){return p.codeWarn.bad;}).length;
+  document.getElementById('statDup').textContent = pendientes.filter(function(p){return p.dupWarn && p.dupWarn.bad;}).length;
   updateSelStat();
 }
 function findPend(key){
@@ -693,6 +814,11 @@ function editPend(key, field, value){
     var oldKey = p.key;
     p.key = makeKey(p);
     document.querySelectorAll('[data-key="'+CSS.escape(oldKey)+'"]').forEach(function(el){ el.dataset.key = p.key; });
+  }
+  if(field==='nombre'){
+    // el nombre puede crear o resolver una alerta de duplicado
+    marcarDuplicados(pendientes);
+    renderPendientes();
   }
 }
 function editCodigo(key, value){
@@ -922,6 +1048,9 @@ function showToast(msg, isErr){
    ============================================================ */
 function initApp(){
   fillConfigForm();
+  if(!document.getElementById('fechaDesde').value && !document.getElementById('fechaHasta').value){
+    setRangoHoy();
+  }
 }
 window.addEventListener('DOMContentLoaded', function(){
   var logoSrc = 'data:image/png;base64,' + LOGO_B64;
