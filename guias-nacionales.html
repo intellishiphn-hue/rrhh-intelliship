@@ -192,13 +192,20 @@
           <h2>Pedidos desde Manager Cargo</h2>
           <div class="desc">Se leen en vivo desde el Google Sheets configurado. Revisa el código de zona (⚠) y la referencia antes de exportar &mdash; ambos son editables.</div>
 
-          <div class="btnrow" style="margin-top:0;margin-bottom:10px;align-items:center;">
+          <div class="btnrow" style="margin-top:0;margin-bottom:6px;align-items:center;">
             <span class="hint" style="margin:0;">Traer guías con fecha entre</span>
             <input type="date" id="fechaDesde" style="max-width:150px;">
             <span class="hint" style="margin:0;">y</span>
             <input type="date" id="fechaHasta" style="max-width:150px;">
             <span class="pill" id="pillHoy" onclick="setRangoHoy()">Solo hoy</span>
             <span class="pill" id="pillTodo" onclick="limpiarRango()">Traer todas</span>
+          </div>
+          <div class="btnrow" style="margin-top:0;margin-bottom:14px;align-items:center;">
+            <span class="hint" style="margin:0;">y hora entre</span>
+            <input type="time" id="horaDesde" style="max-width:120px;">
+            <span class="hint" style="margin:0;">y</span>
+            <input type="time" id="horaHasta" style="max-width:120px;">
+            <span class="hint" style="margin:0;">(opcional &mdash; se aplica a cada día del rango de arriba)</span>
           </div>
 
           <div class="btnrow" style="margin-top:0;margin-bottom:14px;">
@@ -244,7 +251,7 @@
             <thead>
               <tr>
                 <th><input type="checkbox" class="checkbox" id="selAllPend" onclick="toggleAllPend(this)"></th>
-                <th>Fecha</th>
+                <th style="cursor:pointer;" onclick="toggleSortFecha()" title="Ordenar por fecha y hora">Fecha <span id="sortFechaArrow">▲</span></th>
                 <th>Nombre</th>
                 <th>Teléfono</th>
                 <th>Municipio / Código</th>
@@ -399,6 +406,7 @@ var pendientes = [];   // filas activas leidas del sheet, sin exportar aun
 var exportadas = [];   // registros cargados desde Firebase
 var expSel = new Set();
 var onlyWarn = false;
+var sortFechaAsc = true; // orden de la tabla de pendientes: true = mas antigua primero (por hora)
 
 /* ============================================================
    LOGIN / CONFIG LOCAL
@@ -599,8 +607,12 @@ function rowsToPedidos(matrix){
     var directa = parseFechaLoose(pedido.fecha);
     if(directa){
       pedido.fechaISOEfectiva = fechaISO(directa);
+      pedido.fechaMs = directa.getTime();
+      pedido.horaHM = ('0'+directa.getHours()).slice(-2)+':'+('0'+directa.getMinutes()).slice(-2);
     } else {
       pedido.fechaISOEfectiva = '';
+      pedido.fechaMs = null;
+      pedido.horaHM = '';
     }
     pedido.fechaInferida = false;
     pedido.fechaWarn = !pedido.fechaISOEfectiva;
@@ -622,16 +634,18 @@ function makeKey(p){
 function parseFechaLoose(str){
   if(!str) return null;
   str = (''+str).trim();
-  var m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // ISO: 2026-09-08
-  if(m){ var d = new Date(+m[1], +m[2]-1, +m[3]); return isNaN(d.getTime())?null:d; }
-  m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/); // DD/MM/YYYY o MM/DD/YYYY
+  // ISO: 2026-09-08 o 2026-09-08 18:23:48 (la hora es opcional; si viene, se conserva
+  // para poder ordenar/filtrar por hora, no solo por dia).
+  var m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m){ var d = new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0)); return isNaN(d.getTime())?null:d; }
+  m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/); // DD/MM/YYYY o MM/DD/YYYY, hora opcional
   if(m){
     var a=+m[1], b=+m[2], y=+m[3];
     var day, month;
     if(a>12){ day=a; month=b; } // el primero no puede ser mes -> es dia
     else if(b>12){ day=b; month=a; } // el segundo no puede ser mes -> es dia
     else { day=a; month=b; } // ambiguo: asumimos DD/MM/YYYY (formato Honduras)
-    var d2 = new Date(y, month-1, day);
+    var d2 = new Date(y, month-1, day, +(m[4]||0), +(m[5]||0), +(m[6]||0));
     return isNaN(d2.getTime())?null:d2;
   }
   m = str.match(/^(\d{4,6})(?:[.,](\d+))?$/); // numero de serie de Google Sheets (a veces con coma decimal en vez de punto)
@@ -659,14 +673,27 @@ function fechaISOEnRango(fechaISOStr, desde, hasta){
   if(hasta && fechaISOStr>hasta) return false;
   return true;
 }
+// Compara solo la hora del dia (HH:MM), sin importar la fecha -- se aplica igual
+// a cada dia dentro del rango de fechas (ej. "del 9 al 9 de septiembre, de 8am a 5pm").
+function horaEnRango(horaHM, horaDesde, horaHasta){
+  if(!horaDesde && !horaHasta) return true; // sin filtro de hora = todo el dia
+  if(!horaHM) return true; // sin hora resuelta: no se oculta, mejor mostrarla que perderla
+  if(horaDesde && horaHM<horaDesde) return false;
+  if(horaHasta && horaHM>horaHasta) return false;
+  return true;
+}
 function setRangoHoy(){
   var hoy = fechaISO(new Date());
   document.getElementById('fechaDesde').value = hoy;
   document.getElementById('fechaHasta').value = hoy;
+  document.getElementById('horaDesde').value = '';
+  document.getElementById('horaHasta').value = '';
 }
 function limpiarRango(){
   document.getElementById('fechaDesde').value = '';
   document.getElementById('fechaHasta').value = '';
+  document.getElementById('horaDesde').value = '';
+  document.getElementById('horaHasta').value = '';
 }
 
 // Separa los pedidos leidos en 2 grupos: los que tienen fecha reconocible y caen
@@ -675,15 +702,17 @@ function limpiarRango(){
 // ultimas SIEMPRE se incluyen igual (nunca se pierde una guia por esto), pero se
 // cuentan aparte para que el numero de "Pendientes" refleje el dia real y no se
 // infle con un backlog viejo de fechas sin identificar.
-function filtrarPorFecha(todos, desde, hasta){
+function filtrarPorFecha(todos, desde, hasta, horaDesde, horaHasta){
   var conFiltro = !!(desde || hasta);
+  var conFiltroHora = !!(horaDesde || horaHasta);
   var enRango = todos.filter(function(p){
     if(p.fechaWarn) return false;
-    if(!conFiltro) return true;
-    return fechaISOEnRango(p.fechaISOEfectiva, desde, hasta);
+    if(conFiltro && !fechaISOEnRango(p.fechaISOEfectiva, desde, hasta)) return false;
+    if(conFiltroHora && !horaEnRango(p.horaHM, horaDesde, horaHasta)) return false;
+    return true;
   });
   var ambiguas = todos.filter(function(p){ return p.fechaWarn; });
-  return { pedidos: enRango.concat(ambiguas), enRango: enRango, ambiguas: ambiguas, conFiltro: conFiltro };
+  return { pedidos: enRango.concat(ambiguas), enRango: enRango, ambiguas: ambiguas, conFiltro: conFiltro||conFiltroHora };
 }
 
 /* ============================================================
@@ -772,10 +801,12 @@ async function fetchFromSheet(){
     var todos = rowsToPedidos(matrix);
     var desde = document.getElementById('fechaDesde').value;
     var hasta = document.getElementById('fechaHasta').value;
-    var desglose = filtrarPorFecha(todos, desde, hasta);
+    var horaDesde = document.getElementById('horaDesde').value;
+    var horaHasta = document.getElementById('horaHasta').value;
+    var desglose = filtrarPorFecha(todos, desde, hasta, horaDesde, horaHasta);
     var resumen = await applyNuevosPedidos(desglose.pedidos);
     var rangoTxt = desglose.conFiltro
-      ? (desglose.enRango.length+' de '+todos.length+' filas leídas están en el rango de fechas. ')
+      ? (desglose.enRango.length+' de '+todos.length+' filas leídas están en el rango elegido. ')
       : (todos.length+' filas leídas del Sheets. ');
     var ambTxt = desglose.ambiguas.length ? (desglose.ambiguas.length+' más tienen fecha sin identificar (se muestran aparte, en "Revisar fecha", para que no se pierdan). ') : '';
     var resumenTxt = rangoTxt+ambTxt+resumen.yaExportadas+' ya estaban exportadas. '+resumen.nuevasDeVerdad+' son nuevas. Quedan '+resumen.pendientesAhora+' filas en la tabla en total.';
@@ -807,10 +838,12 @@ function handleFileFallback(files){
       var todosArch = rowsToPedidos(matrix);
       var desdeArch = document.getElementById('fechaDesde').value;
       var hastaArch = document.getElementById('fechaHasta').value;
-      var desgloseArch = filtrarPorFecha(todosArch, desdeArch, hastaArch);
+      var horaDesdeArch = document.getElementById('horaDesde').value;
+      var horaHastaArch = document.getElementById('horaHasta').value;
+      var desgloseArch = filtrarPorFecha(todosArch, desdeArch, hastaArch, horaDesdeArch, horaHastaArch);
       var resumenArch = await applyNuevosPedidos(desgloseArch.pedidos);
       var rangoTxtArch = desgloseArch.conFiltro
-        ? (desgloseArch.enRango.length+' de '+todosArch.length+' filas leídas están en el rango de fechas. ')
+        ? (desgloseArch.enRango.length+' de '+todosArch.length+' filas leídas están en el rango elegido. ')
         : (todosArch.length+' filas leídas. ');
       var ambTxtArch = desgloseArch.ambiguas.length ? (desgloseArch.ambiguas.length+' más tienen fecha sin identificar (se muestran aparte, en "Revisar fecha"). ') : '';
       var resumenTxtArch = rangoTxtArch+ambTxtArch+resumenArch.yaExportadas+' ya estaban exportadas. '+resumenArch.nuevasDeVerdad+' son nuevas. Quedan '+resumenArch.pendientesAhora+' filas en la tabla en total.';
@@ -876,7 +909,7 @@ function toggleOnlyFechaWarn(){
 }
 function getFilteredPendientes(){
   var q = (document.getElementById('pendSearch').value||'').toLowerCase();
-  return pendientes.filter(function(p){
+  var filtradas = pendientes.filter(function(p){
     if(onlyWarn && !p.codeWarn.bad) return false;
     if(onlyDup && !(p.dupWarn && p.dupWarn.bad)) return false;
     if(onlyFechaWarn && !p.fechaWarn) return false;
@@ -886,6 +919,24 @@ function getFilteredPendientes(){
            (p.codigo||'').toLowerCase().indexOf(q)>-1 ||
            (p.municipio||'').toLowerCase().indexOf(q)>-1;
   });
+  // Orden por fecha/hora: las que tienen fecha reconocible primero (de mas antigua a
+  // mas reciente, o al reves si se invierte el orden desde el encabezado "Fecha"),
+  // y al final las de fecha sin identificar (no tienen hora con la que ordenarlas).
+  filtradas.sort(function(a,b){
+    var av = (typeof a.fechaMs === 'number') ? a.fechaMs : null;
+    var bv = (typeof b.fechaMs === 'number') ? b.fechaMs : null;
+    if(av===null && bv===null) return 0;
+    if(av===null) return 1;
+    if(bv===null) return -1;
+    return sortFechaAsc ? (av-bv) : (bv-av);
+  });
+  return filtradas;
+}
+function toggleSortFecha(){
+  sortFechaAsc = !sortFechaAsc;
+  var arrow = document.getElementById('sortFechaArrow');
+  if(arrow) arrow.textContent = sortFechaAsc ? '▲' : '▼';
+  renderPendientes();
 }
 function renderPendientes(){
   var filtered = getFilteredPendientes();
