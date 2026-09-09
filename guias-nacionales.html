@@ -893,14 +893,14 @@ function renderPendientes(){
   document.getElementById('pendEmpty').style.display = pendientes.length? 'none':'block';
   body.innerHTML = filtered.map(function(p){
     var codeBadge = p.codeWarn.bad
-      ? '<span class="badge warn" title="'+escAttr(p.codeWarn.motivo)+'">&#9888; '+escAttr(p.codigo||'&mdash;')+'</span>'
+      ? '<span class="badge warn" title="'+escAttr(p.codeWarn.motivo)+'">&#9888; '+escAttr(p.codigo||'—')+'</span>'
       : '<span class="badge ok">'+escAttr(p.codigo)+'</span>';
     var dupBadge = (p.dupWarn && p.dupWarn.bad)
       ? '<div class="badge warn" style="margin-top:4px;" title="'+escAttr(p.dupWarn.motivo)+'">&#9888; Posible duplicado</div>'
       : '';
     return '<tr>'+
       '<td><input type="checkbox" class="checkbox rowSelP" data-key="'+escAttr(p.key)+'" onchange="updateSelStat()"></td>'+
-      '<td>'+escAttr(p.fecha||'&mdash;')+
+      '<td>'+escAttr(p.fecha||'—')+
         (p.fechaWarn ? '<div class="badge warn" style="margin-top:4px;" title="No se pudo interpretar esta fecha, revísala a mano. La guía se muestra igual para no perderla.">&#9888; Revisar</div>' : '')+
       '</td>'+
       '<td><input type="text" value="'+escAttr(p.nombre)+'" onchange="editPend(\''+p.key+'\',\'nombre\',this.value)">'+dupBadge+'</td>'+
