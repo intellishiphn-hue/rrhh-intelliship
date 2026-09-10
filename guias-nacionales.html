@@ -311,6 +311,18 @@
             </button>
           </div>
 
+          <div class="btnrow" style="margin-top:0;">
+            <button class="btn" onclick="descargarExportadas('csv')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Volver a descargar CSV
+            </button>
+            <button class="btn sec" onclick="descargarExportadas('xlsx')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Volver a descargar Excel
+            </button>
+            <span class="hint" style="margin:0;">Descarga de nuevo lo que ya está filtrado arriba (por fecha o búsqueda). Si marcas casillas específicas, descarga solo esas. No vuelve a marcar nada ni duplica registros &mdash; puedes darle clic las veces que necesites.</span>
+          </div>
+
           <div class="dangerzone">
             <div class="dzlabel">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -1204,11 +1216,57 @@ function renderExportadas(){
       '<td>'+fecha+'</td><td>'+escAttr(r.nombre)+'</td><td>'+escAttr(r.telefono)+'</td>'+
       '<td>'+escAttr(r.codigo)+'</td><td>'+escAttr(r.piezas)+'</td><td>'+escAttr(r.referencia1)+'</td>'+
       '<td>'+escAttr(metodoTxt)+'</td>'+
-      '<td><button class="btn sec" style="padding:5px 9px;" title="Volver a pendientes" onclick="revertirExportada(\''+r._id+'\')">'+
+      '<td style="white-space:nowrap;">'+
+      '<button class="btn sec" style="padding:5px 9px;" title="Volver a descargar esta guía (CSV)" onclick="descargarExportadaUna(\''+r._id+'\')">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></svg>'+
+      '</button>'+
+      '<button class="btn sec" style="padding:5px 9px;margin-left:4px;" title="Volver a pendientes" onclick="revertirExportada(\''+r._id+'\')">'+
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>'+
-      '</button></td>'+
+      '</button>'+
+      '</td>'+
     '</tr>';
   }).join('');
+}
+// Vuelve a generar el archivo para Cargo Expreso a partir de lo ya guardado en la nube
+// (no del archivo original que descargaste antes) -- por eso funciona aunque el
+// navegador ya no tenga esa descarga, o si el primer intento fallo (ej. subiste Excel
+// a Cargo Expreso por error y solo acepta CSV). No vuelve a marcar nada ni duplica
+// registros, solo genera el archivo otra vez.
+function exportadasParaDescargar(){
+  var ids = Array.from(expSel);
+  if(ids.length){
+    var set = {}; ids.forEach(function(id){ set[id]=true; });
+    return exportadas.filter(function(r){ return set[r._id]; });
+  }
+  return getFilteredExportadas();
+}
+async function descargarExportadas(kind){
+  var rows = exportadasParaDescargar();
+  if(!rows.length){ showToast('No hay registros para descargar. Ajusta la búsqueda/fecha de arriba o selecciona alguna fila.', true); return; }
+  var stamp = new Date();
+  var stampStr = stamp.toISOString().slice(0,16).replace('T','_').replace(':','');
+  if(kind === 'csv'){
+    var lines = [TEMPLATE_HEADERS.map(csvEscape).join(',')];
+    rows.forEach(function(r){ lines.push(toTemplateRow(r).map(csvEscape).join(',')); });
+    var blob = new Blob(['﻿'+lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    downloadBlob(blob, 'CargoExpreso_Guias_reenvio_'+stampStr+'.csv');
+  } else {
+    var aoa = [TEMPLATE_HEADERS].concat(rows.map(toTemplateRow));
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Guias');
+    XLSX.writeFile(wb, 'CargoExpreso_Guias_reenvio_'+stampStr+'.xlsx');
+  }
+  showToast(rows.length+' guía(s) descargada(s) de nuevo desde el historial.');
+}
+function descargarExportadaUna(id){
+  var r = exportadas.find(function(x){ return x._id===id; });
+  if(!r){ showToast('No se encontró ese registro.', true); return; }
+  var lines = [TEMPLATE_HEADERS.map(csvEscape).join(',')];
+  lines.push(toTemplateRow(r).map(csvEscape).join(','));
+  var blob = new Blob(['﻿'+lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  downloadBlob(blob, 'CargoExpreso_Guia_'+(r.nombre||'guia').replace(/[^a-z0-9]+/gi,'_')+'.csv');
+  showToast('Guía de "'+r.nombre+'" descargada de nuevo.');
 }
 function toggleExpSel(id, checked){ if(checked) expSel.add(id); else expSel.delete(id); }
 function toggleAllExp(cb){
