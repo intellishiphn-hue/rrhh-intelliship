@@ -753,8 +753,19 @@ function checkCodigo(codigo, municipio){
   if(!codigo) return { bad:true, motivo:'Sin código de zona' };
   var oficial = CODIGO_TO_MUNI[codigo];
   if(!oficial) return { bad:true, motivo:'Código "'+codigo+'" no existe en la lista oficial' };
-  if(municipio && normTxt(oficial) !== normTxt(municipio)){
-    return { bad:true, motivo:'Código '+codigo+' pertenece a "'+oficial+'", pero Manager Cargo lo asoció a "'+municipio+'"' };
+  if(municipio){
+    var nOficial = normTxt(oficial), nMuni = normTxt(municipio);
+    if(nOficial !== nMuni){
+      // Manager Cargo a veces manda el nombre del municipio recortado (le falta el final,
+      // ej. "Villa de San Francis" en vez de "Villa de San Francisco"). Si lo que mandaron
+      // es exactamente el principio del nombre oficial, es un recorte de texto, no un
+      // codigo de zona equivocado -- no se avisa. Si el nombre es realmente otro
+      // municipio (ej. Omoa en vez de Potrerillos), sigue marcandose.
+      var esRecorte = nMuni.length>=4 && nOficial.indexOf(nMuni)===0;
+      if(!esRecorte){
+        return { bad:true, motivo:'Código '+codigo+' pertenece a "'+oficial+'", pero Manager Cargo lo asoció a "'+municipio+'"' };
+      }
+    }
   }
   return { bad:false, motivo:'' };
 }
