@@ -30,6 +30,10 @@
   .loginBox button{width:100%;margin-top:16px;padding:11px;border:none;border-radius:8px;background:var(--acc);color:#04211d;font-weight:700;cursor:pointer;font-size:14px;}
   .loginBox button:hover{background:var(--acc2);color:#fff;}
   #loginErr{color:var(--danger);font-size:12.5px;margin-top:10px;min-height:14px;}
+  .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx2);text-decoration:none;margin-top:16px;}
+  .backlink:hover{color:var(--tx);}
+  .navbtn.navback{color:var(--tx2);border:1px dashed var(--bd);margin-bottom:12px;}
+  .navbtn.navback:hover{color:var(--tx);border-color:var(--tx2);}
 
   /* ---- app shell ---- */
   #app{display:none;min-height:100vh;}
@@ -140,6 +144,10 @@
     <input type="password" id="loginPass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
     <button onclick="doLogin()">Ingresar</button>
     <div id="loginErr"></div>
+    <a class="backlink" href="index.html">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Volver al menú principal
+    </a>
   </div>
 </div>
 
@@ -149,6 +157,7 @@
     <div class="brandmark">
       <img class="logo" id="logoSidebar" alt="INTELLISHIP · La experiencia lo es todo">
     </div>
+    <div class="navbtn navback" onclick="location.href='index.html'"><span class="ic">←</span> Menú principal</div>
     <div class="navbtn active" data-view="viewUpload" onclick="showView('viewUpload')"><span class="ic">📤</span> Subir Guías</div>
     <div class="navbtn" data-view="viewHistorial" onclick="showView('viewHistorial')"><span class="ic">🕒</span> Historial</div>
     <div class="navbtn" data-view="viewConfig" onclick="showView('viewConfig')"><span class="ic">⚙️</span> Configuración</div>
