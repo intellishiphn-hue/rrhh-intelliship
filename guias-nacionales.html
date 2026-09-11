@@ -498,8 +498,13 @@ function parseSheetUrl(url){
   if(!mId) return null;
   return { id: mId[1], gid: mGid ? mGid[1] : '0' };
 }
+// OJO: usamos /export?format=csv y NO /gviz/tq?tqx=out:csv. El endpoint de gviz le
+// "adivina" el tipo de dato a cada columna, y cuando una columna numerica tiene celdas
+// con formato mixto, a veces gviz devuelve la celda VACIA aunque el valor real si este
+// en el Sheet (confirmado con datos reales del Sheet de Bodega). El endpoint
+// /export?format=csv exporta el valor de la celda tal cual, sin ese problema.
 function buildCsvUrl(parsed){
-  return 'https://docs.google.com/spreadsheets/d/'+parsed.id+'/gviz/tq?tqx=out:csv&gid='+parsed.gid;
+  return 'https://docs.google.com/spreadsheets/d/'+parsed.id+'/export?format=csv&gid='+parsed.gid;
 }
 
 // Parser CSV robusto (soporta comillas, comas y saltos de linea dentro de campos)
