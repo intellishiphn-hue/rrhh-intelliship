@@ -55,11 +55,18 @@
   .okbox p{color:var(--tx2);font-size:13.5px;line-height:1.6;margin:0 0 18px;}
   .refcode{display:inline-block;background:var(--sur2);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:1px;margin-bottom:18px;}
 
-  .iconbtn{position:fixed;top:16px;right:16px;background:var(--sur2);border:1px solid var(--bd);color:var(--tx);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .iconbtn{position:fixed;top:16px;right:16px;background:var(--sur2);border:1px solid var(--bd);color:var(--tx);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;}
+  .backbtn{position:fixed;top:16px;left:16px;background:var(--sur2);border:1px solid var(--bd);color:var(--tx);height:36px;padding:0 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;text-decoration:none;}
+  .catcard .ds{font-size:11px;font-weight:500;color:var(--tx2);margin-top:4px;line-height:1.35;}
+  .catcard.active .ds{color:inherit;opacity:.85;}
 </style>
 </head>
 <body class="light">
 
+<a class="backbtn" href="index.html" title="Volver al menú principal">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  Menú
+</a>
 <button class="iconbtn" onclick="toggleTheme()" title="Cambiar tema">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
 </button>
@@ -76,15 +83,19 @@
     <div class="catgrid" id="catGrid">
       <div class="catcard cat-queja" data-cat="queja" onclick="setCategoria('queja')">
         <div class="ic">⚠️</div><div class="lb">Queja / Problema</div>
+        <div class="ds">Algo no está funcionando bien o te afectó a ti o a tu trabajo</div>
       </div>
       <div class="catcard cat-sugerencia" data-cat="sugerencia" onclick="setCategoria('sugerencia')">
         <div class="ic">💡</div><div class="lb">Sugerencia</div>
+        <div class="ds">Una idea para mejorar algo en la empresa</div>
       </div>
       <div class="catcard cat-reconocimiento" data-cat="reconocimiento" onclick="setCategoria('reconocimiento')">
         <div class="ic">🌟</div><div class="lb">Reconocimiento</div>
+        <div class="ds">Destacar el buen trabajo de un compañero o de un equipo</div>
       </div>
       <div class="catcard cat-ticket" data-cat="ticket" onclick="setCategoria('ticket')">
         <div class="ic">🎫</div><div class="lb">Ticket / Soporte</div>
+        <div class="ds">Necesitas ayuda o soporte con algo puntual (equipo, sistema, acceso, etc.)</div>
       </div>
     </div>
 
@@ -113,6 +124,10 @@ var LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAA4QAAAEOCAYAAADR+tmsAAB53UlEQVR42u3deZwd
 </script>
 <script>
 var FB_URL = 'https://rrhh-intelliship-default-rtdb.firebaseio.com/buzon';
+// Correo de gerencia por defecto -- se usa si todavia no han configurado uno en el
+// panel (RRHH ADMIN > Configuración). Asi el aviso siempre llega aunque nadie haya
+// tocado la configuración todavia. El de RRHH se agrega ahi una vez tenga correo.
+var DEFAULT_MANAGER_EMAIL = 'scasasola@intellishiphn.com';
 var categoriaSel = '';
 var CATEGORIA_LABEL = { queja:'Queja / Problema', sugerencia:'Sugerencia', reconocimiento:'Reconocimiento', ticket:'Ticket / Soporte' };
 
@@ -215,10 +230,14 @@ async function enviarReporte(){
   // Avisar por correo a gerencia y RRHH -- si esto falla, el reporte ya quedo
   // guardado de todas formas, asi que nunca se pierde por un correo que no salio.
   try{
-    var cfgRes = await fetch(FB_URL+'/config.json');
-    var cfgData = await cfgRes.json() || {};
+    var cfgData = {};
+    try{
+      var cfgRes = await fetch(FB_URL+'/config.json');
+      cfgData = await cfgRes.json() || {};
+    }catch(e){ /* si falla la carga de configuración, igual usamos el correo de gerencia por defecto */ }
+    var managerDestino = cfgData.managerEmail || DEFAULT_MANAGER_EMAIL;
     await Promise.all([
-      enviarCorreoAviso(cfgData.managerEmail, registro, refCode),
+      enviarCorreoAviso(managerDestino, registro, refCode),
       enviarCorreoAviso(cfgData.hrEmail, registro, refCode)
     ]);
   }catch(e){ /* best-effort */ }
