@@ -37,9 +37,17 @@
   .topbar h1{font-size:19px;margin:0;display:flex;align-items:center;gap:9px;}
   .topbar .sub{font-size:12px;color:var(--tx2);margin-top:2px;}
   .topright{display:flex;align-items:center;gap:8px;}
-  .iconbtn{background:var(--sur2);border:1px solid var(--bd);color:var(--tx);width:38px;height:38px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;}
+  .iconbtn{background:var(--sur2);border:1px solid var(--bd);color:var(--tx);width:38px;height:38px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;text-decoration:none;}
+  .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx2);text-decoration:none;margin-top:16px;}
+  .backlink:hover{color:var(--tx);}
+
+  .tabs{display:flex;gap:8px;padding:0 20px;background:var(--sur);border-bottom:1px solid var(--bd);}
+  .tabbtn{padding:13px 20px;border-radius:10px 10px 0 0;background:transparent;border:none;color:var(--tx2);font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;}
+  .tabbtn.active{background:var(--bg);color:var(--acc);}
 
   .content{padding:18px 20px 40px;flex:1;overflow:auto;}
+  .view{display:none;}
+  .view.active{display:block;}
 
   .card{background:var(--sur);border:1px solid var(--bd);border-radius:var(--radius);padding:18px;margin-bottom:18px;}
   .card h2{margin:0 0 4px;font-size:15px;}
@@ -82,6 +90,12 @@
   .estrow{display:flex;gap:6px;flex-wrap:wrap;}
   .estbtn{flex:1;min-width:84px;padding:7px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--sur2);color:var(--tx2);font-size:11.5px;font-weight:700;cursor:pointer;text-align:center;}
   .estbtn.on{border-color:var(--acc);color:var(--acc);background:rgba(20,184,166,.13);}
+  .delbtn{flex:none;padding:7px 10px;border-radius:8px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:var(--danger);font-size:11.5px;font-weight:700;cursor:pointer;text-align:center;}
+  .delbtn:hover{background:rgba(239,68,68,.18);}
+  .restorebtn{padding:8px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--sur2);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;align-self:flex-start;}
+  .restorebtn:hover{border-color:var(--acc);}
+  .repcard.st-historial{border-left-color:var(--tx2);}
+  .archivadonota{font-size:11px;color:var(--tx2);}
   .notabox textarea{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--sur2);color:var(--tx);font-size:12.5px;font-family:inherit;min-height:56px;resize:vertical;}
   .notabtn{margin-top:6px;padding:7px 12px;border-radius:8px;border:none;background:var(--acc);color:#04211d;font-weight:700;font-size:12px;cursor:pointer;}
   .notabtn:hover{background:var(--acc2);color:#fff;}
@@ -116,6 +130,10 @@
     <input type="password" id="loginPass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
     <button onclick="doLogin()">Ingresar</button>
     <div id="loginErr"></div>
+    <a class="backlink" href="index.html">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Volver al menú principal
+    </a>
   </div>
 </div>
 
@@ -127,6 +145,9 @@
       <div class="sub">Reportes enviados por el equipo &mdash; quejas, sugerencias, reconocimientos y tickets</div>
     </div>
     <div class="topright">
+      <a class="iconbtn" href="index.html" title="Volver al menú principal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>
+      </a>
       <button class="iconbtn" onclick="loadReportes()" title="Actualizar ahora">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
       </button>
@@ -140,6 +161,11 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
     </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn active" id="tabBandeja" onclick="showTab('bandeja')">📥 Bandeja</button>
+    <button class="tabbtn" id="tabHistorial" onclick="showTab('historial')">🗄 Historial</button>
   </div>
 
   <div class="content">
@@ -163,32 +189,45 @@
       <button onclick="changePassword()">Actualizar contraseña</button>
     </div>
 
-    <div class="statrow">
-      <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Total</div></div>
-      <div class="stat warnstat"><div class="n" id="stNuevos">0</div><div class="l">Nuevos</div></div>
-      <div class="stat"><div class="n" id="stRevision">0</div><div class="l">En revisión</div></div>
-      <div class="stat"><div class="n" id="stResueltos">0</div><div class="l">Resueltos</div></div>
+    <div class="view active" id="viewBandeja">
+      <div class="statrow">
+        <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Total</div></div>
+        <div class="stat warnstat"><div class="n" id="stNuevos">0</div><div class="l">Nuevos</div></div>
+        <div class="stat"><div class="n" id="stRevision">0</div><div class="l">En revisión</div></div>
+        <div class="stat"><div class="n" id="stResueltos">0</div><div class="l">Resueltos</div></div>
+      </div>
+
+      <div class="card">
+        <div class="filtrow">
+          <div class="pill cat-all active" data-cat="" onclick="setCatFiltro('')">Todas</div>
+          <div class="pill cat-queja" data-cat="queja" onclick="setCatFiltro('queja')">⚠️ Quejas</div>
+          <div class="pill cat-sugerencia" data-cat="sugerencia" onclick="setCatFiltro('sugerencia')">💡 Sugerencias</div>
+          <div class="pill cat-reconocimiento" data-cat="reconocimiento" onclick="setCatFiltro('reconocimiento')">🌟 Reconocimientos</div>
+          <div class="pill cat-ticket" data-cat="ticket" onclick="setCatFiltro('ticket')">🎫 Tickets</div>
+        </div>
+        <div class="filtrow">
+          <div class="pill est-all active" data-est="" onclick="setEstFiltro('')">Todos</div>
+          <div class="pill est-nuevo" data-est="nuevo" onclick="setEstFiltro('nuevo')">Nuevo</div>
+          <div class="pill est-revision" data-est="revision" onclick="setEstFiltro('revision')">En revisión</div>
+          <div class="pill est-resuelto" data-est="resuelto" onclick="setEstFiltro('resuelto')">Resuelto</div>
+          <input type="text" class="searchbox" id="buscarTxt" placeholder="Buscar por nombre o mensaje..." oninput="renderReportes()">
+        </div>
+      </div>
+
+      <div id="repGrid" class="repgrid"></div>
+      <div id="emptyMsg" class="empty" style="display:none;">No hay reportes que coincidan con este filtro.</div>
     </div>
 
-    <div class="card">
-      <div class="filtrow">
-        <div class="pill cat-all active" data-cat="" onclick="setCatFiltro('')">Todas</div>
-        <div class="pill cat-queja" data-cat="queja" onclick="setCatFiltro('queja')">⚠️ Quejas</div>
-        <div class="pill cat-sugerencia" data-cat="sugerencia" onclick="setCatFiltro('sugerencia')">💡 Sugerencias</div>
-        <div class="pill cat-reconocimiento" data-cat="reconocimiento" onclick="setCatFiltro('reconocimiento')">🌟 Reconocimientos</div>
-        <div class="pill cat-ticket" data-cat="ticket" onclick="setCatFiltro('ticket')">🎫 Tickets</div>
+    <div class="view" id="viewHistorial">
+      <div class="card">
+        <div class="desc" style="margin-bottom:10px;">Reportes archivados desde la Bandeja &mdash; se guardan aquí por cualquier cosa, y se pueden restaurar cuando quieras.</div>
+        <div class="filtrow">
+          <input type="text" class="searchbox" id="histBuscarTxt" placeholder="Buscar en el historial..." oninput="renderHistorial()">
+        </div>
       </div>
-      <div class="filtrow">
-        <div class="pill est-all active" data-est="" onclick="setEstFiltro('')">Todos</div>
-        <div class="pill est-nuevo" data-est="nuevo" onclick="setEstFiltro('nuevo')">Nuevo</div>
-        <div class="pill est-revision" data-est="revision" onclick="setEstFiltro('revision')">En revisión</div>
-        <div class="pill est-resuelto" data-est="resuelto" onclick="setEstFiltro('resuelto')">Resuelto</div>
-        <input type="text" class="searchbox" id="buscarTxt" placeholder="Buscar por nombre o mensaje..." oninput="renderReportes()">
-      </div>
+      <div id="histGrid" class="repgrid"></div>
+      <div id="histEmptyMsg" class="empty" style="display:none;">Todavía no hay reportes archivados.</div>
     </div>
-
-    <div id="repGrid" class="repgrid"></div>
-    <div id="emptyMsg" class="empty" style="display:none;">No hay reportes que coincidan con este filtro.</div>
 
   </div>
 </div>
@@ -206,6 +245,7 @@ var FB_URL = 'https://rrhh-intelliship-default-rtdb.firebaseio.com/buzon';
 var DEFAULT_PASS = 'buzon2026';
 var cfg = { pass: DEFAULT_PASS };
 var reportes = [];       // lista completa cargada desde Firebase, con _id agregado
+var historial = [];      // reportes archivados (movidos desde reportes), con _id agregado
 var catFiltro = '';      // '' = todas
 var estFiltro = '';      // '' = todos
 var autoRefreshTimer = null;
@@ -303,6 +343,14 @@ async function loadReportes(){
   }
 }
 
+function showTab(tab){
+  document.getElementById('tabBandeja').classList.toggle('active', tab==='bandeja');
+  document.getElementById('tabHistorial').classList.toggle('active', tab==='historial');
+  document.getElementById('viewBandeja').classList.toggle('active', tab==='bandeja');
+  document.getElementById('viewHistorial').classList.toggle('active', tab==='historial');
+  if(tab==='historial') loadHistorial();
+}
+
 function setCatFiltro(cat){
   catFiltro = cat;
   document.querySelectorAll('.pill[data-cat]').forEach(function(el){
@@ -370,6 +418,7 @@ function renderReportes(){
         +'<div class="estbtn'+(r.estado==='nuevo'?' on':'')+'" onclick="cambiarEstado(\''+r._id+'\',\'nuevo\')">Nuevo</div>'
         +'<div class="estbtn'+(r.estado==='revision'?' on':'')+'" onclick="cambiarEstado(\''+r._id+'\',\'revision\')">En revisión</div>'
         +'<div class="estbtn'+(r.estado==='resuelto'?' on':'')+'" onclick="cambiarEstado(\''+r._id+'\',\'resuelto\')">Resuelto</div>'
+        +'<div class="delbtn" onclick="archivarReporte(\''+r._id+'\')" title="Archivar (se guarda en Historial)">🗑 Archivar</div>'
       +'</div>'
       +'<div class="notabox">'
         +'<textarea id="nota_'+r._id+'" placeholder="Nota interna / seguimiento (solo la ve Gerencia y RRHH)...">'+escHtml(r.notaInterna||'')+'</textarea>'
@@ -407,6 +456,112 @@ async function guardarNota(id){
     showToast('Nota guardada.');
   }catch(e){
     showToast('No se pudo guardar la nota. Revisa tu conexión.', true);
+  }
+}
+
+/* ============================================================
+   ARCHIVAR / HISTORIAL
+   Al "borrar" un reporte no lo eliminamos para siempre -- lo movemos a
+   /buzon/historial en Firebase, para que quede guardado por cualquier cosa
+   y se pueda restaurar despues si hiciera falta.
+   ============================================================ */
+async function archivarReporte(id){
+  var r = reportes.find(function(x){ return x._id===id; });
+  if(!r) return;
+  if(!confirm('¿Archivar este reporte? Ya no aparecerá en la Bandeja, pero quedará guardado en Historial.')) return;
+
+  var registro = {
+    fecha: r.fecha, categoria: r.categoria, nombre: r.nombre, mensaje: r.mensaje,
+    estado: r.estado, notaInterna: r.notaInterna||'', fechaActualizado: r.fechaActualizado,
+    fechaArchivado: new Date().toISOString()
+  };
+
+  try{
+    await fetch(FB_URL+'/historial/'+encodeURIComponent(id)+'.json', {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(registro)
+    });
+    await fetch(FB_URL+'/reportes/'+encodeURIComponent(id)+'.json', { method:'DELETE' });
+    reportes = reportes.filter(function(x){ return x._id!==id; });
+    renderReportes();
+    showToast('Reporte archivado. Puedes verlo en la pestaña Historial.');
+  }catch(e){
+    showToast('No se pudo archivar. Revisa tu conexión e intenta de nuevo.', true);
+  }
+}
+
+async function loadHistorial(){
+  try{
+    var res = await fetch(FB_URL+'/historial.json');
+    var data = await res.json();
+    data = data || {};
+    historial = Object.keys(data).map(function(id){
+      var r = data[id]; r._id = id; return r;
+    });
+    historial.sort(function(a,b){ return new Date(b.fechaArchivado||b.fecha) - new Date(a.fechaArchivado||a.fecha); });
+    renderHistorial();
+  }catch(e){
+    showToast('No se pudo cargar el historial.', true);
+  }
+}
+
+function renderHistorial(){
+  var q = (document.getElementById('histBuscarTxt').value||'').toLowerCase().trim();
+  var lista = historial.filter(function(r){
+    if(!q) return true;
+    var enNombre = (r.nombre||'').toLowerCase().indexOf(q) !== -1;
+    var enMensaje = (r.mensaje||'').toLowerCase().indexOf(q) !== -1;
+    return enNombre || enMensaje;
+  });
+
+  var grid = document.getElementById('histGrid');
+  grid.innerHTML = '';
+  document.getElementById('histEmptyMsg').style.display = lista.length ? 'none' : 'block';
+
+  lista.forEach(function(r){
+    var refCode = (r._id||'').slice(-6).toUpperCase();
+    var nombreHtml = r.nombre
+      ? '<div class="repnombre">'+escHtml(r.nombre)+'</div>'
+      : '<div class="repnombre anon">Anónimo</div>';
+    var notaHtml = r.notaInterna
+      ? '<div class="archivadonota"><b>Nota interna:</b> '+escHtml(r.notaInterna)+'</div>'
+      : '';
+    var el = document.createElement('div');
+    el.className = 'repcard st-historial';
+    el.innerHTML =
+      '<div class="rephead">'
+        +'<span class="catbadge cat-'+r.categoria+'">'+(CATEGORIA_ICONO[r.categoria]||'')+' '+escHtml(CATEGORIA_LABEL[r.categoria]||r.categoria)+'</span>'
+        +'<span class="repfecha">'+fechaFmt(r.fecha)+'</span>'
+      +'</div>'
+      +nombreHtml
+      +'<div class="repmsg">'+escHtml(r.mensaje)+'</div>'
+      +notaHtml
+      +'<div class="archivadonota">Estado al archivar: '+(ESTADO_LABEL[r.estado]||r.estado)+' &middot; Archivado: '+fechaFmt(r.fechaArchivado)+'</div>'
+      +'<button class="restorebtn" onclick="restaurarReporte(\''+r._id+'\')">↩ Restaurar a la Bandeja</button>'
+      +'<div class="refcodesm">#'+refCode+'</div>';
+    grid.appendChild(el);
+  });
+}
+
+async function restaurarReporte(id){
+  var r = historial.find(function(x){ return x._id===id; });
+  if(!r) return;
+
+  var registro = {
+    fecha: r.fecha, categoria: r.categoria, nombre: r.nombre, mensaje: r.mensaje,
+    estado: r.estado, notaInterna: r.notaInterna||'', fechaActualizado: new Date().toISOString()
+  };
+
+  try{
+    await fetch(FB_URL+'/reportes/'+encodeURIComponent(id)+'.json', {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(registro)
+    });
+    await fetch(FB_URL+'/historial/'+encodeURIComponent(id)+'.json', { method:'DELETE' });
+    historial = historial.filter(function(x){ return x._id!==id; });
+    renderHistorial();
+    loadReportes();
+    showToast('Reporte restaurado a la Bandeja.');
+  }catch(e){
+    showToast('No se pudo restaurar. Revisa tu conexión e intenta de nuevo.', true);
   }
 }
 
