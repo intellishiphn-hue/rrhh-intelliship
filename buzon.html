@@ -33,6 +33,9 @@
   input[type=text],textarea{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--bd);background:var(--sur2);color:var(--tx);font-size:14.5px;font-family:inherit;}
   textarea{min-height:130px;resize:vertical;line-height:1.5;}
   .hint{font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5;}
+  .warnbox{display:flex;gap:9px;align-items:flex-start;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+  .warnbox .wi{font-size:16px;line-height:1.3;flex:none;}
+  .warnbox .wt{font-size:12px;color:var(--danger);font-weight:700;line-height:1.5;}
 
   .catgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   @media(max-width:420px){.catgrid{grid-template-columns:1fr;}}
@@ -104,6 +107,10 @@
     <div class="hint">Si lo dejas en blanco, se envía completamente anónimo &mdash; ni gerencia ni RRHH sabrán quién lo mandó.</div>
 
     <label class="f">Cuéntanos</label>
+    <div class="warnbox">
+      <div class="wi">⚠️</div>
+      <div class="wt">NO SE ACEPTAN CHISMES. Este espacio es para reportes serios y constructivos — comentarios sin fundamento o mal intencionados sobre otras personas pueden tener consecuencias.</div>
+    </div>
     <textarea id="fMensaje" placeholder="Describe la situación, tu idea o tu solicitud con el detalle que necesites..."></textarea>
 
     <button class="btn" id="btnEnviar" onclick="enviarReporte()">Enviar</button>
