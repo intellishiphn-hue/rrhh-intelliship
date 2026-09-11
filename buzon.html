@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
-<title>INTELLISHIP &middot; Buzón de Empleados</title>
+<title>INTELLISHIP &middot; 💬 Buzón Intelliship &mdash; Te escuchamos</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
   (function(){ try{ emailjs.init({ publicKey: 'q9dny_O5VCALgIzDB' }); }catch(e){} })();
@@ -68,7 +68,7 @@
   <div class="brandmark">
     <img class="logo" id="logoImg" alt="INTELLISHIP &middot; La experiencia lo es todo">
   </div>
-  <h1>Buzón de Empleados</h1>
+  <h1>💬 Buzón Intelliship &mdash; Te escuchamos</h1>
   <div class="sub">Un espacio para reportar problemas, sugerencias, reconocimientos o solicitudes. Gerencia y Recursos Humanos lo revisan directamente &mdash; puedes enviarlo con tu nombre o de forma anónima.</div>
 
   <div class="card" id="formCard">
@@ -166,8 +166,8 @@ async function enviarCorreoAviso(destino, registro, refCode){
       +'<p style="color:#94a3b8;font-size:12px;">Código de referencia: '+refCode+' &middot; '+new Date(registro.fecha).toLocaleString('es-HN')+'</p>';
     await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
       to_email: destino,
-      subject: '📬 Nuevo en el Buzón de Empleados: '+etiqueta,
-      message: getEmailTemplate('📬 Nuevo reporte en el Buzón de Empleados', body),
+      subject: '📬 Nuevo en el Buzón Intelliship: '+etiqueta,
+      message: getEmailTemplate('📬 Nuevo reporte en el Buzón Intelliship', body),
       reply_to: destino
     });
   }catch(e){
