@@ -128,6 +128,15 @@
   .labelInner .lrow span:first-child{color:#000;}
   .labelInner .lservicio{text-align:center;font-size:19pt;font-weight:900;border:3px solid #000;border-radius:10px;padding:8px 4px;margin-top:14px;letter-spacing:1px;}
   .labelInner .lfecha{text-align:center;font-size:10pt;margin-top:12px;color:#000;}
+  /* ---- aviso de orden nueva: pantalla completa + parpadeo, mientras imprime sola ---- */
+  .alerta-overlay{position:fixed;inset:0;background:rgba(220,38,38,.97);display:none;align-items:center;justify-content:center;z-index:2000;text-align:center;padding:20px;}
+  .alerta-overlay.show{display:flex;animation:alertaPulse .6s ease-in-out infinite;}
+  @keyframes alertaPulse{0%,100%{background:rgba(220,38,38,.97);}50%{background:rgba(248,113,113,.97);}}
+  .alerta-badge{font-size:22px;font-weight:900;color:#fff;letter-spacing:3px;margin-bottom:20px;}
+  .alerta-nombre{font-size:min(11vw,58px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px;word-break:break-word;}
+  .alerta-detalle{font-size:min(6vw,30px);font-weight:700;color:#fff;margin-bottom:22px;}
+  .alerta-nota{font-size:15px;color:rgba(255,255,255,.9);}
+
   @media print{
     @page{ size: 4in 6in; margin: 0; }
     body *{ visibility:hidden; }
@@ -267,6 +276,16 @@
   </div>
 </div>
 
+<!-- AVISO DE ORDEN NUEVA: pantalla completa, con sonido, mientras se imprime la etiqueta sola -->
+<div id="alertaNueva" class="alerta-overlay">
+  <div>
+    <div class="alerta-badge">🆕 NUEVA ORDEN</div>
+    <div class="alerta-nombre" id="alertaNombre"></div>
+    <div class="alerta-detalle"><span id="alertaCant"></span> &middot; <span id="alertaServicio"></span></div>
+    <div class="alerta-nota">🖨 Imprimiendo etiqueta...</div>
+  </div>
+</div>
+
 <!-- ETIQUETA PARA IMPRIMIR (oculta en pantalla, solo aparece en la vista de impresión) -->
 <div id="labelPrintArea">
   <div class="labelInner">
@@ -296,8 +315,14 @@ function parseSheetUrl(url){
   if(!mId) return null;
   return { id: mId[1], gid: mGid ? mGid[1] : '0' };
 }
+// OJO: usamos /export?format=csv y NO /gviz/tq?tqx=out:csv. El endpoint de gviz le
+// "adivina" el tipo de dato a cada columna, y cuando una columna numerica (como
+// Cant Paquetes) tiene celdas con formato mixto, a veces gviz devuelve la celda VACIA
+// aunque el valor real si este en el Sheet (confirmado con datos reales: "2.00" se
+// perdia en Cant Paquetes aunque el resto de la fila si llegaba bien). El endpoint
+// /export?format=csv exporta el valor de la celda tal cual, sin ese problema.
 function buildCsvUrl(parsed){
-  return 'https://docs.google.com/spreadsheets/d/'+parsed.id+'/gviz/tq?tqx=out:csv&gid='+parsed.gid;
+  return 'https://docs.google.com/spreadsheets/d/'+parsed.id+'/export?format=csv&gid='+parsed.gid;
 }
 
 // Parser CSV robusto (soporta comillas, comas y saltos de linea dentro de campos)
@@ -422,6 +447,11 @@ var vistos = {};            // keys que este dispositivo ya vio (para dejar de p
 var servicioFiltro = '';    // '' = todos
 var diaModo = 'hoy';        // 'hoy' | 'todos' | 'custom'
 var autoRefreshTimer = null;
+var anunciados = {};        // keys que YA activaron el aviso grande + impresion automatica (una sola vez por pedido, persiste en este dispositivo)
+var anunciadosEsPrimeraVez = false; // true solo la primera vez que se usa esta funcion en este dispositivo -- para no imprimir de golpe TODO lo que ya estaba pendiente
+var colaAlertas = [];        // pedidos nuevos esperando a mostrar el aviso + imprimir, uno por uno
+var procesandoAlerta = false;
+var audioCtx = null;
 
 /* ============================================================
    LOGIN / CONFIG LOCAL
@@ -447,7 +477,51 @@ function loadVistos(){
 }
 function saveVistos(){ localStorage.setItem('ish_bodega_vistos', JSON.stringify(vistos)); }
 
+function loadAnunciados(){
+  try{
+    var raw = localStorage.getItem('ish_bodega_anunciados');
+    if(raw===null){
+      // Primera vez que este dispositivo usa el aviso automatico: no hay que avisar
+      // ni imprimir TODO lo que ya estaba pendiente desde antes -- solo lo que
+      // llegue de aqui en adelante cuenta como "nueva orden".
+      anunciadosEsPrimeraVez = true;
+      anunciados = {};
+    } else {
+      anunciados = JSON.parse(raw||'{}');
+      anunciadosEsPrimeraVez = false;
+    }
+  }catch(e){ anunciados = {}; anunciadosEsPrimeraVez = false; }
+}
+function saveAnunciados(){ localStorage.setItem('ish_bodega_anunciados', JSON.stringify(anunciados)); }
+
+/* ============================================================
+   SONIDO (beep generado, no necesita archivo de audio)
+   ============================================================ */
+function initAudio(){
+  try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+}
+function beep(){
+  if(!audioCtx) return;
+  try{
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine';
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.25);
+    o.start();
+    o.stop(audioCtx.currentTime+0.25);
+  }catch(e){}
+}
+function beepTriple(){
+  beep();
+  setTimeout(beep, 280);
+  setTimeout(beep, 560);
+}
+
 function doLogin(){
+  initAudio(); // tiene que arrancar dentro de un clic del usuario, si no el navegador bloquea el sonido despues
   var v = document.getElementById('loginPass').value;
   if(v === cfg.pass){
     sessionStorage.setItem('ish_bodega_auth','1');
@@ -601,6 +675,7 @@ async function fetchFromSheet(){
     var matrix = parseCsv(text);
     todosPaquetes = rowsToPaquetes(matrix);
     await loadEmpacadoMap();
+    detectarYAvisarNuevos();
     renderPendientes();
     statusEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN');
     document.getElementById('statUltima').textContent = new Date().toLocaleTimeString('es-HN');
@@ -608,6 +683,55 @@ async function fetchFromSheet(){
     statusEl.textContent = 'No se pudo actualizar (' + err.message + ')';
   }
 }
+
+// Revisa si llegaron pedidos que este dispositivo nunca ha visto, y si es asi los
+// encola para el aviso grande + sonido + impresion automatica de la etiqueta.
+// La primera vez que se usa esta funcion en un dispositivo NO avisa de nada (para
+// no imprimir de golpe todo lo que ya estaba pendiente) -- solo cuenta lo nuevo
+// que llegue de ahi en adelante.
+function detectarYAvisarNuevos(){
+  var pendientesGlobal = todosPaquetes.filter(function(p){ return !empacadoMap[p.key]; });
+  if(anunciadosEsPrimeraVez){
+    pendientesGlobal.forEach(function(p){ anunciados[p.key] = true; });
+    saveAnunciados();
+    anunciadosEsPrimeraVez = false;
+    return;
+  }
+  var nuevos = pendientesGlobal.filter(function(p){ return !anunciados[p.key]; });
+  if(!nuevos.length) return;
+  nuevos.forEach(function(p){ anunciados[p.key] = true; });
+  saveAnunciados();
+  colaAlertas = colaAlertas.concat(nuevos);
+  procesarSiguienteAlerta();
+}
+
+/* ============================================================
+   AVISO DE ORDEN NUEVA: pantalla completa + sonido + imprime sola
+   ============================================================ */
+function procesarSiguienteAlerta(){
+  if(procesandoAlerta) return; // ya hay una en pantalla, esta se procesa cuando esa termine (evento afterprint)
+  var p = colaAlertas.shift();
+  if(!p) return;
+  procesandoAlerta = true;
+  document.getElementById('alertaNombre').textContent = p.nombre || '(sin nombre)';
+  document.getElementById('alertaCant').textContent = p.cantidad+' paquete'+(p.cantidad===1?'':'s');
+  document.getElementById('alertaServicio').textContent = p.servicio.label;
+  document.getElementById('alertaNueva').classList.add('show');
+  beepTriple();
+  vistos[p.key] = true; // ya se avisó a todo volumen, no hace falta que la tarjeta siga parpadeando tambien
+  saveVistos();
+  // Se imprime sola, sin que nadie tenga que tocar nada. En un navegador normal esto
+  // abre el dialogo de impresión (alguien solo confirma con Enter); si la tablet/PC
+  // tiene Chrome configurado en modo de impresión silenciosa (--kiosk-printing) con
+  // la impresora de etiquetas como predeterminada, imprime derecho sin ningún clic.
+  setTimeout(function(){ imprimirEtiqueta(p.key); }, 400);
+}
+window.addEventListener('afterprint', function(){
+  document.getElementById('alertaNueva').classList.remove('show');
+  procesandoAlerta = false;
+  renderPendientes();
+  procesarSiguienteAlerta();
+});
 async function loadEmpacadoMap(){
   try{
     var res = await fetch(FB_URL+'/empacado.json');
@@ -854,6 +978,7 @@ window.addEventListener('DOMContentLoaded', function(){
   document.getElementById('logoLogin').src = logoSrc;
   loadCfg();
   loadVistos();
+  loadAnunciados();
   if(localStorage.getItem('ish_bodega_theme')==='dark') document.body.classList.remove('light');
   if(sessionStorage.getItem('ish_bodega_auth')==='1'){
     document.getElementById('loginScreen').classList.add('hidden');
