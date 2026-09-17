@@ -119,15 +119,15 @@
   .cfgbox{display:none;}
   .cfgbox.show{display:block;}
 
-  /* ---- etiqueta de impresion (rollo termico 4x6 pulg / 10x15cm) ---- */
+  /* ---- etiqueta de impresion (rollo termico 2x1 pulg) ---- */
   #labelPrintArea{display:none;}
-  .labelInner{width:100%;box-sizing:border-box;padding:0.25in 0.2in;font-family:Arial,Helvetica,sans-serif;color:#000;}
-  .labelInner .lhead{font-size:13pt;font-weight:800;letter-spacing:1px;text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:14px;}
-  .labelInner .lnombre{font-size:26pt;font-weight:800;text-align:center;line-height:1.2;word-break:break-word;margin-bottom:16px;}
-  .labelInner .lrow{display:flex;justify-content:space-between;border-top:1px dashed #000;padding:9px 0;font-size:15pt;font-weight:700;}
+  .labelInner{width:100%;height:100%;box-sizing:border-box;padding:0.06in 0.1in;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden;}
+  .labelInner .lhead{font-size:6pt;font-weight:800;letter-spacing:0.5px;text-align:center;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:2px;}
+  .labelInner .lnombre{font-size:11pt;font-weight:800;text-align:center;line-height:1.05;word-break:break-word;margin-bottom:2px;max-height:0.34in;overflow:hidden;}
+  .labelInner .lrow{display:flex;justify-content:space-between;border-top:1px dashed #000;padding:1px 0;font-size:7.5pt;font-weight:700;}
   .labelInner .lrow span:first-child{color:#000;}
-  .labelInner .lservicio{text-align:center;font-size:19pt;font-weight:900;border:3px solid #000;border-radius:10px;padding:8px 4px;margin-top:14px;letter-spacing:1px;}
-  .labelInner .lfecha{text-align:center;font-size:10pt;margin-top:12px;color:#000;}
+  .labelInner .lservicio{text-align:center;font-size:8.5pt;font-weight:900;border:1.5px solid #000;border-radius:5px;padding:1px 3px;margin-top:2px;letter-spacing:0.5px;}
+  .labelInner .lfecha{text-align:center;font-size:5.5pt;margin-top:1px;color:#000;}
   /* ---- aviso de orden nueva: pantalla completa + parpadeo, mientras imprime sola ---- */
   .alerta-overlay{position:fixed;inset:0;background:rgba(220,38,38,.97);display:none;align-items:center;justify-content:center;z-index:2000;text-align:center;padding:20px;}
   .alerta-overlay.show{display:flex;animation:alertaPulse .6s ease-in-out infinite;}
@@ -138,10 +138,10 @@
   .alerta-nota{font-size:15px;color:rgba(255,255,255,.9);}
 
   @media print{
-    @page{ size: 4in 6in; margin: 0; }
+    @page{ size: 2in 1in; margin: 0; }
     body *{ visibility:hidden; }
     #labelPrintArea, #labelPrintArea *{ visibility:visible; }
-    #labelPrintArea{ display:block; position:absolute; top:0; left:0; width:4in; }
+    #labelPrintArea{ display:block; position:absolute; top:0; left:0; width:2in; height:1in; }
   }
 </style>
 </head>
