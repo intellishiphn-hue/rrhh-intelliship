@@ -121,13 +121,32 @@
 
   /* ---- etiqueta de impresion (rollo termico 2x1 pulg) ---- */
   #labelPrintArea{display:none;}
-  .labelInner{width:100%;height:100%;box-sizing:border-box;padding:0.06in 0.1in;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden;}
-  .labelInner .lhead{font-size:6pt;font-weight:800;letter-spacing:0.5px;text-align:center;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:2px;}
-  .labelInner .lnombre{font-size:11pt;font-weight:800;text-align:center;line-height:1.05;word-break:break-word;margin-bottom:2px;max-height:0.34in;overflow:hidden;}
-  .labelInner .lrow{display:flex;justify-content:space-between;border-top:1px dashed #000;padding:1px 0;font-size:7.5pt;font-weight:700;}
+  /* en etiquetas muy chicas no cabe todo -- quitamos lo menos importante
+     (encabezado y fecha), achicamos la letra del nombre y lo cortamos con
+     "..." si no cabe en 2 lineas, en vez de dejar que se encime con lo demas */
+  #labelPrintArea.compact .lhead, #labelPrintArea.compact .lfecha{display:none;}
+  #labelPrintArea.compact .labelInner{padding:calc(0.04in * var(--lbl-scale,1)) calc(0.06in * var(--lbl-scale,1));}
+  #labelPrintArea.compact .lnombre{
+    font-size:calc(9pt * var(--lbl-scale,1));
+    line-height:1.08;
+    margin-bottom:1px;
+    max-height:none;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  #labelPrintArea.compact .lrow{font-size:calc(6.5pt * var(--lbl-scale,1));padding:1px 0;}
+  #labelPrintArea.compact .lservicio{font-size:calc(7pt * var(--lbl-scale,1));padding:1px 2px;margin-top:1px;border-width:1px;}
+  /* --lbl-scale se ajusta desde JS segun el tamano de etiqueta elegido en
+     Configuracion (tomando 1 pulgada de alto como referencia = escala 1) */
+  .labelInner{width:100%;height:100%;box-sizing:border-box;padding:calc(0.06in * var(--lbl-scale,1)) calc(0.1in * var(--lbl-scale,1));font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden;}
+  .labelInner .lhead{font-size:calc(6pt * var(--lbl-scale,1));font-weight:800;letter-spacing:0.5px;text-align:center;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:2px;}
+  .labelInner .lnombre{font-size:calc(11pt * var(--lbl-scale,1));font-weight:800;text-align:center;line-height:1.05;word-break:break-word;margin-bottom:2px;max-height:calc(0.34in * var(--lbl-scale,1));overflow:hidden;}
+  .labelInner .lrow{display:flex;justify-content:space-between;border-top:1px dashed #000;padding:1px 0;font-size:calc(7.5pt * var(--lbl-scale,1));font-weight:700;}
   .labelInner .lrow span:first-child{color:#000;}
-  .labelInner .lservicio{text-align:center;font-size:8.5pt;font-weight:900;border:1.5px solid #000;border-radius:5px;padding:1px 3px;margin-top:2px;letter-spacing:0.5px;}
-  .labelInner .lfecha{text-align:center;font-size:5.5pt;margin-top:1px;color:#000;}
+  .labelInner .lservicio{text-align:center;font-size:calc(8.5pt * var(--lbl-scale,1));font-weight:900;border:1.5px solid #000;border-radius:5px;padding:1px 3px;margin-top:2px;letter-spacing:0.5px;}
+  .labelInner .lfecha{text-align:center;font-size:calc(5.5pt * var(--lbl-scale,1));margin-top:1px;color:#000;}
   /* ---- aviso de orden nueva: pantalla completa + parpadeo, mientras imprime sola ---- */
   .alerta-overlay{position:fixed;inset:0;background:rgba(220,38,38,.97);display:none;align-items:center;justify-content:center;z-index:2000;text-align:center;padding:20px;}
   .alerta-overlay.show{display:flex;animation:alertaPulse .6s ease-in-out infinite;}
@@ -202,6 +221,27 @@
       <input type="password" id="cfgNewPass" placeholder="Nueva contraseña">
       <div class="btnrow">
         <button class="btn sec" onclick="changePassword()">Actualizar contraseña</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tamaño de etiqueta</h2>
+      <div class="desc">Esto es solo para esta computadora (cada equipo puede tener un rollo de etiquetas distinto). Elige el tamaño de la etiqueta que tienes puesta ahora mismo en la impresora térmica.</div>
+      <label class="f" style="margin-top:0;">Tamaño</label>
+      <select id="cfgLabelSize" onchange="onLabelSizeSelectChange()"></select>
+      <div id="labelCustomRow" style="display:none;gap:10px;margin-top:8px;">
+        <div style="flex:1;">
+          <label class="f" style="margin:0 0 5px;">Ancho (pulgadas)</label>
+          <input type="number" id="cfgLabelW" step="0.1" min="0.5" max="8">
+        </div>
+        <div style="flex:1;">
+          <label class="f" style="margin:0 0 5px;">Alto (pulgadas)</label>
+          <input type="number" id="cfgLabelH" step="0.1" min="0.5" max="8">
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" onclick="saveLabelSizeFromUI()">Guardar tamaño</button>
+        <button class="btn sec" onclick="imprimirEtiquetaPrueba()">🖨 Imprimir etiqueta de prueba</button>
       </div>
     </div>
   </div>
@@ -295,7 +335,7 @@
   <div class="labelInner">
     <div class="lhead">INTELLISHIP HONDURAS</div>
     <div class="lnombre" id="lblNombre"></div>
-    <div class="lrow"><span>Cantidad de paquetes</span><span id="lblCantidad"></span></div>
+    <div class="lrow"><span id="lblCantEtiqueta">Cantidad de paquetes</span><span id="lblCantidad"></span></div>
     <div class="lservicio" id="lblServicio"></div>
     <div class="lfecha" id="lblFecha"></div>
   </div>
@@ -558,6 +598,7 @@ function saveSheetConfig(){
 function toggleCfg(){
   document.getElementById('cfgBox').classList.toggle('show');
   document.getElementById('cfgSheetUrl').value = cfg.sheetUrl||'';
+  syncLabelCfgUI();
 }
 function toggleTheme(){
   document.body.classList.toggle('light');
@@ -953,6 +994,120 @@ function imprimirEtiqueta(key){
   window.print();
 }
 
+function imprimirEtiquetaPrueba(){
+  document.getElementById('lblNombre').textContent = 'Nombre De Prueba Apellido';
+  document.getElementById('lblCantidad').textContent = '1 paquete';
+  document.getElementById('lblServicio').textContent = 'AEREO';
+  document.getElementById('lblFecha').textContent = fechaBonita(new Date().toISOString().slice(0,10));
+  window.print();
+}
+
+/* ============================================================
+   TAMAÑO DE ETIQUETA (por computadora -- cada equipo puede tener
+   un rollo distinto puesto en la impresora termica)
+   ============================================================ */
+var LABEL_PRESETS = [
+  {key:'2x1',   w:2,   h:1,   label:'2 x 1 pulg (la mas comun)'},
+  {key:'1.5x1', w:1.5, h:1,   label:'1.5 x 1 pulg'},
+  {key:'1x1',   w:1,   h:1,   label:'1 x 1 pulg (cuadrada chica)'},
+  {key:'3x1',   w:3,   h:1,   label:'3 x 1 pulg'},
+  {key:'3x2',   w:3,   h:2,   label:'3 x 2 pulg'},
+  {key:'4x6',   w:4,   h:6,   label:'4 x 6 pulg (etiqueta grande de envio)'}
+];
+var labelSize = {w:2, h:1}; // por defecto, hasta que se cargue lo guardado en este equipo
+
+function populateLabelSizeSelect(){
+  var sel = document.getElementById('cfgLabelSize');
+  if(!sel || sel.options.length) return; // ya esta poblado
+  LABEL_PRESETS.forEach(function(p){
+    var opt = document.createElement('option');
+    opt.value = p.key;
+    opt.textContent = p.label;
+    sel.appendChild(opt);
+  });
+  var custom = document.createElement('option');
+  custom.value = 'custom';
+  custom.textContent = 'Personalizado...';
+  sel.appendChild(custom);
+}
+
+function loadLabelSize(){
+  try{
+    var saved = JSON.parse(localStorage.getItem('ish_bodega_labelsize')||'null');
+    if(saved && saved.w>0 && saved.h>0){ labelSize = saved; }
+  }catch(e){}
+  applyLabelCss();
+}
+
+function saveLabelSizeLocal(){ localStorage.setItem('ish_bodega_labelsize', JSON.stringify(labelSize)); }
+
+function applyLabelCss(){
+  var w = labelSize.w, h = labelSize.h;
+  // la letra se escala segun el ALTO de la etiqueta, tomando 1 pulgada como
+  // referencia (que es con lo que se disenaron los tamanos de fuente de base)
+  var scale = Math.max(0.45, Math.min(1.6, h/1));
+  var css = '@media print{'
+    + '@page{ size: '+w+'in '+h+'in; margin:0; }'
+    + 'html, body{ margin:0; padding:0; width:'+w+'in; height:'+h+'in; }'
+    + 'body > *:not(#labelPrintArea){ display:none !important; }'
+    + '#labelPrintArea{ display:block !important; width:'+w+'in; height:'+h+'in; }'
+    + '}';
+  var styleTag = document.getElementById('dynLabelStyle');
+  if(!styleTag){
+    styleTag = document.createElement('style');
+    styleTag.id = 'dynLabelStyle';
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent = css;
+  var areaEl = document.getElementById('labelPrintArea');
+  areaEl.style.setProperty('--lbl-scale', scale);
+  // en etiquetas chicas (poca area total) no cabe todo el contenido completo --
+  // 2x1in (area 2) se queda con el diseño completo, que es el que ya funciona bien
+  var compact = (w*h) < 1.8;
+  areaEl.classList.toggle('compact', compact);
+  // "Cantidad de paquetes" no cabe en una etiqueta chica sin partirse en 3 lineas
+  document.getElementById('lblCantEtiqueta').textContent = compact ? 'Cant.' : 'Cantidad de paquetes';
+}
+
+function syncLabelCfgUI(){
+  var sel = document.getElementById('cfgLabelSize');
+  if(!sel) return;
+  populateLabelSizeSelect();
+  var match = LABEL_PRESETS.find(function(p){ return Math.abs(p.w-labelSize.w)<0.001 && Math.abs(p.h-labelSize.h)<0.001; });
+  document.getElementById('cfgLabelW').value = labelSize.w;
+  document.getElementById('cfgLabelH').value = labelSize.h;
+  if(match){
+    sel.value = match.key;
+    document.getElementById('labelCustomRow').style.display = 'none';
+  } else {
+    sel.value = 'custom';
+    document.getElementById('labelCustomRow').style.display = 'flex';
+  }
+}
+
+function onLabelSizeSelectChange(){
+  var v = document.getElementById('cfgLabelSize').value;
+  document.getElementById('labelCustomRow').style.display = (v==='custom') ? 'flex' : 'none';
+}
+
+function saveLabelSizeFromUI(){
+  var v = document.getElementById('cfgLabelSize').value;
+  var w, h;
+  if(v==='custom'){
+    w = parseFloat(document.getElementById('cfgLabelW').value);
+    h = parseFloat(document.getElementById('cfgLabelH').value);
+    if(!(w>0) || !(h>0)){ showToast('Ingresa un ancho y alto válidos, en pulgadas.', true); return; }
+  } else {
+    var preset = LABEL_PRESETS.find(function(p){ return p.key===v; });
+    if(!preset) return;
+    w = preset.w; h = preset.h;
+  }
+  labelSize = {w:w, h:h};
+  saveLabelSizeLocal();
+  applyLabelCss();
+  showToast('Tamaño de etiqueta guardado en esta computadora: '+w+' x '+h+' pulg. Prueba con "Imprimir etiqueta de prueba".');
+}
+
 /* ============================================================
    VARIOS
    ============================================================ */
@@ -983,6 +1138,7 @@ window.addEventListener('DOMContentLoaded', function(){
   loadCfg();
   loadVistos();
   loadAnunciados();
+  loadLabelSize();
   if(localStorage.getItem('ish_bodega_theme')==='dark') document.body.classList.remove('light');
   if(sessionStorage.getItem('ish_bodega_auth')==='1'){
     document.getElementById('loginScreen').classList.add('hidden');
