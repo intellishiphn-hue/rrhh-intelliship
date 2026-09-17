@@ -139,9 +139,13 @@
 
   @media print{
     @page{ size: 2in 1in; margin: 0; }
-    body *{ visibility:hidden; }
-    #labelPrintArea, #labelPrintArea *{ visibility:visible; }
-    #labelPrintArea{ display:block; position:absolute; top:0; left:0; width:2in; height:1in; }
+    html, body{ margin:0; padding:0; width:2in; height:1in; }
+    /* ocultamos con display:none (no visibility:hidden) para que el resto de
+       la pagina (todo el listado de pedidos) no siga ocupando espacio en la
+       hoja -- si no, el navegador sigue partiendo esa hoja larga en muchas
+       etiquetas en blanco despues de la buena. */
+    body > *:not(#labelPrintArea){ display:none !important; }
+    #labelPrintArea{ display:block !important; width:2in; height:1in; }
   }
 </style>
 </head>
