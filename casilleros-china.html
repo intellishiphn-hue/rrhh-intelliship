@@ -134,6 +134,7 @@
   .tlitem:not(:last-child){position:relative;}
   .tlitem:not(:last-child)::after{content:'';position:absolute;left:4px;top:16px;bottom:-8px;width:2px;background:var(--bd);}
   .tltxt{font-size:13px;font-weight:700;}
+  .tlnota{font-size:12px;color:var(--tx2);font-style:italic;margin-top:1px;}
   .tldate{font-size:11.5px;color:var(--tx2);}
 
   .filecard{display:flex;align-items:center;gap:10px;background:var(--sur2);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12.5px;}
@@ -296,6 +297,8 @@
                   <select id="rcPesoUnidad"><option value="lb">lb</option><option value="kg">kg</option></select>
                 </div>
               </div>
+              <label class="f">CBM (metro cúbico)</label>
+              <input type="number" step="0.001" id="rcCBM" placeholder="0.000">
             </div>
           </div>
           <div class="hint" style="margin-top:6px;">Si todavía no tienes todos los datos (factura, packing list, teléfono del vendedor), no hay problema — puedes crear el recibo solo con la foto y completar el resto después abriendo el recibo desde "Todos los recibos".</div>
@@ -584,6 +587,21 @@ function fechaBonita(iso){
   return d.toLocaleDateString('es-HN', {day:'2-digit', month:'short', year:'numeric'}) + ' ' + d.toLocaleTimeString('es-HN', {hour:'2-digit', minute:'2-digit'});
 }
 function nowISO(){ return new Date().toISOString(); }
+function isoToFechaInputLocal(iso){
+  if(!iso) return '';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return '';
+  var yyyy = d.getFullYear();
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var dd = String(d.getDate()).padStart(2,'0');
+  return yyyy+'-'+mm+'-'+dd;
+}
+function fechaInputToISO(dateStr){
+  if(!dateStr) return null;
+  var d = new Date(dateStr+'T12:00:00');
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+function ordenarPorFecha(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); }
 function newId(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 
 /* ============================================================
@@ -1049,6 +1067,7 @@ async function crearRecibo(){
       medidas: document.getElementById('rcMedidas').value.trim(),
       peso: document.getElementById('rcPeso').value.trim(),
       pesoUnidad: document.getElementById('rcPesoUnidad').value,
+      cbm: document.getElementById('rcCBM').value.trim(),
       contenedorId: contenedorId, contenedorNombre: contenedorNombre,
       estado: estadoInicial,
       historialEstados: [{estado: estadoInicial, fecha: nowISO()}],
@@ -1069,7 +1088,7 @@ async function crearRecibo(){
     var id = newId();
     await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PUT', body: JSON.stringify(data)});
     recibos[id] = data;
-    ['rcContenido','rcVendedor','rcMedidas','rcPeso'].forEach(function(fid){ document.getElementById(fid).value=''; });
+    ['rcContenido','rcVendedor','rcMedidas','rcPeso','rcCBM'].forEach(function(fid){ document.getElementById(fid).value=''; });
     document.getElementById('rcCliente').value='';
     document.getElementById('rcClienteBuscar').value='';
     document.getElementById('rcContenedorInicial').value='';
@@ -1157,6 +1176,9 @@ function abrirDetalleRecibo(id){
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Detalles del paquete</h2>';
   html += '<div class="hint" style="margin-bottom:8px;">Ve completando estos datos según los vayas teniendo — no hace falta llenarlos todos de una vez.</div>';
+  html += '<label class="f" style="margin-top:0;">Fecha en que se recibió el paquete</label>'
+    + '<input type="date" id="mrFechaRecibido" value="'+isoToFechaInputLocal(r.fechaCreacion)+'">'
+    + '<div class="hint" style="margin-top:2px;margin-bottom:10px;">Cámbiala si el paquete llegó antes (o después) de que se registrara en el sistema.</div>';
   html += '<div class="row2">'
     + '<div><label class="f" style="margin-top:0;">Teléfono del vendedor (China)</label><input type="text" id="mrVendedor" value="'+escHtml(r.vendedorTelefono||'')+'" placeholder="Contacto del vendedor"></div>'
     + '<div><label class="f" style="margin-top:0;">Medidas</label><input type="text" id="mrMedidas" value="'+escHtml(r.medidas||'')+'" placeholder="Ej. 40 x 30 x 20 cm"></div>'
@@ -1165,6 +1187,7 @@ function abrirDetalleRecibo(id){
     + '<div><label class="f">Peso</label><input type="number" step="0.01" id="mrPeso" value="'+escHtml(r.peso||'')+'"></div>'
     + '<div><label class="f">Unidad</label><select id="mrPesoUnidad"><option value="lb"'+(r.pesoUnidad!=='kg'?' selected':'')+'>lb</option><option value="kg"'+(r.pesoUnidad==='kg'?' selected':'')+'>kg</option></select></div>'
     + '</div>'
+    + '<label class="f">CBM (metro cúbico)</label><input type="number" step="0.001" id="mrCBM" value="'+escHtml(r.cbm||'')+'">'
     + '<label class="f">Contenido</label><textarea id="mrContenido" placeholder="Descripción general del paquete">'+escHtml(r.contenido||'')+'</textarea>'
     + '<div class="btnrow"><button class="btn sec small" onclick="guardarReciboEdit(\''+id+'\')">Guardar detalles</button></div>';
 
@@ -1181,9 +1204,17 @@ function abrirDetalleRecibo(id){
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Estado</h2>';
   html += '<select id="mrEstado">' + cfg.estados.map(function(e){ return '<option value="'+escHtml(e)+'"'+(e===r.estado?' selected':'')+'>'+escHtml(e)+'</option>'; }).join('') + '</select>';
+  html += '<label class="f">Fecha de este cambio</label>';
+  html += '<input type="date" id="mrEstadoFecha" value="'+isoToFechaInputLocal(nowISO())+'">';
+  html += '<div class="hint" style="margin-top:2px;">Cámbiala si estás registrando este cambio días después de que realmente ocurrió.</div>';
+  html += '<label class="f">Nota de este cambio (opcional)</label>';
+  html += '<input type="text" id="mrEstadoNota" placeholder="Ej. Retraso en salida de China por mal tiempo">';
+  html += '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mrEstadoWA" checked style="width:auto;"> Enviar WhatsApp al cliente avisando este cambio</label>';
   html += '<div class="btnrow"><button class="btn sec small" onclick="cambiarEstadoRecibo(\''+id+'\')">Actualizar estado</button></div>';
-  html += '<div class="timeline">' + (r.historialEstados||[]).slice().reverse().map(function(h){
-    return '<div class="tlitem"><div class="tldot"></div><div><div class="tltxt">'+escHtml(h.estado)+'</div><div class="tldate">'+fechaBonita(h.fecha)+'</div></div></div>';
+  html += '<div class="timeline">' + (r.historialEstados||[]).slice().sort(ordenarPorFecha).reverse().map(function(h){
+    return '<div class="tlitem"><div class="tldot"></div><div><div class="tltxt">'+escHtml(h.estado)+'</div>'
+      + (h.nota ? '<div class="tlnota">'+escHtml(h.nota)+'</div>' : '')
+      + '<div class="tldate">'+fechaBonita(h.fecha)+'</div></div></div>';
   }).join('') + '</div>';
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Contenedor</h2>';
@@ -1216,16 +1247,20 @@ function copiarLink(){
 async function guardarReciboEdit(id){
   var r = recibos[id];
   if(!r) return;
+  var fechaRecibidoISO = fechaInputToISO(document.getElementById('mrFechaRecibido').value) || r.fechaCreacion;
   var patch = {
     vendedorTelefono: document.getElementById('mrVendedor').value.trim(),
     medidas: document.getElementById('mrMedidas').value.trim(),
     peso: document.getElementById('mrPeso').value.trim(),
     pesoUnidad: document.getElementById('mrPesoUnidad').value,
-    contenido: document.getElementById('mrContenido').value.trim()
+    cbm: document.getElementById('mrCBM').value.trim(),
+    contenido: document.getElementById('mrContenido').value.trim(),
+    fechaCreacion: fechaRecibidoISO
   };
   try{
     await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PATCH', body: JSON.stringify(patch)});
     Object.assign(r, patch);
+    renderRecibos();
     showToast('Detalles del recibo actualizados.');
   }catch(e){ showToast('No se pudo guardar: '+e.message, true); }
 }
@@ -1248,16 +1283,21 @@ async function subirArchivoRecibo(id, campo){
 }
 async function cambiarEstadoRecibo(id){
   var nuevo = document.getElementById('mrEstado').value;
+  var nota = document.getElementById('mrEstadoNota').value.trim();
+  var enviarWA = document.getElementById('mrEstadoWA').checked;
+  var fechaCambio = fechaInputToISO(document.getElementById('mrEstadoFecha').value) || nowISO();
   var r = recibos[id];
-  if(nuevo === r.estado){ showToast('Ese ya es el estado actual.'); return; }
+  if(nuevo === r.estado && !nota){ showToast('Ese ya es el estado actual. Si solo quieres dejar un aviso (ej. un retraso), escribe una nota.', true); return; }
   r.estado = nuevo;
-  r.historialEstados = (r.historialEstados||[]).concat([{estado:nuevo, fecha: nowISO()}]);
+  var entrada = {estado:nuevo, fecha: fechaCambio};
+  if(nota) entrada.nota = nota;
+  r.historialEstados = (r.historialEstados||[]).concat([entrada]);
   try{
     await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PATCH', body: JSON.stringify({estado:nuevo, historialEstados:r.historialEstados})});
     renderRecibos();
     abrirDetalleRecibo(id);
     showToast('Estado actualizado.');
-    preguntarEnviarWA('estado', id);
+    if(enviarWA){ await enviarWhatsAppRecibo(id, 'estado'); }
   }catch(e){ showToast('No se pudo actualizar: '+e.message, true); }
 }
 async function asignarContenedorRecibo(id){
@@ -1325,20 +1365,37 @@ function abrirDetalleContenedor(id){
   var misRec = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; });
   var html = '<label class="f" style="margin-top:0;">Estado del contenedor</label>'
     + '<select id="mkEstado">' + cfg.estados.map(function(e){ return '<option value="'+escHtml(e)+'"'+(e===c.estado?' selected':'')+'>'+escHtml(e)+'</option>'; }).join('') + '</select>'
+    + '<label class="f">Fecha de este cambio</label>'
+    + '<input type="date" id="mkEstadoFecha" value="'+isoToFechaInputLocal(nowISO())+'">'
+    + '<div class="hint" style="margin-top:2px;">Cámbiala si estás registrando este cambio días después de que realmente ocurrió.</div>'
+    + '<label class="f">Nota de este cambio (opcional)</label>'
+    + '<input type="text" id="mkEstadoNota" placeholder="Ej. Retraso en salida de China por mal tiempo">'
+    + '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mkEstadoWA" checked style="width:auto;"> Enviar WhatsApp a los clientes de este contenedor</label>'
     + '<div class="hint">Al cambiar el estado del contenedor, se actualiza el estado de los '+misRec.length+' recibo(s) que tiene asignados.</div>'
     + '<div class="btnrow"><button class="btn" onclick="cambiarEstadoContenedor(\''+id+'\')">Actualizar estado (y sus recibos)</button></div>';
 
-  html += '<div class="timeline">' + (c.historialEstados||[]).slice().reverse().map(function(h){
-    return '<div class="tlitem"><div class="tldot"></div><div><div class="tltxt">'+escHtml(h.estado)+'</div><div class="tldate">'+fechaBonita(h.fecha)+'</div></div></div>';
+  html += '<div class="timeline">' + (c.historialEstados||[]).slice().sort(ordenarPorFecha).reverse().map(function(h){
+    return '<div class="tlitem"><div class="tldot"></div><div><div class="tltxt">'+escHtml(h.estado)+'</div>'
+      + (h.nota ? '<div class="tlnota">'+escHtml(h.nota)+'</div>' : '')
+      + '<div class="tldate">'+fechaBonita(h.fecha)+'</div></div></div>';
   }).join('') + '</div>';
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Asignar recibos a este contenedor</h2>';
-  var disponibles = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId !== id; });
-  html += '<select id="mkAddRecibo"><option value="">Elige un recibo...</option>' + disponibles.map(function(rid){
-    var r = recibos[rid];
-    return '<option value="'+rid+'">'+escHtml(r.numeroWR)+' — '+escHtml(r.clienteNombre)+(r.contenedorNombre?' (actualmente en '+escHtml(r.contenedorNombre)+')':'')+'</option>';
-  }).join('') + '</select>';
-  html += '<div class="btnrow"><button class="btn sec small" onclick="agregarReciboAContenedor(\''+id+'\')">+ Agregar a este contenedor</button></div>';
+  var disponibles = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId !== id; })
+    .sort(function(a,b){ return (recibos[b].fechaCreacion||'').localeCompare(recibos[a].fechaCreacion||''); });
+  if(!disponibles.length){
+    html += '<div class="hint">No hay otros recibos disponibles para agregar.</div>';
+  } else {
+    html += '<div class="hint" style="margin-bottom:6px;">Marca los que quieras meter a este contenedor (puedes elegir varios a la vez).</div>';
+    html += '<div class="suggestbox" style="position:static;max-height:240px;">' + disponibles.map(function(rid){
+      var r = recibos[rid];
+      return '<label class="suggestitem" style="display:flex;align-items:center;gap:8px;cursor:pointer;">'
+        + '<input type="checkbox" class="mkAddCheck" value="'+rid+'" style="width:auto;">'
+        + '<span><b>'+escHtml(r.numeroWR)+'</b> — '+escHtml(r.clienteNombre)+(r.contenedorNombre?' <span style="opacity:.7;">(actualmente en '+escHtml(r.contenedorNombre)+')</span>':'')+'</span>'
+        + '</label>';
+    }).join('') + '</div>';
+    html += '<div class="btnrow"><button class="btn sec small" onclick="agregarRecibosSeleccionadosAContenedor(\''+id+'\')">+ Agregar seleccionados a este contenedor</button></div>';
+  }
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Recibos en este contenedor ('+misRec.length+')</h2>';
   if(!misRec.length){
@@ -1354,47 +1411,81 @@ function abrirDetalleContenedor(id){
     html += '<div class="btnrow"><button class="btn sec" onclick="exportarContenedor(\''+id+'\')">⬇ Exportar todo (ZIP) para mandar a China</button></div>';
   }
 
+  html += '<h2 style="margin-top:18px;font-size:14px;">Zona de peligro</h2>';
+  html += '<div class="hint">Borrar este contenedor no borra los recibos — solo los deja "Sin contenedor" otra vez.</div>';
+  html += '<div class="btnrow"><button class="btn danger small" onclick="eliminarContenedor(\''+id+'\')">🗑 Eliminar contenedor</button></div>';
+
   document.getElementById('mkBody').innerHTML = html;
   abrirModal('modalContenedor');
 }
 
 async function cambiarEstadoContenedor(id){
   var nuevo = document.getElementById('mkEstado').value;
+  var nota = document.getElementById('mkEstadoNota').value.trim();
+  var enviarWA = document.getElementById('mkEstadoWA').checked;
+  var fechaCambio = fechaInputToISO(document.getElementById('mkEstadoFecha').value) || nowISO();
   var c = contenedores[id];
-  if(nuevo === c.estado){ showToast('Ese ya es el estado actual.'); return; }
+  if(nuevo === c.estado && !nota){ showToast('Ese ya es el estado actual. Si solo quieres dejar un aviso (ej. un retraso), escribe una nota.', true); return; }
   var misRec = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; });
-  if(!confirm('Vas a cambiar el estado del contenedor a "'+nuevo+'". Esto también actualizará el estado de sus '+misRec.length+' recibo(s). ¿Continuar?')) return;
+  if(!confirm('Vas a actualizar el contenedor. Esto también actualizará el estado de sus '+misRec.length+' recibo(s). ¿Continuar?')) return;
   c.estado = nuevo;
-  c.historialEstados = (c.historialEstados||[]).concat([{estado:nuevo, fecha: nowISO()}]);
+  var entradaC = {estado:nuevo, fecha: fechaCambio}; if(nota) entradaC.nota = nota;
+  c.historialEstados = (c.historialEstados||[]).concat([entradaC]);
   try{
     await fetch(FB_URL+'/contenedores/'+id+'.json', {method:'PATCH', body: JSON.stringify({estado:nuevo, historialEstados:c.historialEstados})});
     for(var i=0;i<misRec.length;i++){
       var rid = misRec[i];
       var r = recibos[rid];
       r.estado = nuevo;
-      r.historialEstados = (r.historialEstados||[]).concat([{estado:nuevo, fecha: nowISO()}]);
+      var entradaR = {estado:nuevo, fecha: fechaCambio}; if(nota) entradaR.nota = nota;
+      r.historialEstados = (r.historialEstados||[]).concat([entradaR]);
       await fetch(FB_URL+'/recibos/'+rid+'.json', {method:'PATCH', body: JSON.stringify({estado:nuevo, historialEstados:r.historialEstados})});
     }
     renderContenedores(); renderRecibos();
     abrirDetalleContenedor(id);
     showToast('Estado del contenedor y de sus recibos actualizado.');
-    if(misRec.length && confirm('¿Enviar WhatsApp de aviso a los '+misRec.length+' cliente(s) de este contenedor?')){
+    if(enviarWA && misRec.length){
       for(var j=0;j<misRec.length;j++){ await enviarWhatsAppRecibo(misRec[j], 'estado'); }
     }
   }catch(e){ showToast('No se pudo actualizar: '+e.message, true); }
 }
-async function agregarReciboAContenedor(id){
-  var rid = document.getElementById('mkAddRecibo').value;
-  if(!rid) return;
+async function agregarRecibosSeleccionadosAContenedor(id){
+  var checks = Array.prototype.slice.call(document.querySelectorAll('.mkAddCheck:checked'));
+  if(!checks.length){ showToast('Marca al menos un recibo para agregar.', true); return; }
   var c = contenedores[id];
-  var r = recibos[rid];
-  r.contenedorId = id; r.contenedorNombre = c.nombre;
   try{
-    await fetch(FB_URL+'/recibos/'+rid+'.json', {method:'PATCH', body: JSON.stringify({contenedorId:id, contenedorNombre:c.nombre})});
+    for(var i=0;i<checks.length;i++){
+      var rid = checks[i].value;
+      var r = recibos[rid];
+      if(!r) continue;
+      r.contenedorId = id; r.contenedorNombre = c.nombre;
+      await fetch(FB_URL+'/recibos/'+rid+'.json', {method:'PATCH', body: JSON.stringify({contenedorId:id, contenedorNombre:c.nombre})});
+    }
     renderRecibos();
     abrirDetalleContenedor(id);
-    showToast('Recibo agregado al contenedor.');
+    showToast(checks.length+' recibo'+(checks.length===1?'':'s')+' agregado'+(checks.length===1?'':'s')+' al contenedor.');
   }catch(e){ showToast('No se pudo agregar: '+e.message, true); }
+}
+async function eliminarContenedor(id){
+  var c = contenedores[id];
+  if(!c) return;
+  var misRec = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; });
+  var aviso = '¿Seguro que quieres eliminar el contenedor "'+c.nombre+'"?';
+  if(misRec.length) aviso += ' Sus '+misRec.length+' recibo(s) quedarán como "Sin contenedor" (no se borran).';
+  aviso += ' Esto no se puede deshacer.';
+  if(!confirm(aviso)) return;
+  try{
+    await fetch(FB_URL+'/contenedores/'+id+'.json', {method:'DELETE'});
+    for(var i=0;i<misRec.length;i++){
+      var rid = misRec[i];
+      recibos[rid].contenedorId = ''; recibos[rid].contenedorNombre = '';
+      await fetch(FB_URL+'/recibos/'+rid+'.json', {method:'PATCH', body: JSON.stringify({contenedorId:'', contenedorNombre:''})});
+    }
+    delete contenedores[id];
+    cerrarModal('modalContenedor');
+    renderContenedores(); renderRecibos();
+    showToast('Contenedor eliminado.');
+  }catch(e){ showToast('No se pudo eliminar: '+e.message, true); }
 }
 
 /* ============================================================
@@ -1448,7 +1539,7 @@ async function exportarContenedor(id){
     var carpeta = zip.folder(nombreCarpeta);
     resumen += '----------------------------------------\n';
     resumen += 'WR: '+r.numeroWR+'\nCliente: '+r.clienteNombre+' ('+r.clienteCasillero+')\n';
-    resumen += 'Contenido: '+(r.contenido||'—')+'\nMedidas: '+(r.medidas||'—')+'\nPeso: '+(r.peso||'—')+' '+(r.pesoUnidad||'')+'\n';
+    resumen += 'Contenido: '+(r.contenido||'—')+'\nMedidas: '+(r.medidas||'—')+'\nPeso: '+(r.peso||'—')+' '+(r.pesoUnidad||'')+'\nCBM: '+(r.cbm||'—')+' m³\n';
     resumen += 'Teléfono del vendedor: '+(r.vendedorTelefono||'—')+'\n\n';
     if(r.fotoB64) carpeta.file('foto'+extDeDataUrl(r.fotoB64), dataUrlABlob(r.fotoB64));
     if(r.facturaB64) carpeta.file(r.facturaNombreArchivo||('factura'+extDeDataUrl(r.facturaB64)), dataUrlABlob(r.facturaB64));
