@@ -223,8 +223,17 @@
               <input type="tel" id="clTelefono" placeholder="9999-9999">
             </div>
           </div>
-          <label class="f">Email (opcional)</label>
-          <input type="text" id="clEmail" placeholder="cliente@correo.com">
+          <div class="row2">
+            <div>
+              <label class="f">Número de casillero</label>
+              <input type="text" id="clCasillero" placeholder="Ej. IH-0001" oninput="this.dataset.auto='0'">
+              <div class="hint">Te sugerimos el siguiente número disponible, pero lo puedes cambiar por el que tú quieras.</div>
+            </div>
+            <div>
+              <label class="f">Email (opcional)</label>
+              <input type="text" id="clEmail" placeholder="cliente@correo.com">
+            </div>
+          </div>
           <label class="f">Etiqueta del casillero (PDF, opcional)</label>
           <div class="drop" id="clDrop" onclick="document.getElementById('clFile').click()">
             <div class="big">📄</div>
@@ -801,16 +810,37 @@ function limpiarDrop(stateKey, dropId, inputId, txtId){
 /* ============================================================
    CLIENTES / CASILLEROS
    ============================================================ */
+function sugerirCasillero(){
+  var max = 0;
+  Object.keys(clientes).forEach(function(id){
+    var m = /^IH-(\d+)$/.exec(clientes[id].casillero||'');
+    if(m){ var n = parseInt(m[1],10); if(n>max) max = n; }
+  });
+  var num = String(max+1);
+  while(num.length<4) num = '0'+num;
+  return 'IH-'+num;
+}
+function precargarCasilleroSugerido(){
+  var input = document.getElementById('clCasillero');
+  if(!input) return;
+  if(document.activeElement === input) return; // no interrumpir mientras el usuario escribe
+  if(input.dataset.auto === '0') return; // ya lo cambio a mano, lo respetamos
+  input.value = sugerirCasillero();
+  input.dataset.auto = '1';
+}
 async function crearCliente(){
   var nombre = document.getElementById('clNombre').value.trim();
   var telefono = document.getElementById('clTelefono').value.trim();
   var email = document.getElementById('clEmail').value.trim();
+  var casillero = document.getElementById('clCasillero').value.trim();
   if(!nombre){ showToast('Ingresa el nombre del cliente.', true); return; }
   if(!telefono){ showToast('Ingresa el teléfono del cliente.', true); return; }
+  if(!casillero){ showToast('Ingresa el número de casillero.', true); return; }
+  var yaExiste = Object.keys(clientes).some(function(id){ return (clientes[id].casillero||'').toLowerCase() === casillero.toLowerCase(); });
+  if(yaExiste){ showToast('Ya existe un cliente con el casillero '+casillero+'. Usa otro número.', true); return; }
   var btn = event.target; var prevTxt = btn.textContent;
   btn.disabled = true; btn.textContent = 'Guardando...';
   try{
-    var casillero = await siguienteCasillero();
     var data = { nombre: nombre, telefono: telefono, email: email, casillero: casillero, fechaCreacion: nowISO() };
     if(pendingFiles.clEtiqueta){
       data.etiquetaNombreArchivo = pendingFiles.clEtiqueta.name;
@@ -822,9 +852,12 @@ async function crearCliente(){
     document.getElementById('clNombre').value='';
     document.getElementById('clTelefono').value='';
     document.getElementById('clEmail').value='';
+    document.getElementById('clCasillero').value='';
+    document.getElementById('clCasillero').dataset.auto='';
     limpiarDrop('clEtiqueta','clDrop','clFile','clFileTxt');
     renderClientes();
     renderClienteSelect();
+    precargarCasilleroSugerido();
     showToast('Casillero '+casillero+' abierto para '+nombre+'.');
   }catch(e){
     showToast('No se pudo guardar el casillero: '+e.message, true);
@@ -833,6 +866,7 @@ async function crearCliente(){
 }
 
 function renderClientes(){
+  precargarCasilleroSugerido();
   var q = (document.getElementById('clSearch').value||'').toLowerCase();
   var ids = Object.keys(clientes).filter(function(id){
     var c = clientes[id];
@@ -910,9 +944,10 @@ function abrirDetalleCliente(id){
   var misRecibos = Object.keys(recibos).filter(function(r){ return recibos[r].clienteId===id; })
     .sort(function(a,b){ return (recibos[b].fechaCreacion||'').localeCompare(recibos[a].fechaCreacion||''); });
   var html = '<div class="row2">'
+    + '<div><label class="f" style="margin-top:0;">Número de casillero</label><input type="text" id="mcCasillero" value="'+escHtml(c.casillero||'')+'"></div>'
     + '<div><label class="f" style="margin-top:0;">Teléfono</label><input type="text" id="mcTelefono" value="'+escHtml(c.telefono||'')+'"></div>'
-    + '<div><label class="f" style="margin-top:0;">Email</label><input type="text" id="mcEmail" value="'+escHtml(c.email||'')+'"></div>'
     + '</div>'
+    + '<label class="f">Email</label><input type="text" id="mcEmail" value="'+escHtml(c.email||'')+'">'
     + '<div class="btnrow"><button class="btn sec small" onclick="guardarClienteEdit(\''+id+'\')">Guardar cambios</button></div>';
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Etiqueta del casillero</h2>';
@@ -951,11 +986,28 @@ function irANuevoReciboDe(clienteId){
 async function guardarClienteEdit(id){
   var telefono = document.getElementById('mcTelefono').value.trim();
   var email = document.getElementById('mcEmail').value.trim();
+  var casillero = document.getElementById('mcCasillero').value.trim();
+  if(!casillero){ showToast('El número de casillero no puede quedar vacío.', true); return; }
+  var choca = Object.keys(clientes).some(function(cid){ return cid!==id && (clientes[cid].casillero||'').toLowerCase()===casillero.toLowerCase(); });
+  if(choca){ showToast('Ya existe otro cliente con el casillero '+casillero+'. Usa otro número.', true); return; }
+  var casilleroAnterior = clientes[id].casillero;
   try{
-    await fetch(FB_URL+'/clientes/'+id+'.json', {method:'PATCH', body: JSON.stringify({telefono:telefono, email:email})});
-    clientes[id].telefono = telefono; clientes[id].email = email;
+    await fetch(FB_URL+'/clientes/'+id+'.json', {method:'PATCH', body: JSON.stringify({telefono:telefono, email:email, casillero:casillero})});
+    clientes[id].telefono = telefono; clientes[id].email = email; clientes[id].casillero = casillero;
+    if(casillero !== casilleroAnterior){
+      var misRecibos = Object.keys(recibos).filter(function(r){ return recibos[r].clienteId===id; });
+      for(var i=0;i<misRecibos.length;i++){
+        var rid = misRecibos[i];
+        recibos[rid].clienteCasillero = casillero;
+        await fetch(FB_URL+'/recibos/'+rid+'.json', {method:'PATCH', body: JSON.stringify({clienteCasillero:casillero})});
+      }
+      renderRecibos();
+      showToast('Datos del cliente actualizados (el casillero se actualizó en sus '+misRecibos.length+' recibo'+(misRecibos.length===1?'':'s')+').');
+    } else {
+      showToast('Datos del cliente actualizados.');
+    }
     renderClientes();
-    showToast('Datos del cliente actualizados.');
+    abrirDetalleCliente(id);
   }catch(e){ showToast('No se pudo guardar: '+e.message, true); }
 }
 async function subirEtiquetaCliente(id){
