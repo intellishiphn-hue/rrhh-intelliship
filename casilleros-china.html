@@ -153,6 +153,14 @@
   .estrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
   .estrow input{flex:1;}
   .estrow .num{width:22px;text-align:center;color:var(--tx2);font-size:12px;}
+
+  .suggestbox{position:absolute;top:100%;left:0;right:0;background:var(--sur);border:1px solid var(--bd);border-radius:var(--radius);margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+  .suggestitem{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--bd);}
+  .suggestitem:last-child{border-bottom:none;}
+  .suggestitem:hover, .suggestitem.activo{background:var(--acc);color:#fff;}
+  .suggestitem .sname{font-weight:700;}
+  .suggestitem .scas{font-size:11.5px;opacity:.85;}
+  .suggestempty{padding:10px 12px;font-size:12.5px;color:var(--tx2);}
 </style>
 </head>
 <body class="light">
@@ -252,17 +260,23 @@
           <h2>Nuevo recibo de bodega (WR)</h2>
           <div class="desc">Crea el recibo a nombre de un cliente con casillero ya abierto y adjunta los documentos que necesitas mandar a China.</div>
           <label class="f" style="margin-top:0;">Cliente</label>
-          <select id="rcCliente"></select>
+          <div style="position:relative;">
+            <input type="text" id="rcClienteBuscar" placeholder="Busca por nombre o casillero..." autocomplete="off" oninput="filtrarClienteBusqueda()" onfocus="filtrarClienteBusqueda()">
+            <input type="hidden" id="rcCliente">
+            <div id="rcClienteSugerencias" class="suggestbox" style="display:none;"></div>
+          </div>
+          <label class="f">Contenedor (opcional, lo puedes asignar después)</label>
+          <select id="rcContenedorInicial"><option value="">Sin asignar todavía</option></select>
           <div class="row2">
             <div>
               <label class="f">Contenido</label>
-              <textarea id="rcContenido" placeholder="Descripción general del paquete"></textarea>
+              <textarea id="rcContenido" placeholder="Descripción general del paquete (puedes dejarlo vacío y completarlo después)"></textarea>
             </div>
             <div>
               <label class="f">Teléfono del vendedor (China)</label>
-              <input type="text" id="rcVendedor" placeholder="Contacto del vendedor">
+              <input type="text" id="rcVendedor" placeholder="Contacto del vendedor (puedes agregarlo después)">
               <label class="f">Medidas (L x A x A)</label>
-              <input type="text" id="rcMedidas" placeholder='Ej. 40 x 30 x 20 cm'>
+              <input type="text" id="rcMedidas" placeholder='Ej. 40 x 30 x 20 cm (opcional por ahora)'>
               <div class="row2">
                 <div>
                   <label class="f">Peso</label>
@@ -275,6 +289,7 @@
               </div>
             </div>
           </div>
+          <div class="hint" style="margin-top:6px;">Si todavía no tienes todos los datos (factura, packing list, teléfono del vendedor), no hay problema — puedes crear el recibo solo con la foto y completar el resto después abriendo el recibo desde "Todos los recibos".</div>
 
           <div class="row3">
             <div>
@@ -673,6 +688,82 @@ function comprimirImagen(file, maxDim, calidad){
   });
 }
 
+/* ============================================================
+   COMPRESION DE PDFs PESADOS (etiquetas, facturas, packing lists)
+   Si un PDF pesa mucho (ej. un escaneo o una etiqueta con foto en alta
+   resolucion), lo volvemos a generar mas liviano: convertimos cada
+   pagina en una imagen comprimida y armamos un PDF nuevo con esas
+   imagenes. Si algo falla (o no hay internet para bajar las librerias),
+   simplemente se sube el archivo original sin tocarlo.
+   ============================================================ */
+var _pdfLibsCargando = null;
+function _cargarScript(src){
+  return new Promise(function(resolve){
+    var listo = false;
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = function(){ listo = true; resolve(true); };
+    s.onerror = function(){ listo = true; resolve(false); };
+    document.head.appendChild(s);
+    setTimeout(function(){ if(!listo) resolve(false); }, 9000);
+  });
+}
+function cargarLibsPDF(){
+  if(typeof pdfjsLib !== 'undefined' && window.jspdf && window.jspdf.jsPDF) return Promise.resolve(true);
+  if(_pdfLibsCargando) return _pdfLibsCargando;
+  _pdfLibsCargando = Promise.all([
+    _cargarScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'),
+    _cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+  ]).then(function(resultados){
+    if(!resultados[0] || !resultados[1]) return false;
+    try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){}
+    return typeof pdfjsLib !== 'undefined' && window.jspdf && window.jspdf.jsPDF;
+  }).catch(function(){ return false; });
+  return _pdfLibsCargando;
+}
+async function comprimirPDF(file){
+  // Los PDFs livianos los dejamos tal cual, no vale la pena procesarlos.
+  if(file.size < 1.2*1024*1024) return fileToDataURL(file);
+  var ok = await cargarLibsPDF();
+  if(!ok) return fileToDataURL(file);
+  try{
+    var buffer = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+    var jsPDFClase = window.jspdf.jsPDF;
+    var doc = null;
+    var maxPaginas = Math.min(pdf.numPages, 25);
+    for(var i=1;i<=maxPaginas;i++){
+      var page = await pdf.getPage(i);
+      var viewport = page.getViewport({scale: 1.4});
+      var canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      var ctx = canvas.getContext('2d');
+      await page.render({canvasContext: ctx, viewport: viewport}).promise;
+      var imgData = canvas.toDataURL('image/jpeg', 0.72);
+      var wMm = viewport.width * 0.2646, hMm = viewport.height * 0.2646;
+      var orient = wMm > hMm ? 'l' : 'p';
+      if(!doc){ doc = new jsPDFClase({orientation: orient, unit:'mm', format:[wMm,hMm]}); }
+      else { doc.addPage([wMm,hMm], orient); }
+      doc.addImage(imgData, 'JPEG', 0, 0, wMm, hMm);
+    }
+    var resultado = doc.output('datauristring');
+    var pesoNuevoAprox = Math.round(resultado.length * 0.75);
+    if(pesoNuevoAprox < file.size * 0.9){
+      showToast('Archivo comprimido: '+Math.round(file.size/1024)+' KB → '+Math.round(pesoNuevoAprox/1024)+' KB.');
+      return resultado;
+    }
+    return fileToDataURL(file);
+  }catch(e){
+    return fileToDataURL(file);
+  }
+}
+function prepararArchivo(file){
+  if(!file) return Promise.resolve(null);
+  if(file.type === 'application/pdf') return comprimirPDF(file);
+  if(file.type && file.type.indexOf('image/')===0) return comprimirImagen(file, 1600, 0.8);
+  return fileToDataURL(file);
+}
+
 function wireDrop(dropId, inputId, txtId, stateKey){
   var drop = document.getElementById(dropId);
   var input = document.getElementById(inputId);
@@ -693,7 +784,11 @@ function handleDropFile(file, stateKey, txtId, dropEl){
   document.getElementById(txtId).textContent = file.name + ' ('+Math.round(file.size/1024)+' KB)';
   dropEl.classList.add('hasfile');
   if(file.size > 5*1024*1024){
-    showToast('Ese archivo pesa más de 5 MB — puede tardar o fallar al guardar. Si puedes, usa uno más liviano.', true);
+    if(file.type === 'application/pdf'){
+      showToast('Ese PDF pesa '+Math.round(file.size/1024/1024*10)/10+' MB — se comprimirá automáticamente al guardarlo.');
+    } else {
+      showToast('Ese archivo pesa más de 5 MB — puede tardar o fallar al guardar. Si puedes, usa uno más liviano.', true);
+    }
   }
 }
 function limpiarDrop(stateKey, dropId, inputId, txtId){
@@ -719,7 +814,7 @@ async function crearCliente(){
     var data = { nombre: nombre, telefono: telefono, email: email, casillero: casillero, fechaCreacion: nowISO() };
     if(pendingFiles.clEtiqueta){
       data.etiquetaNombreArchivo = pendingFiles.clEtiqueta.name;
-      data.etiquetaB64 = await fileToDataURL(pendingFiles.clEtiqueta);
+      data.etiquetaB64 = await prepararArchivo(pendingFiles.clEtiqueta);
     }
     var id = newId();
     await fetch(FB_URL+'/clientes/'+id+'.json', {method:'PUT', body: JSON.stringify(data)});
@@ -761,14 +856,52 @@ function renderClientes(){
 }
 
 function renderClienteSelect(){
-  var sel = document.getElementById('rcCliente');
-  var current = sel.value;
-  var ids = Object.keys(clientes).sort(function(a,b){ return (clientes[a].nombre||'').localeCompare(clientes[b].nombre||''); });
-  sel.innerHTML = '<option value="">Selecciona un cliente...</option>' + ids.map(function(id){
-    return '<option value="'+id+'">'+escHtml(clientes[id].nombre)+' ('+escHtml(clientes[id].casillero)+')</option>';
-  }).join('');
-  if(ids.indexOf(current)!==-1) sel.value = current;
+  // Ya no usamos un <select> para el cliente del recibo (con muchos clientes
+  // se vuelve incomodo), usamos un buscador -- ver filtrarClienteBusqueda().
+  // Esta funcion solo limpia la seleccion si el cliente elegido ya no existe.
+  var hid = document.getElementById('rcCliente');
+  if(hid && hid.value && !clientes[hid.value]){
+    hid.value = '';
+    var buscar = document.getElementById('rcClienteBuscar');
+    if(buscar) buscar.value = '';
+  }
 }
+function filtrarClienteBusqueda(){
+  var q = (document.getElementById('rcClienteBuscar').value||'').trim().toLowerCase();
+  var caja = document.getElementById('rcClienteSugerencias');
+  var ids = Object.keys(clientes).filter(function(id){
+    var c = clientes[id];
+    var hay = [(c.nombre||''),(c.casillero||'')].join(' ').toLowerCase();
+    return !q || hay.indexOf(q) !== -1;
+  }).sort(function(a,b){ return (clientes[a].nombre||'').localeCompare(clientes[b].nombre||''); }).slice(0,40);
+  if(!ids.length){
+    caja.innerHTML = '<div class="suggestempty">No se encontraron clientes con casillero abierto.</div>';
+  } else {
+    caja.innerHTML = ids.map(function(id){
+      var c = clientes[id];
+      return '<div class="suggestitem" onmousedown="event.preventDefault();seleccionarClienteBusqueda(\''+id+'\')">'
+        + '<div class="sname">'+escHtml(c.nombre)+'</div>'
+        + '<div class="scas">Casillero '+escHtml(c.casillero)+'</div>'
+        + '</div>';
+    }).join('');
+  }
+  caja.style.display = 'block';
+}
+function seleccionarClienteBusqueda(id){
+  var c = clientes[id];
+  if(!c) return;
+  document.getElementById('rcCliente').value = id;
+  document.getElementById('rcClienteBuscar').value = c.nombre + ' (' + c.casillero + ')';
+  document.getElementById('rcClienteSugerencias').style.display = 'none';
+}
+document.addEventListener('click', function(e){
+  var caja = document.getElementById('rcClienteSugerencias');
+  var input = document.getElementById('rcClienteBuscar');
+  if(!caja || !input) return;
+  if(e.target !== caja && e.target !== input && !caja.contains(e.target)){
+    caja.style.display = 'none';
+  }
+});
 
 function abrirDetalleCliente(id){
   var c = clientes[id];
@@ -810,7 +943,9 @@ function abrirDetalleCliente(id){
 }
 function irANuevoReciboDe(clienteId){
   showView('viewRecibos');
+  var c = clientes[clienteId];
   document.getElementById('rcCliente').value = clienteId;
+  document.getElementById('rcClienteBuscar').value = c ? (c.nombre + ' (' + c.casillero + ')') : '';
   window.scrollTo(0,0);
 }
 async function guardarClienteEdit(id){
@@ -829,7 +964,7 @@ async function subirEtiquetaCliente(id){
   var file = input.files[0];
   document.getElementById('mcFileTxt').textContent = 'Subiendo '+file.name+'...';
   try{
-    var dataUrl = await fileToDataURL(file);
+    var dataUrl = await prepararArchivo(file);
     await fetch(FB_URL+'/clientes/'+id+'.json', {method:'PATCH', body: JSON.stringify({etiquetaB64:dataUrl, etiquetaNombreArchivo:file.name})});
     clientes[id].etiquetaB64 = dataUrl;
     clientes[id].etiquetaNombreArchivo = file.name;
@@ -843,8 +978,10 @@ async function subirEtiquetaCliente(id){
    ============================================================ */
 async function crearRecibo(){
   var clienteId = document.getElementById('rcCliente').value;
-  if(!clienteId || !clientes[clienteId]){ showToast('Elige un cliente con casillero abierto.', true); return; }
+  if(!clienteId || !clientes[clienteId]){ showToast('Busca y elige un cliente con casillero abierto.', true); return; }
   var cliente = clientes[clienteId];
+  var contenedorId = document.getElementById('rcContenedorInicial').value;
+  var contenedorNombre = contenedorId && contenedores[contenedorId] ? contenedores[contenedorId].nombre : '';
   var btn = event.target; var prevTxt = btn.textContent;
   btn.disabled = true; btn.textContent = 'Guardando...';
   try{
@@ -860,7 +997,7 @@ async function crearRecibo(){
       medidas: document.getElementById('rcMedidas').value.trim(),
       peso: document.getElementById('rcPeso').value.trim(),
       pesoUnidad: document.getElementById('rcPesoUnidad').value,
-      contenedorId: '', contenedorNombre: '',
+      contenedorId: contenedorId, contenedorNombre: contenedorNombre,
       estado: estadoInicial,
       historialEstados: [{estado: estadoInicial, fecha: nowISO()}],
       fechaCreacion: nowISO()
@@ -871,21 +1008,24 @@ async function crearRecibo(){
     }
     if(pendingFiles.rcFactura){
       data.facturaNombreArchivo = pendingFiles.rcFactura.name;
-      data.facturaB64 = await fileToDataURL(pendingFiles.rcFactura);
+      data.facturaB64 = await prepararArchivo(pendingFiles.rcFactura);
     }
     if(pendingFiles.rcPacking){
       data.packingNombreArchivo = pendingFiles.rcPacking.name;
-      data.packingB64 = await fileToDataURL(pendingFiles.rcPacking);
+      data.packingB64 = await prepararArchivo(pendingFiles.rcPacking);
     }
     var id = newId();
     await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PUT', body: JSON.stringify(data)});
     recibos[id] = data;
     ['rcContenido','rcVendedor','rcMedidas','rcPeso'].forEach(function(fid){ document.getElementById(fid).value=''; });
     document.getElementById('rcCliente').value='';
+    document.getElementById('rcClienteBuscar').value='';
+    document.getElementById('rcContenedorInicial').value='';
     limpiarDrop('rcFoto','rcDropFoto','rcFoto','rcFotoTxt');
     limpiarDrop('rcFactura','rcDropFactura','rcFactura','rcFacturaTxt');
     limpiarDrop('rcPacking','rcDropPacking','rcPacking','rcPackingTxt');
     renderRecibos();
+    renderContenedores();
     showToast('Recibo '+numeroWR+' creado para '+cliente.nombre+'.');
     preguntarEnviarWA('recibido', id);
   }catch(e){
@@ -951,25 +1091,41 @@ function filaArchivo(label, b64, nombre){
     + '</div>';
 }
 
+var CAMPOS_ARCHIVO_RECIBO = {
+  foto: {b64:'fotoB64', nombre:'fotoNombreArchivo', label:'Foto del paquete', icono:'📷', accept:'image/*'},
+  factura: {b64:'facturaB64', nombre:'facturaNombreArchivo', label:'Factura comercial', icono:'🧾', accept:'application/pdf,image/*'},
+  packing: {b64:'packingB64', nombre:'packingNombreArchivo', label:'Packing list', icono:'📋', accept:'application/pdf,image/*'}
+};
 function abrirDetalleRecibo(id){
   var r = recibos[id];
   if(!r) return;
   document.getElementById('mrTitulo').textContent = r.numeroWR + ' · ' + r.clienteNombre;
   var link = linkRastreoRecibo(id);
-  var html = '<div class="row2">'
-    + '<div><label class="f" style="margin-top:0;">Cliente</label><div>'+escHtml(r.clienteNombre)+' ('+escHtml(r.clienteCasillero)+')</div></div>'
-    + '<div><label class="f" style="margin-top:0;">Teléfono del vendedor</label><div>'+escHtml(r.vendedorTelefono||'—')+'</div></div>'
+  var html = '<div><label class="f" style="margin-top:0;">Cliente</label><div>'+escHtml(r.clienteNombre)+' ('+escHtml(r.clienteCasillero)+')</div></div>';
+
+  html += '<h2 style="margin-top:18px;font-size:14px;">Detalles del paquete</h2>';
+  html += '<div class="hint" style="margin-bottom:8px;">Ve completando estos datos según los vayas teniendo — no hace falta llenarlos todos de una vez.</div>';
+  html += '<div class="row2">'
+    + '<div><label class="f" style="margin-top:0;">Teléfono del vendedor (China)</label><input type="text" id="mrVendedor" value="'+escHtml(r.vendedorTelefono||'')+'" placeholder="Contacto del vendedor"></div>'
+    + '<div><label class="f" style="margin-top:0;">Medidas</label><input type="text" id="mrMedidas" value="'+escHtml(r.medidas||'')+'" placeholder="Ej. 40 x 30 x 20 cm"></div>'
     + '</div>'
     + '<div class="row2">'
-    + '<div><label class="f">Medidas</label><div>'+escHtml(r.medidas||'—')+'</div></div>'
-    + '<div><label class="f">Peso</label><div>'+escHtml(r.peso||'—')+' '+escHtml(r.pesoUnidad||'')+'</div></div>'
+    + '<div><label class="f">Peso</label><input type="number" step="0.01" id="mrPeso" value="'+escHtml(r.peso||'')+'"></div>'
+    + '<div><label class="f">Unidad</label><select id="mrPesoUnidad"><option value="lb"'+(r.pesoUnidad!=='kg'?' selected':'')+'>lb</option><option value="kg"'+(r.pesoUnidad==='kg'?' selected':'')+'>kg</option></select></div>'
     + '</div>'
-    + '<label class="f">Contenido</label><div>'+escHtml(r.contenido||'—')+'</div>';
+    + '<label class="f">Contenido</label><textarea id="mrContenido" placeholder="Descripción general del paquete">'+escHtml(r.contenido||'')+'</textarea>'
+    + '<div class="btnrow"><button class="btn sec small" onclick="guardarReciboEdit(\''+id+'\')">Guardar detalles</button></div>';
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Archivos</h2>';
-  html += filaArchivo('Foto del paquete', r.fotoB64, r.fotoNombreArchivo);
-  html += filaArchivo('Factura comercial', r.facturaB64, r.facturaNombreArchivo);
-  html += filaArchivo('Packing list', r.packingB64, r.packingNombreArchivo);
+  ['foto','factura','packing'].forEach(function(campo){
+    var meta = CAMPOS_ARCHIVO_RECIBO[campo];
+    html += filaArchivo(meta.label, r[meta.b64], r[meta.nombre]);
+    html += '<div class="drop" id="mrDrop_'+campo+'" style="margin:6px 0 14px;padding:12px;" onclick="document.getElementById(\'mrFile_'+campo+'\').click()">'
+      + '<div>'+meta.icono+' '+(r[meta.b64] ? 'Reemplazar' : 'Subir')+' — '+meta.label.toLowerCase()+'</div>'
+      + '<div class="filepreview" id="mrFileTxt_'+campo+'"></div>'
+      + '</div>'
+      + '<input type="file" id="mrFile_'+campo+'" accept="'+meta.accept+'" style="display:none" onchange="subirArchivoRecibo(\''+id+'\',\''+campo+'\')">';
+  });
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Estado</h2>';
   html += '<select id="mrEstado">' + cfg.estados.map(function(e){ return '<option value="'+escHtml(e)+'"'+(e===r.estado?' selected':'')+'>'+escHtml(e)+'</option>'; }).join('') + '</select>';
@@ -1004,6 +1160,39 @@ function copiarLink(){
   } else {
     showToast('Cópialo manualmente: '+texto, true);
   }
+}
+async function guardarReciboEdit(id){
+  var r = recibos[id];
+  if(!r) return;
+  var patch = {
+    vendedorTelefono: document.getElementById('mrVendedor').value.trim(),
+    medidas: document.getElementById('mrMedidas').value.trim(),
+    peso: document.getElementById('mrPeso').value.trim(),
+    pesoUnidad: document.getElementById('mrPesoUnidad').value,
+    contenido: document.getElementById('mrContenido').value.trim()
+  };
+  try{
+    await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PATCH', body: JSON.stringify(patch)});
+    Object.assign(r, patch);
+    showToast('Detalles del recibo actualizados.');
+  }catch(e){ showToast('No se pudo guardar: '+e.message, true); }
+}
+async function subirArchivoRecibo(id, campo){
+  var meta = CAMPOS_ARCHIVO_RECIBO[campo];
+  var r = recibos[id];
+  var input = document.getElementById('mrFile_'+campo);
+  if(!input || !input.files.length || !r || !meta) return;
+  var file = input.files[0];
+  var txtEl = document.getElementById('mrFileTxt_'+campo);
+  if(txtEl) txtEl.textContent = 'Subiendo '+file.name+'...';
+  try{
+    var dataUrl = campo==='foto' ? await comprimirImagen(file, 1400, 0.78) : await prepararArchivo(file);
+    var patch = {}; patch[meta.b64] = dataUrl; patch[meta.nombre] = file.name;
+    await fetch(FB_URL+'/recibos/'+id+'.json', {method:'PATCH', body: JSON.stringify(patch)});
+    r[meta.b64] = dataUrl; r[meta.nombre] = file.name;
+    showToast(meta.label+' actualizado.');
+    abrirDetalleRecibo(id);
+  }catch(e){ showToast('No se pudo subir el archivo: '+e.message, true); }
 }
 async function cambiarEstadoRecibo(id){
   var nuevo = document.getElementById('mrEstado').value;
@@ -1051,7 +1240,18 @@ async function crearContenedor(){
   }catch(e){ showToast('No se pudo crear: '+e.message, true); }
 }
 
+function renderSelectContenedorInicial(){
+  var sel = document.getElementById('rcContenedorInicial');
+  if(!sel) return;
+  var current = sel.value;
+  var ids = Object.keys(contenedores).sort(function(a,b){ return (contenedores[a].nombre||'').localeCompare(contenedores[b].nombre||''); });
+  sel.innerHTML = '<option value="">Sin asignar todavía</option>' + ids.map(function(id){
+    return '<option value="'+id+'">'+escHtml(contenedores[id].nombre)+'</option>';
+  }).join('');
+  if(ids.indexOf(current)!==-1) sel.value = current;
+}
 function renderContenedores(){
+  renderSelectContenedorInicial();
   var ids = Object.keys(contenedores).sort(function(a,b){ return (contenedores[b].fechaCreacion||'').localeCompare(contenedores[a].fechaCreacion||''); });
   var wrap = document.getElementById('contenedorList');
   if(!ids.length){ wrap.innerHTML=''; document.getElementById('contenedorEmpty').style.display='block'; return; }
