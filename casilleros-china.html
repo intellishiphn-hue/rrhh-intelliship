@@ -162,6 +162,19 @@
   .suggestitem .sname{font-weight:700;}
   .suggestitem .scas{font-size:11.5px;opacity:.85;}
   .suggestempty{padding:10px 12px;font-size:12.5px;color:var(--tx2);}
+  .cbmbox{background:var(--sur2);border:1px solid var(--bd);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+  .cbmtop{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:12px;}
+  .cbmnum{font-size:28px;font-weight:800;line-height:1;}
+  .cbmnum small{font-size:14px;font-weight:700;color:var(--tx2);}
+  .cbmlabel{font-size:11.5px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+  .cbmside{text-align:right;}
+  .cbmside .cbmn2{font-size:16px;font-weight:700;}
+  .cbmside .cbml2{font-size:11px;color:var(--tx2);}
+  .cbmbar{height:10px;border-radius:6px;background:var(--bd);overflow:hidden;}
+  .cbmbarfill{height:100%;border-radius:6px;background:var(--acc);transition:width .3s;}
+  .cbmbarfill.listo{background:var(--ok);}
+  .cbmmsg{margin-top:10px;font-size:12.5px;color:var(--tx2);}
+  .cbmmsg.listo{color:var(--ok);font-weight:700;}
 </style>
 </head>
 <body class="light">
@@ -275,6 +288,9 @@
             <input type="hidden" id="rcCliente">
             <div id="rcClienteSugerencias" class="suggestbox" style="display:none;"></div>
           </div>
+          <label class="f">Fecha en que se recibió el paquete</label>
+          <input type="date" id="rcFechaRecibido">
+          <div class="hint" style="margin-top:2px;margin-bottom:8px;">Viene con la fecha de hoy, pero puedes cambiarla si el paquete llegó otro día.</div>
           <label class="f">Contenedor (opcional, lo puedes asignar después)</label>
           <select id="rcContenedorInicial"><option value="">Sin asignar todavía</option></select>
           <div class="row2">
@@ -558,6 +574,10 @@ function showView(id){
   document.getElementById('topTitle').textContent = titles[id][0];
   document.getElementById('topSub').textContent = titles[id][1];
   if(id==='viewConfig'){ syncConfigInputs(); renderEstadosList(); }
+  if(id==='viewRecibos'){
+    var fr = document.getElementById('rcFechaRecibido');
+    if(fr && !fr.value) fr.value = isoToFechaInputLocal(nowISO());
+  }
 }
 function toggleTheme(){
   document.body.classList.toggle('light');
@@ -1057,6 +1077,7 @@ async function crearRecibo(){
   try{
     var numeroWR = await siguienteWR();
     var estadoInicial = cfg.estados[0] || 'Recibido en bodega China';
+    var fechaRecibido = fechaInputToISO(document.getElementById('rcFechaRecibido').value) || nowISO();
     var data = {
       clienteId: clienteId,
       clienteNombre: cliente.nombre,
@@ -1070,8 +1091,8 @@ async function crearRecibo(){
       cbm: document.getElementById('rcCBM').value.trim(),
       contenedorId: contenedorId, contenedorNombre: contenedorNombre,
       estado: estadoInicial,
-      historialEstados: [{estado: estadoInicial, fecha: nowISO()}],
-      fechaCreacion: nowISO()
+      historialEstados: [{estado: estadoInicial, fecha: fechaRecibido}],
+      fechaCreacion: fechaRecibido
     };
     if(pendingFiles.rcFoto){
       data.fotoNombreArchivo = pendingFiles.rcFoto.name;
@@ -1092,6 +1113,7 @@ async function crearRecibo(){
     document.getElementById('rcCliente').value='';
     document.getElementById('rcClienteBuscar').value='';
     document.getElementById('rcContenedorInicial').value='';
+    document.getElementById('rcFechaRecibido').value = isoToFechaInputLocal(nowISO());
     limpiarDrop('rcFoto','rcDropFoto','rcFoto','rcFotoTxt');
     limpiarDrop('rcFactura','rcDropFactura','rcFactura','rcFacturaTxt');
     limpiarDrop('rcPacking','rcDropPacking','rcPacking','rcPackingTxt');
@@ -1232,8 +1254,26 @@ function abrirDetalleRecibo(id){
     + '<button class="btn wa small" onclick="preguntarEnviarWA(\'estado\',\''+id+'\')">🔄 Avisar cambio de estado</button>'
     + '</div>';
 
+  html += '<h2 style="margin-top:18px;font-size:14px;">Zona de peligro</h2>';
+  html += '<div class="hint">Elimina este recibo si fue creado por error o de prueba. Esto no se puede deshacer.</div>';
+  html += '<div class="btnrow"><button class="btn danger small" onclick="eliminarRecibo(\''+id+'\')">🗑 Eliminar recibo</button></div>';
+
   document.getElementById('mrBody').innerHTML = html;
   abrirModal('modalRecibo');
+}
+async function eliminarRecibo(id){
+  var r = recibos[id];
+  if(!r) return;
+  var aviso = '¿Seguro que quieres eliminar el recibo '+(r.numeroWR||'')+' de '+(r.clienteNombre||'')+'? Esto no se puede deshacer.';
+  if(!confirm(aviso)) return;
+  try{
+    await fetch(FB_URL+'/recibos/'+id+'.json', {method:'DELETE'});
+    delete recibos[id];
+    cerrarModal('modalRecibo');
+    renderRecibos();
+    renderContenedores();
+    showToast('Recibo eliminado.');
+  }catch(e){ showToast('No se pudo eliminar: '+e.message, true); }
 }
 function copiarLink(){
   var el = document.getElementById('mrLink');
@@ -1350,20 +1390,59 @@ function renderContenedores(){
   document.getElementById('contenedorEmpty').style.display='none';
   wrap.innerHTML = ids.map(function(id){
     var c = contenedores[id];
-    var n = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; }).length;
+    var misRec = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; });
+    var n = misRec.length;
+    var resumen = resumenCBMPeso(misRec);
+    var listo = resumen.cbm >= META_CBM_DESPACHO;
     return '<div class="filecard" style="cursor:pointer;padding:14px;" onclick="abrirDetalleContenedor(\''+id+'\')">'
-      + '<span class="fname"><b>'+escHtml(c.nombre)+'</b><br><span style="color:var(--tx2);font-size:11.5px;">'+(c.fechaEstimada?fechaBonita(c.fechaEstimada):'sin fecha')+' · '+n+' recibo'+(n===1?'':'s')+'</span></span>'
+      + '<span class="fname"><b>'+escHtml(c.nombre)+'</b><br><span style="color:var(--tx2);font-size:11.5px;">'+(c.fechaEstimada?fechaBonita(c.fechaEstimada):'sin fecha')+' · '+n+' recibo'+(n===1?'':'s')+' · '+resumen.cbm.toFixed(3)+' m³'+(listo?' ✅':'')+'</span></span>'
       + '<span class="badge info">'+escHtml(c.estado||'')+'</span>'
       + '</div>';
   }).join('');
 }
 
+function resumenCBMPeso(idsRecibos){
+  var totalCBM = 0, pesoLb = 0, pesoKg = 0;
+  idsRecibos.forEach(function(rid){
+    var r = recibos[rid];
+    if(!r) return;
+    var cbm = parseFloat(r.cbm);
+    if(!isNaN(cbm)) totalCBM += cbm;
+    var peso = parseFloat(r.peso);
+    if(!isNaN(peso)){
+      if(r.pesoUnidad==='kg') pesoKg += peso; else pesoLb += peso;
+    }
+  });
+  return {cbm: totalCBM, pesoLb: pesoLb, pesoKg: pesoKg};
+}
+var META_CBM_DESPACHO = 1;
+function renderCBMBox(idsRecibos){
+  var r = resumenCBMPeso(idsRecibos);
+  var pct = Math.max(0, Math.min(100, (r.cbm / META_CBM_DESPACHO) * 100));
+  var listo = r.cbm >= META_CBM_DESPACHO;
+  var pesoTxt = [];
+  if(r.pesoLb) pesoTxt.push(r.pesoLb.toFixed(2)+' lb');
+  if(r.pesoKg) pesoTxt.push(r.pesoKg.toFixed(2)+' kg');
+  var html = '<div class="cbmbox">'
+    + '<div class="cbmtop">'
+    + '<div><div class="cbmnum">'+r.cbm.toFixed(3)+' <small>m³</small></div><div class="cbmlabel">CBM acumulado</div></div>'
+    + '<div class="cbmside"><div class="cbmn2">'+idsRecibos.length+' recibo'+(idsRecibos.length===1?'':'s')+'</div>'
+    + '<div class="cbml2">'+(pesoTxt.length ? pesoTxt.join(' + ') : 'sin peso registrado')+'</div></div>'
+    + '</div>'
+    + '<div class="cbmbar"><div class="cbmbarfill'+(listo?' listo':'')+'" style="width:'+pct+'%;"></div></div>'
+    + '<div class="cbmmsg'+(listo?' listo':'')+'">'+(listo
+        ? '✅ Ya llegaste a '+META_CBM_DESPACHO+' m³ — listo para despachar'
+        : 'Faltan '+(META_CBM_DESPACHO - r.cbm).toFixed(3)+' m³ para llegar a '+META_CBM_DESPACHO+' m³')+'</div>'
+    + '</div>';
+  return html;
+}
 function abrirDetalleContenedor(id){
   var c = contenedores[id];
   if(!c) return;
   document.getElementById('mkTitulo').textContent = c.nombre;
   var misRec = Object.keys(recibos).filter(function(r){ return recibos[r].contenedorId===id; });
-  var html = '<label class="f" style="margin-top:0;">Estado del contenedor</label>'
+  var html = renderCBMBox(misRec);
+  html += '<label class="f" style="margin-top:0;">Estado del contenedor</label>'
     + '<select id="mkEstado">' + cfg.estados.map(function(e){ return '<option value="'+escHtml(e)+'"'+(e===c.estado?' selected':'')+'>'+escHtml(e)+'</option>'; }).join('') + '</select>'
     + '<label class="f">Fecha de este cambio</label>'
     + '<input type="date" id="mkEstadoFecha" value="'+isoToFechaInputLocal(nowISO())+'">'
