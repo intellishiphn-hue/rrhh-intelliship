@@ -419,11 +419,13 @@
 
             <label class="f">Plantilla: "Paquete recibido en bodega"</label>
             <input type="text" id="cfgWaTplRecibido" placeholder="china_recibido">
+            <label class="f">Idioma de esa plantilla</label>
+            <input type="text" id="cfgWaLangRecibido" value="es">
             <label class="f">Plantilla: "Cambio de estado"</label>
             <input type="text" id="cfgWaTplEstado" placeholder="china_cambio_estado">
-            <label class="f">Idioma de las plantillas</label>
-            <input type="text" id="cfgWaLang" value="es">
-            <div class="hint">Estas 2 plantillas deben estar <b>aprobadas por Meta</b> antes de que los botones de WhatsApp funcionen — pídeme el texto exacto para mandarlas a aprobación si todavía no las tienes.</div>
+            <label class="f">Idioma de esa plantilla</label>
+            <input type="text" id="cfgWaLangEstado" value="es">
+            <div class="hint">Estas 2 plantillas deben estar <b>aprobadas por Meta</b> antes de que los botones de WhatsApp funcionen — pídeme el texto exacto para mandarlas a aprobación si todavía no las tienes. El idioma de cada una debe ser <b>exactamente</b> el código que Meta le asignó al aprobarla (ej. "es", "es_MX", "es_LA") — revísalo en WhatsApp Manager, dentro del detalle de cada plantilla. Si no coincide exacto, WhatsApp rechaza el envío con el error "Template name does not exist in the translation".</div>
 
             <label class="f">Link público de rastreo (dominio)</label>
             <input type="text" id="cfgTrackBase" placeholder="https://intellishiphn.github.io/rrhh/rastreo-china.html">
@@ -502,6 +504,7 @@ var cfg = {
   estados: ESTADOS_DEFAULT.slice(),
   waPhoneId:'', waToken:'', waVersion:'v20.0',
   waTplRecibido:'china_recibido', waTplEstado:'china_cambio_estado', waLang:'es',
+  waLangRecibido:'es', waLangEstado:'es',
   trackBase:''
 };
 
@@ -644,6 +647,8 @@ async function cargarTodo(){
     if(cloudCfg.waTplRecibido) cfg.waTplRecibido = cloudCfg.waTplRecibido;
     if(cloudCfg.waTplEstado) cfg.waTplEstado = cloudCfg.waTplEstado;
     if(cloudCfg.waLang) cfg.waLang = cloudCfg.waLang;
+    cfg.waLangRecibido = cloudCfg.waLangRecibido || cloudCfg.waLang || cfg.waLangRecibido;
+    cfg.waLangEstado = cloudCfg.waLangEstado || cloudCfg.waLang || cfg.waLangEstado;
     if(cloudCfg.trackBase) cfg.trackBase = cloudCfg.trackBase;
   }catch(e){
     showToast('No se pudo cargar la información desde la nube.', true);
@@ -1673,10 +1678,11 @@ async function enviarWhatsAppRecibo(reciboId, tipo){
   var params = tipo==='recibido'
     ? [{type:'text',text:cliente.nombre||''},{type:'text',text:r.numeroWR||''},{type:'text',text:link}]
     : [{type:'text',text:cliente.nombre||''},{type:'text',text:r.numeroWR||''},{type:'text',text:r.estado||''},{type:'text',text:link}];
+  var idioma = (tipo==='recibido' ? cfg.waLangRecibido : cfg.waLangEstado) || cfg.waLang || 'es';
   var url = 'https://graph.facebook.com/'+(cfg.waVersion||'v20.0')+'/'+cfg.waPhoneId+'/messages';
   var payload = {
     messaging_product:'whatsapp', to: phone, type:'template',
-    template: { name: template, language:{code: cfg.waLang||'es'}, components:[{type:'body', parameters: params}] }
+    template: { name: template, language:{code: idioma}, components:[{type:'body', parameters: params}] }
   };
   try{
     var res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.waToken}, body: JSON.stringify(payload)});
@@ -1688,7 +1694,10 @@ async function enviarWhatsAppRecibo(reciboId, tipo){
     r[campo] = val;
     await fetch(FB_URL+'/recibos/'+reciboId+'.json', {method:'PATCH', body: JSON.stringify((function(){var o={};o[campo]=val;return o;})())});
   }catch(e){
-    showToast('No se pudo enviar WhatsApp: '+e.message, true);
+    var pista = /does not exist in the translation|template.*not.*found|132001/i.test(e.message)
+      ? ' — revisa en Configuración que el nombre y el idioma de la plantilla "'+template+'" sean EXACTAMENTE iguales a como está aprobada en WhatsApp Manager.'
+      : '';
+    showToast('No se pudo enviar WhatsApp: '+e.message+pista, true);
   }
 }
 
@@ -1749,7 +1758,8 @@ function syncConfigInputs(){
   document.getElementById('cfgWaVersion').value = cfg.waVersion||'v20.0';
   document.getElementById('cfgWaTplRecibido').value = cfg.waTplRecibido||'';
   document.getElementById('cfgWaTplEstado').value = cfg.waTplEstado||'';
-  document.getElementById('cfgWaLang').value = cfg.waLang||'es';
+  document.getElementById('cfgWaLangRecibido').value = cfg.waLangRecibido||cfg.waLang||'es';
+  document.getElementById('cfgWaLangEstado').value = cfg.waLangEstado||cfg.waLang||'es';
   document.getElementById('cfgTrackBase').value = cfg.trackBase||'';
   var desc = document.getElementById('waDetectDesc');
   if(cfg.waPhoneId && cfg.waToken){
@@ -1764,12 +1774,16 @@ async function saveWaConfig(){
   cfg.waVersion = document.getElementById('cfgWaVersion').value.trim() || 'v20.0';
   cfg.waTplRecibido = document.getElementById('cfgWaTplRecibido').value.trim();
   cfg.waTplEstado = document.getElementById('cfgWaTplEstado').value.trim();
-  cfg.waLang = document.getElementById('cfgWaLang').value.trim() || 'es';
+  cfg.waLangRecibido = document.getElementById('cfgWaLangRecibido').value.trim() || 'es';
+  cfg.waLangEstado = document.getElementById('cfgWaLangEstado').value.trim() || 'es';
+  cfg.waLang = cfg.waLangRecibido; // se mantiene por compatibilidad con versiones anteriores
   cfg.trackBase = document.getElementById('cfgTrackBase').value.trim();
   saveCfgLocal(); // credenciales: solo en este navegador
   try{
     await fetch(FB_URL+'/config.json', {method:'PATCH', body: JSON.stringify({
-      waTplRecibido: cfg.waTplRecibido, waTplEstado: cfg.waTplEstado, waLang: cfg.waLang, trackBase: cfg.trackBase
+      waTplRecibido: cfg.waTplRecibido, waTplEstado: cfg.waTplEstado,
+      waLangRecibido: cfg.waLangRecibido, waLangEstado: cfg.waLangEstado, waLang: cfg.waLang,
+      trackBase: cfg.trackBase
     })});
   }catch(e){}
   showToast('Configuración guardada.');
