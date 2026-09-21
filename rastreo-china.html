@@ -31,6 +31,7 @@
   .tlitem.actual .tldot{background:var(--acc);}
   .tltxt{font-size:13.5px;font-weight:700;}
   .tlitem.pendiente .tltxt{color:var(--tx2);font-weight:600;}
+  .tlnota{font-size:12px;color:var(--acc2);font-style:italic;margin-top:1px;}
   .tldate{font-size:11px;color:var(--tx2);}
   .empty{text-align:center;color:var(--tx2);font-size:14px;padding:60px 20px;}
   .foot{text-align:center;font-size:11.5px;color:var(--tx2);margin-top:20px;}
@@ -95,6 +96,9 @@ async function cargar(){
     html += '<div class="info">'
       + '<div><b>Contenido</b>'+escHtml(r.contenido||'—')+'</div>'
       + '<div><b>Peso</b>'+escHtml(r.peso||'—')+' '+escHtml(r.pesoUnidad||'')+'</div>';
+    if(r.cbm){
+      html += '<div><b>CBM</b>'+escHtml(r.cbm)+' m³</div>';
+    }
     if(r.contenedorNombre){
       html += '<div><b>Contenedor</b>'+escHtml(r.contenedorNombre)+'</div>';
     }
@@ -105,8 +109,9 @@ async function cargar(){
     var idxActual = estados.indexOf(r.estado);
     html += estados.map(function(e, i){
       var clase = i < idxActual ? 'pasado' : (i === idxActual ? 'actual' : 'pendiente');
-      var histEntry = (r.historialEstados||[]).slice().reverse().find(function(h){ return h.estado===e; });
+      var histEntry = (r.historialEstados||[]).slice().sort(function(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); }).reverse().find(function(h){ return h.estado===e; });
       return '<div class="tlitem '+clase+'"><div class="tldot"></div><div><div class="tltxt">'+escHtml(e)+'</div>'
+        + (histEntry && histEntry.nota ? '<div class="tlnota">'+escHtml(histEntry.nota)+'</div>' : '')
         + (histEntry ? '<div class="tldate">'+fechaBonita(histEntry.fecha)+'</div>' : '')
         + '</div></div>';
     }).join('');
