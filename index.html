@@ -860,6 +860,10 @@ function saveAll(){
 // records at the same time never overwrite this one (and vice versa).
 async function cloudPut(collection,id,record){
   setSyncStatus('syncing');
+  // Se encola de inmediato (antes del fetch), guardado ya en localStorage, para que si el
+  // usuario cierra o recarga la pestaña mientras el guardado esta en curso, el cambio no se
+  // pierda: flushOutbox()/loadCloud() lo reintentaran y lo reaplicaran en la proxima carga.
+  queueOutbox(collection,id,record);
   try{
     var fetchPromise=fetch(FB_URL+'/'+collection+'/'+fbKey(id)+'.json',{
       method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(record)
@@ -867,12 +871,14 @@ async function cloudPut(collection,id,record){
     var timeoutPromise=new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); },10000); });
     var r=await Promise.race([fetchPromise, timeoutPromise]);
     if(!r.ok) throw new Error('HTTP '+r.status);
+    // Guardado exitoso: ya no hace falta reintentarlo
+    _outbox=_outbox.filter(function(o){ return !(o.collection===collection&&o.id===id); });
+    saveOutbox();
     setSyncStatus('ok');
     return true;
   }catch(e){
     console.warn('Cloud save error ('+collection+'/'+id+'):', e);
     setSyncStatus('error');
-    queueOutbox(collection,id,record);
     toast('No se pudo guardar en la nube. Se reintentara automaticamente.','err');
     return false;
   }
