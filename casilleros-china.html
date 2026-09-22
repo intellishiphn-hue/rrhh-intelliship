@@ -997,9 +997,13 @@ function abrirDetalleCliente(id){
   if(c.etiquetaB64){
     html += '<div class="filecard">📄 <span class="fname">'+escHtml(c.etiquetaNombreArchivo||'etiqueta.pdf')+'</span> <a class="btn sec small" href="'+c.etiquetaB64+'" target="_blank" download="'+escHtml(c.etiquetaNombreArchivo||'etiqueta.pdf')+'">Ver / Descargar</a></div>';
   } else {
-    html += '<div class="hint">Todavía no se ha subido una etiqueta.</div>';
+    html += '<div class="hint">Todavía no se ha generado ni subido una etiqueta.</div>';
   }
-  html += '<div class="drop" id="mcDrop" style="margin-top:8px;" onclick="document.getElementById(\'mcFile\').click()"><div class="big">📄</div><div>Subir / reemplazar etiqueta (PDF)</div><div class="filepreview" id="mcFileTxt"></div></div>'
+  html += '<label class="f">Generar etiqueta automáticamente</label>'
+    + '<input type="text" id="mcEtiquetaTexto" value="'+escHtml('INTELLISHIP ' + (c.nombre||'') + ' + ' + (c.casillero||''))+'">'
+    + '<div class="hint" style="margin-top:2px;">Así va a salir escrito en el campo "Nombre + ID" de la etiqueta — lo puedes editar como quieras antes de generarla.</div>'
+    + '<div class="btnrow"><button class="btn sec small" onclick="generarEtiquetaPDF(\''+id+'\')">🏷️ Generar etiqueta PDF</button></div>';
+  html += '<div class="drop" id="mcDrop" style="margin-top:8px;" onclick="document.getElementById(\'mcFile\').click()"><div class="big">📄</div><div>O subir una etiqueta ya hecha (PDF)</div><div class="filepreview" id="mcFileTxt"></div></div>'
     + '<input type="file" id="mcFile" accept="application/pdf" style="display:none" onchange="subirEtiquetaCliente(\''+id+'\')">';
 
   html += '<h2 style="margin-top:18px;font-size:14px;">Recibos de bodega ('+misRecibos.length+')</h2>';
@@ -1066,6 +1070,73 @@ async function subirEtiquetaCliente(id){
     showToast('Etiqueta actualizada.');
     abrirDetalleCliente(id);
   }catch(e){ showToast('No se pudo subir la etiqueta: '+e.message, true); }
+}
+
+/* ============================================================
+   GENERAR ETIQUETA PDF AUTOMATICAMENTE (rellena el campo "Nombre + ID"
+   de la plantilla de Warehouse Entry usando pdf-lib). La plantilla en
+   blanco vive en etiqueta-plantilla.js (variable ETIQUETA_PLANTILLA_B64),
+   un archivo aparte que solo se carga cuando hace falta, para no hacer
+   pesada la carga normal del panel.
+   ============================================================ */
+var _libEtiquetaCargando = null;
+function cargarLibsEtiqueta(){
+  if(typeof PDFLib !== 'undefined' && typeof ETIQUETA_PLANTILLA_B64 !== 'undefined') return Promise.resolve(true);
+  if(_libEtiquetaCargando) return _libEtiquetaCargando;
+  _libEtiquetaCargando = Promise.all([
+    _cargarScript('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'),
+    _cargarScript('etiqueta-plantilla.js')
+  ]).then(function(resultados){
+    return !!(resultados[0] && resultados[1] && typeof PDFLib !== 'undefined' && typeof ETIQUETA_PLANTILLA_B64 !== 'undefined');
+  }).catch(function(){ return false; });
+  return _libEtiquetaCargando;
+}
+function _b64ToBytes(b64){
+  var binary = atob(b64);
+  var bytes = new Uint8Array(binary.length);
+  for(var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function _bytesToB64(bytes){
+  var binary = '';
+  var chunk = 0x8000;
+  for(var i=0;i<bytes.length;i+=chunk){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  }
+  return btoa(binary);
+}
+async function generarEtiquetaPDF(id){
+  var c = clientes[id];
+  if(!c) return;
+  var textoInput = document.getElementById('mcEtiquetaTexto');
+  var texto = textoInput ? textoInput.value.trim() : '';
+  if(!texto){ showToast('Escribe el texto que debe llevar la etiqueta.', true); return; }
+  var btn = event ? event.target : null;
+  var prevTxt = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Generando...'; }
+  try{
+    showToast('Preparando la etiqueta...');
+    var ok = await cargarLibsEtiqueta();
+    if(!ok){ showToast('No se pudo cargar la herramienta para generar la etiqueta. Revisa tu conexión e intenta de nuevo, o sube la etiqueta manualmente.', true); return; }
+    var bytes = _b64ToBytes(ETIQUETA_PLANTILLA_B64);
+    var pdfDoc = await PDFLib.PDFDocument.load(bytes);
+    var form = pdfDoc.getForm();
+    var field = form.getTextField('nombre_id');
+    field.setText(texto);
+    form.updateFieldAppearances();
+    var out = await pdfDoc.save();
+    var dataUrl = 'data:application/pdf;base64,' + _bytesToB64(out);
+    var nombreArchivo = 'etiqueta_' + (c.casillero||id) + '.pdf';
+    await fetch(FB_URL+'/clientes/'+id+'.json', {method:'PATCH', body: JSON.stringify({etiquetaB64:dataUrl, etiquetaNombreArchivo:nombreArchivo})});
+    c.etiquetaB64 = dataUrl;
+    c.etiquetaNombreArchivo = nombreArchivo;
+    showToast('Etiqueta generada.');
+    abrirDetalleCliente(id);
+  }catch(e){
+    showToast('No se pudo generar la etiqueta: '+e.message, true);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = prevTxt; }
+  }
 }
 
 /* ============================================================
