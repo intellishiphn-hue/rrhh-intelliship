@@ -1039,7 +1039,7 @@ function dxley(y){ if(y<1) return 0; if(y<2) return 10; if(y<3) return 12; if(y<
 function yt(y){ var yr=Math.floor(y),mo=Math.floor((y-yr)*12); if(yr===0) return mo+' mes(es)'; if(mo===0) return yr+' año(s)'; return yr+' año(s), '+mo+' mes(es)'; }
 function vacUsadas(eid){ var yr=new Date().getFullYear(); return regs.filter(function(r){ return r.eid===eid&&r.t==='vacaciones'&&new Date(r.fi).getFullYear()===yr; }).reduce(function(s,r){ return s+(r.d||0); },0); }
 function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t; }).length; }
-function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0&&w!==6) c++; d.setDate(d.getDate()+1); } return c; }
+function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0) c++; d.setDate(d.getDate()+1); } return c; }
 function bdays(ahead){ var now=new Date(),tgt=new Date(now); tgt.setDate(tgt.getDate()+ahead); var m=tgt.getMonth()+1,d=tgt.getDate(); return emps.filter(function(e){ if(!e.nb) return false; var b=new Date(e.nb+'T00:00:00'); return b.getMonth()+1===m&&b.getDate()===d; }); }
 
 // ---- ASISTENCIA (clock in/out, overtime, late arrivals) ----
