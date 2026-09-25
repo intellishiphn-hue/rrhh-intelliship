@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Firebase Auth: antes las llamadas a la base de datos iban sin ningun
+     token y cualquiera podia leer/escribir sin loguearse. Reglas nuevas
+     en Firebase Console -> Realtime Database -> Reglas piden auth!=null. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
@@ -421,6 +426,35 @@ function normTxt(s){
 }
 
 var FB_URL = 'https://rrhh-intelliship-default-rtdb.firebaseio.com/guiasnacionales';
+
+// --- Autenticacion anonima de Firebase (ver nota en <head>) ---
+var _fbConfig={apiKey:"AIzaSyBEsKxgabKmqHR0vDZyOC8N2aECVcA-0Mc",authDomain:"rrhh-intelliship.firebaseapp.com",databaseURL:"https://rrhh-intelliship-default-rtdb.firebaseio.com",projectId:"rrhh-intelliship",storageBucket:"rrhh-intelliship.firebasestorage.app",messagingSenderId:"419644504052",appId:"1:419644504052:web:f78f7f6ead21af4a23aba1"};
+if(!firebase.apps.length) firebase.initializeApp(_fbConfig);
+var _fbSignedIn=null;
+function fbEnsureAuth(){
+  if(_fbSignedIn) return _fbSignedIn;
+  _fbSignedIn=firebase.auth().signInAnonymously().catch(function(e){ console.error('Firebase auth error:',e); throw e; });
+  return _fbSignedIn;
+}
+var _fbOrigFetch=window.fetch.bind(window);
+window.fetch=function(url,opts){
+  if(typeof url==='string' && url.indexOf(FB_URL)===0){
+    return fbEnsureAuth()
+      .then(function(){ return firebase.auth().currentUser.getIdToken(); })
+      .then(function(tok){
+        var sep=url.indexOf('?')===-1?'?':'&';
+        return _fbOrigFetch(url+sep+'auth='+tok,opts);
+      })
+      .catch(function(e){
+        // Si la autenticacion anonima todavia no esta activada en Firebase
+        // (o falla por cualquier razon), no se cae la app -- se intenta la
+        // llamada tal como era antes, sin token.
+        console.warn('Firebase auth no disponible, se intenta sin token:', e && e.message);
+        return _fbOrigFetch(url,opts);
+      });
+  }
+  return _fbOrigFetch(url,opts);
+};
 var DEFAULT_PASS = 'guias2026';
 var cfg = { pass: DEFAULT_PASS, sheetUrl: '' };
 var pendientes = [];   // filas activas leidas del sheet, sin exportar aun
