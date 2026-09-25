@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/.git/**",
+      "**/node_modules/**",
+      "netlify/**",
+      "netlify.toml",
+      "package.json",
+      "package-lock.json",
+      "_migracion-rrhh/**",
+      "README.md"
+    ]
+  }
+}
