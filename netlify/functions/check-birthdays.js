@@ -4,19 +4,27 @@ const EMAILJS_SERVICE  = "service_ae309iq";
 const EMAILJS_TEMPLATE = "template_au2kuvi";
 const EMAILJS_KEY      = "q9dny_O5VCALgIzDB";
 
-const EMPS = [
-  {id:"IS-001",n:"Judith",   a:"Xiomaris Centeno Pinel",  nb:"1995-01-22", e:"Judithpinel1990@gmail.com"},
-  {id:"IS-002",n:"Brayan",   a:"Alexander Mejia Ramos",   nb:"2002-03-24", e:""},
-  {id:"IS-003",n:"Ana",      a:"Beatriz Ortez Lopez",     nb:"1997-03-05", e:"Ortezlobana@gmail.com"},
-  {id:"IS-004",n:"Lesnin",   a:"Mexali Pinel",            nb:"1998-02-27", e:"lesnin98pinel@gmail.com"},
-  {id:"IS-005",n:"Wuendy",   a:"Sarahi Alvarado Navarro", nb:"1995-08-07", e:"Wuendysarahia@gmail.com"},
-  {id:"IS-006",n:"Jose",     a:"Fernando Carrasco",       nb:"2005-07-02", e:"Rosacabrera3248@gmail.com"},
-  {id:"IS-007",n:"Angel",    a:"Daniel Garcia Lopez",     nb:"1994-02-21", e:"Daniellopezgarcia12345678@gmail.com"},
-  {id:"IS-008",n:"Hecto",    a:"Ricardo Zuniga",          nb:"1986-11-26", e:""},
-  {id:"IS-009",n:"Kevin",    a:"Josue Zelaya Amador",     nb:"1993-04-10", e:"Amadorkevin581@gmail.com"},
-  {id:"IS-010",n:"Larissa",  a:"Gissel Ortez Lopez",      nb:"2004-03-16", e:"Larissagisselortez@gmail.com"},
-  {id:"IS-011",n:"Bayron",   a:"Bismar Perez Amador",     nb:"", e:"bismarperez192@gmail.com"}
-];
+// Antes esta lista traia nombre completo, fecha de nacimiento y correo
+// personal de cada empleado escritos directo aqui -- y este archivo se sube
+// a un repo publico de GitHub, asi que esos datos quedaban visibles para
+// cualquiera en internet. Ahora se leen de la variable de entorno
+// EMPLOYEES_JSON (Netlify -> Site settings -> Environment variables), que
+// no se sube al repo. Formato esperado (mismos campos de antes):
+// [{"id":"IS-001","n":"Judith","a":"Xiomaris Centeno Pinel","nb":"1995-01-22","e":"..."}, ...]
+function cargarEmpleados() {
+  const crudo = process.env.EMPLOYEES_JSON
+  if (!crudo) {
+    console.warn('EMPLOYEES_JSON no esta configurada -- no hay a quien revisarle el cumpleanos.')
+    return []
+  }
+  try {
+    return JSON.parse(crudo)
+  } catch (err) {
+    console.error('EMPLOYEES_JSON no es JSON valido:', err.message)
+    return []
+  }
+}
+const EMPS = cargarEmpleados();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 const BDAY_MSG = "Estimado/a {nombre}, en nombre de todo el equipo de INTELLISHIP Honduras le deseamos un muy feliz cumpleaños. Es un privilegio contar con usted en nuestro equipo. ¡Feliz cumpleaños! Equipo INTELLISHIP Honduras";
