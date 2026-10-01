@@ -979,6 +979,15 @@ async function loadCloud(silent){
       cfg.waApiUrl=data.waCfg.config.url||cfg.waApiUrl||'';
       cfg.waToken=data.waCfg.config.token||cfg.waToken||'';
     }
+    if(data.authCfg&&data.authCfg.config){
+      PASSES.admin=data.authCfg.config.admin||PASSES.admin||'';
+      PASSES.coord=data.authCfg.config.coord||PASSES.coord||'';
+    }else{
+      // Primera vez que corre esta version: siembra la nube con las contrasenas
+      // actuales, para que Firebase Console (tu cuenta de Google) sea siempre
+      // la forma de recuperarlas si alguna vez las olvidas.
+      cloudPut('authCfg','config',{admin:PASSES.admin,coord:PASSES.coord});
+    }
 
     // Protect any local changes that are still waiting to upload (outbox) from being
     // overwritten by an older snapshot from the server
@@ -2344,6 +2353,12 @@ function rCfg(){
     +'<div class="fg"><label>Token de acceso</label><input id="cfg-wa-token" type="password" value="'+escH(cfg.waToken||'')+'" placeholder="Bearer token..."></div>'
     +'<button class="btn bp" onclick="saveCfgWA()">💾 Guardar WA</button>'
     +'</div></div>'
+    +'<div class="card"><div class="ch"><div class="ct">🔑 Contrasenas de acceso</div></div><div class="mb">'
+    +'<div style="font-size:12px;color:var(--tx3);margin-bottom:10px;">Si algun dia las olvidas, siempre podes verlas o cambiarlas entrando directo a Firebase Console (con tu cuenta de Google) → Realtime Database → appdata/authCfg/config, sin pasar por este login.</div>'
+    +'<div class="fg"><label>Contrasena de Administrador</label><input id="cfg-pass-admin" type="password" value="'+escH(PASSES.admin||'')+'" placeholder="Contrasena admin"></div>'
+    +'<div class="fg"><label>Contrasena de Coordinador</label><input id="cfg-pass-coord" type="password" value="'+escH(PASSES.coord||'')+'" placeholder="Contrasena coordinador"></div>'
+    +'<button class="btn bp" onclick="saveCfgAuth()">🔑 Guardar Contrasenas</button>'
+    +'</div></div>'
     +'</div>';
 }
 function escH(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2368,6 +2383,13 @@ function saveCfgWA(){
   // Save WA credentials directly to Firebase (bypasses localStorage size limit)
   cloudPut('waCfg','config',{url:cfg.waApiUrl,token:cfg.waToken});
   toast('Configuración WhatsApp guardada ✓');
+}
+function saveCfgAuth(){
+  var a=document.getElementById('cfg-pass-admin'),c=document.getElementById('cfg-pass-coord');
+  if(a&&a.value.trim()) PASSES.admin=a.value.trim();
+  if(c&&c.value.trim()) PASSES.coord=c.value.trim();
+  cloudPut('authCfg','config',{admin:PASSES.admin,coord:PASSES.coord});
+  toast('Contraseñas actualizadas ✓');
 }
 
 // ---- EMP ADD/EDIT ----
