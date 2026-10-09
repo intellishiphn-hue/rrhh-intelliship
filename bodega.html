@@ -116,6 +116,15 @@
   .histrow{display:flex;align-items:center;gap:14px;background:var(--sur);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;margin-bottom:8px;flex-wrap:wrap;}
   .histrow .hn{font-weight:700;flex:1 1 180px;min-width:140px;}
   .histrow .hm{font-size:12px;color:var(--tx2);}
+  .recepScan{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .recepScan input[type=text]{flex:1;min-width:220px;font-size:16px;padding:12px 14px;}
+  .recepPanel{background:var(--sur2);border:2px dashed var(--bd);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;}
+  .recepPanel.found{border-style:solid;border-color:var(--acc);}
+  .recepForm .row3{display:flex;gap:12px;flex-wrap:wrap;}
+  .recepForm .row3>div{flex:1;min-width:110px;}
+  .cubBox{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--ok);font-weight:700;margin-top:10px;}
+  .badge.off{background:rgba(148,163,184,.18);color:var(--tx2);}
+  .badge.ok{background:rgba(16,185,129,.15);color:var(--ok);}
 
   .toast{position:fixed;bottom:20px;right:20px;background:var(--sur);border:1px solid var(--bd);border-left:4px solid var(--acc);padding:12px 16px;border-radius:8px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:1000;max-width:320px;}
   .toast.err{border-left-color:var(--danger);}
@@ -252,6 +261,10 @@
   </div>
 
   <div class="tabs">
+    <button class="tabbtn" id="tabRecep" onclick="showTab('recep')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+      Recepción <span id="tabRecepCount"></span>
+    </button>
     <button class="tabbtn active" id="tabPend" onclick="showTab('pend')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
       Pendientes <span id="tabPendCount"></span>
@@ -263,6 +276,57 @@
   </div>
 
   <div class="content">
+
+    <!-- VIEW: RECEPCION DE PAQUETES -->
+    <div class="view" id="viewRecep">
+      <div class="statrow">
+        <div class="stat"><div class="n" id="statRecepOficina">0</div><div class="l">En oficina</div></div>
+        <div class="stat"><div class="n" id="statRecepHoy">0</div><div class="l">Recibidos hoy</div></div>
+        <div class="stat"><div class="n" id="statSalidaHoy">0</div><div class="l">Con salida hoy</div></div>
+        <div class="stat"><div class="n" id="statRecepTotal">0</div><div class="l">Total histórico</div></div>
+      </div>
+
+      <div class="card">
+        <h2>📷 Escanear o ingresar código</h2>
+        <div class="desc">Escaneá el código que ya trae el paquete (guía, tracking, etc.) con el scanner o handheld, o escribilo a mano y presioná Enter.</div>
+        <div class="recepScan">
+          <input type="text" id="recepCodigoInput" placeholder="Código del paquete..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarCodigoRecep();}">
+          <button class="btn" onclick="buscarCodigoRecep()">Buscar</button>
+        </div>
+        <div id="recepPanel"></div>
+      </div>
+
+      <div class="card">
+        <h2>📥 Paquetes en oficina</h2>
+        <div class="desc">Paquetes ya recibidos que todavía no se han retirado.</div>
+        <div class="searchbar">
+          <input type="text" id="recepOficinaSearch" placeholder="Buscar por nombre o código..." oninput="renderEnOficina()">
+        </div>
+        <div class="pkggrid" id="recepOficinaGrid"></div>
+        <div class="empty" id="recepOficinaEmpty" style="display:none;">No hay paquetes en oficina en este momento.</div>
+      </div>
+
+      <div class="card">
+        <h2>🕑 Historial de recepciones</h2>
+        <div class="desc">Todo lo recibido, con fecha y hora de recepción y de salida.</div>
+        <div class="btnrow" style="margin-top:0;">
+          <span class="hint" style="margin:0;">Recibido entre</span>
+          <input type="date" id="recepHistDesde">
+          <span class="hint" style="margin:0;">y</span>
+          <input type="date" id="recepHistHasta">
+          <button class="btn sec" onclick="renderHistorialRecep()">Filtrar</button>
+          <button class="btn sec" onclick="loadRecepMap()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 3v6h-6"></path></svg>
+            Actualizar
+          </button>
+        </div>
+        <div class="searchbar">
+          <input type="text" id="recepHistSearch" placeholder="Buscar por nombre o código..." oninput="renderHistorialRecep()">
+        </div>
+        <div id="recepHistList"></div>
+        <div class="empty" id="recepHistEmpty" style="display:none;">No hay recepciones con este filtro.</div>
+      </div>
+    </div>
 
     <!-- VIEW: PENDIENTES -->
     <div class="view active" id="viewPend">
@@ -521,6 +585,7 @@ var cfg = { pass: DEFAULT_PASS, sheetUrl: '' };
 var todosPaquetes = [];     // todo lo leido del sheet, ya normalizado
 var empacadoMap = {};       // key -> registro guardado en Firebase (ya se empaco)
 var historial = [];         // lista cargada desde Firebase para la pestaña Historial
+var recepMap = {};          // key (codigo escaneado) -> registro de recepcion de paquetes
 var vistos = {};            // keys que este dispositivo ya vio (para dejar de parpadear) -- localStorage, no se comparte entre pantallas
 var servicioFiltro = '';    // '' = todos
 var diaModo = 'hoy';        // 'hoy' | 'todos' | 'custom'
@@ -643,11 +708,17 @@ function toggleTheme(){
    PESTAÑAS
    ============================================================ */
 function showTab(id){
+  document.getElementById('viewRecep').classList.toggle('active', id==='recep');
   document.getElementById('viewPend').classList.toggle('active', id==='pend');
   document.getElementById('viewHist').classList.toggle('active', id==='hist');
+  document.getElementById('tabRecep').classList.toggle('active', id==='recep');
   document.getElementById('tabPend').classList.toggle('active', id==='pend');
   document.getElementById('tabHist').classList.toggle('active', id==='hist');
   if(id==='hist') loadHistorialCloud();
+  if(id==='recep'){
+    loadRecepMap();
+    setTimeout(function(){ var el=document.getElementById('recepCodigoInput'); if(el) el.focus(); }, 50);
+  }
 }
 
 /* ============================================================
@@ -1016,6 +1087,267 @@ async function deshacerEmpacado(key){
 }
 
 /* ============================================================
+   RECEPCION DE PAQUETES (Honduras) -- escaneo al recibir,
+   calculo automatico de pies cubicos, y salida con fecha/hora.
+   ============================================================ */
+function calcularPiesCubicos(l,a,h){
+  l=parseFloat(l); a=parseFloat(a); h=parseFloat(h);
+  if(!(l>0) || !(a>0) || !(h>0)) return null;
+  return (l*a*h)/1728;
+}
+
+async function loadRecepMap(){
+  try{
+    var res = await fetch(FB_URL+'/recepcion.json');
+    var data = await res.json();
+    recepMap = data || {};
+  }catch(e){ /* si falla, seguimos con lo que ya teniamos */ }
+  renderEnOficina();
+  renderHistorialRecep();
+  actualizarStatsRecep();
+}
+
+function actualizarStatsRecep(){
+  var hoy = fechaISO(new Date());
+  var enOficina=0, hoyRec=0, hoySal=0, total=0;
+  Object.keys(recepMap).forEach(function(k){
+    var r = recepMap[k];
+    total++;
+    if(!r.fecha_salida) enOficina++;
+    if((r.fecha_recepcion||'').slice(0,10)===hoy) hoyRec++;
+    if((r.fecha_salida||'').slice(0,10)===hoy) hoySal++;
+  });
+  document.getElementById('statRecepOficina').textContent = enOficina;
+  document.getElementById('statRecepHoy').textContent = hoyRec;
+  document.getElementById('statSalidaHoy').textContent = hoySal;
+  document.getElementById('statRecepTotal').textContent = total;
+  document.getElementById('tabRecepCount').textContent = enOficina ? '('+enOficina+')' : '';
+}
+
+function buscarCodigoRecep(){
+  var input = document.getElementById('recepCodigoInput');
+  var codigo = (input.value||'').trim();
+  if(!codigo){ showToast('Escaneá o escribí un código primero.', true); return; }
+  var r = recepMap[codigo];
+  if(!r){
+    mostrarFormNuevaRecepcion(codigo);
+  } else if(!r.fecha_salida){
+    mostrarPanelExistente(codigo);
+  } else {
+    mostrarPanelYaDespachado(codigo);
+  }
+}
+
+function mostrarFormNuevaRecepcion(codigo){
+  var panel = document.getElementById('recepPanel');
+  panel.className = 'recepPanel';
+  panel.innerHTML =
+    '<h2 style="margin-top:0;">🆕 Código nuevo: '+escHtml(codigo)+'</h2>'+
+    '<div class="desc">No está registrado todavía. Completá los datos para recibirlo.</div>'+
+    '<div class="recepForm">'+
+      '<label class="f" style="margin-top:0;">Nombre del cliente</label>'+
+      '<input type="text" id="recepNombre" placeholder="Nombre completo">'+
+      '<label class="f">Medidas en pulgadas (opcional)</label>'+
+      '<div class="row3">'+
+        '<div><label class="f" style="margin-top:0;">Largo</label><input type="number" id="recepLargo" step="0.1" min="0" oninput="actualizarCubicajeForm()"></div>'+
+        '<div><label class="f" style="margin-top:0;">Ancho</label><input type="number" id="recepAncho" step="0.1" min="0" oninput="actualizarCubicajeForm()"></div>'+
+        '<div><label class="f" style="margin-top:0;">Alto</label><input type="number" id="recepAlto" step="0.1" min="0" oninput="actualizarCubicajeForm()"></div>'+
+      '</div>'+
+      '<label class="f">Peso (libras)</label>'+
+      '<input type="number" id="recepPeso" step="0.1" min="0">'+
+      '<div class="cubBox" id="recepCubBox" style="display:none;"></div>'+
+      '<div class="btnrow">'+
+        '<button class="btn big" onclick="registrarRecepcion(\''+escAttr(codigo)+'\')">✅ Registrar recepción</button>'+
+        '<button class="btn sec" onclick="cerrarPanelRecep()">Cancelar</button>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('recepNombre').focus();
+}
+
+function actualizarCubicajeForm(){
+  var l=document.getElementById('recepLargo').value;
+  var a=document.getElementById('recepAncho').value;
+  var h=document.getElementById('recepAlto').value;
+  var cub = calcularPiesCubicos(l,a,h);
+  var box = document.getElementById('recepCubBox');
+  if(cub===null){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.textContent = '📐 Pies cúbicos: '+cub.toFixed(2)+' ft³';
+}
+
+async function registrarRecepcion(codigo){
+  var nombre = (document.getElementById('recepNombre').value||'').trim();
+  if(!nombre){ showToast('Ingresá el nombre del cliente.', true); return; }
+  var l=document.getElementById('recepLargo').value;
+  var a=document.getElementById('recepAncho').value;
+  var h=document.getElementById('recepAlto').value;
+  var peso=document.getElementById('recepPeso').value;
+  var cub = calcularPiesCubicos(l,a,h);
+  var registro = {
+    codigo: codigo,
+    nombre: nombre,
+    largo: l? parseFloat(l): null,
+    ancho: a? parseFloat(a): null,
+    alto: h? parseFloat(h): null,
+    peso: peso? parseFloat(peso): null,
+    pies_cubicos: cub,
+    fecha_recepcion: new Date().toISOString(),
+    fecha_salida: null
+  };
+  try{
+    await fetch(FB_URL+'/recepcion/'+encodeURIComponent(codigo)+'.json', {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(registro)
+    });
+    recepMap[codigo] = registro;
+    showToast('"'+nombre+'" recibido correctamente.');
+    cerrarPanelRecep();
+    renderEnOficina();
+    renderHistorialRecep();
+    actualizarStatsRecep();
+  }catch(e){
+    showToast('No se pudo guardar la recepción. Revisa tu conexión.', true);
+  }
+}
+
+function mostrarPanelExistente(codigo){
+  var r = recepMap[codigo];
+  var panel = document.getElementById('recepPanel');
+  panel.className = 'recepPanel found';
+  panel.innerHTML =
+    '<h2 style="margin-top:0;">📦 '+escHtml(r.nombre||'')+'</h2>'+
+    '<div class="desc">Código '+escHtml(codigo)+' &middot; ya está en oficina, esperando salida.</div>'+
+    renderDetalleRecep(r)+
+    '<div class="btnrow">'+
+      '<button class="btn big" onclick="darSalida(\''+escAttr(codigo)+'\')">📤 Dar salida</button>'+
+      '<button class="btn sec" onclick="cerrarPanelRecep()">Cerrar</button>'+
+    '</div>';
+}
+
+function mostrarPanelYaDespachado(codigo){
+  var r = recepMap[codigo];
+  var panel = document.getElementById('recepPanel');
+  panel.className = 'recepPanel found';
+  panel.innerHTML =
+    '<h2 style="margin-top:0;">✅ '+escHtml(r.nombre||'')+'</h2>'+
+    '<div class="desc">Código '+escHtml(codigo)+' &middot; ya salió de oficina el '+fechaBonitaHora(r.fecha_salida)+'.</div>'+
+    renderDetalleRecep(r)+
+    '<div class="btnrow">'+
+      '<button class="btn sec" onclick="mostrarFormNuevaRecepcion(\''+escAttr(codigo)+'\')">🔁 Registrar como nueva recepción</button>'+
+      '<button class="btn sec" onclick="cerrarPanelRecep()">Cerrar</button>'+
+    '</div>';
+}
+
+function renderDetalleRecep(r){
+  var medidas = (r.largo||r.ancho||r.alto) ? (r.largo||'—')+' x '+(r.ancho||'—')+' x '+(r.alto||'—')+' pulg' : 'Sin medidas';
+  var cub = (r.pies_cubicos!=null) ? r.pies_cubicos.toFixed(2)+' ft³' : '—';
+  var peso = (r.peso!=null) ? r.peso+' lb' : '—';
+  return '<div class="meta" style="font-size:13px;line-height:1.6;">'+
+    'Recibido: '+fechaBonitaHora(r.fecha_recepcion)+'<br>'+
+    'Medidas: '+escHtml(medidas)+' &middot; Pies cúbicos: '+cub+' &middot; Peso: '+escHtml(peso)+
+    '</div>';
+}
+
+function cerrarPanelRecep(){
+  var panel = document.getElementById('recepPanel');
+  panel.className = '';
+  panel.innerHTML = '';
+  var input = document.getElementById('recepCodigoInput');
+  input.value='';
+  input.focus();
+}
+
+async function darSalida(codigo){
+  var r = recepMap[codigo];
+  if(!r) return;
+  r.fecha_salida = new Date().toISOString();
+  try{
+    await fetch(FB_URL+'/recepcion/'+encodeURIComponent(codigo)+'.json', {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(r)
+    });
+    showToast('"'+(r.nombre||codigo)+'" salió de oficina.');
+    cerrarPanelRecep();
+    renderEnOficina();
+    renderHistorialRecep();
+    actualizarStatsRecep();
+  }catch(e){
+    showToast('No se pudo guardar la salida. Revisa tu conexión.', true);
+  }
+}
+
+function renderEnOficina(){
+  var q = (document.getElementById('recepOficinaSearch').value||'').toLowerCase();
+  var list = Object.keys(recepMap).map(function(k){ var r=recepMap[k]; r._key=k; return r; })
+    .filter(function(r){ return !r.fecha_salida; })
+    .filter(function(r){
+      if(!q) return true;
+      return (r.nombre||'').toLowerCase().indexOf(q)>-1 || (r._key||'').toLowerCase().indexOf(q)>-1;
+    });
+  list.sort(function(a,b){ return (a.fecha_recepcion||'').localeCompare(b.fecha_recepcion||''); });
+  var grid = document.getElementById('recepOficinaGrid');
+  grid.innerHTML = '';
+  list.forEach(function(r){
+    var card = document.createElement('div');
+    card.className = 'pkgcard';
+    var cub = (r.pies_cubicos!=null) ? r.pies_cubicos.toFixed(2)+' ft³' : 'sin medidas';
+    card.innerHTML =
+      '<div class="fila"><div class="nombre">'+escHtml(r.nombre||'(sin nombre)')+'</div>'+
+      '<span class="badge off">'+escHtml(r._key)+'</span></div>'+
+      '<div class="meta">Recibido: '+fechaBonitaHora(r.fecha_recepcion)+'</div>'+
+      '<div class="meta">'+escHtml(cub)+(r.peso!=null?' &middot; '+r.peso+' lb':'')+'</div>'+
+      '<div class="actions"><button class="btn big" onclick="darSalida(\''+escAttr(r._key)+'\')">📤 Dar salida</button></div>';
+    grid.appendChild(card);
+  });
+  document.getElementById('recepOficinaEmpty').style.display = list.length ? 'none' : 'block';
+}
+
+function renderHistorialRecep(){
+  var q = (document.getElementById('recepHistSearch').value||'').toLowerCase();
+  var desde = document.getElementById('recepHistDesde').value;
+  var hasta = document.getElementById('recepHistHasta').value;
+  var list = Object.keys(recepMap).map(function(k){ var r=recepMap[k]; r._key=k; return r; })
+    .filter(function(r){
+      var dia = (r.fecha_recepcion||'').slice(0,10);
+      if(desde && dia<desde) return false;
+      if(hasta && dia>hasta) return false;
+      if(q){
+        var hay = (r.nombre||'').toLowerCase().indexOf(q)>-1 || (r._key||'').toLowerCase().indexOf(q)>-1;
+        if(!hay) return false;
+      }
+      return true;
+    });
+  list.sort(function(a,b){ return (b.fecha_recepcion||'').localeCompare(a.fecha_recepcion||''); });
+  var box = document.getElementById('recepHistList');
+  box.innerHTML = '';
+  list.forEach(function(r){
+    var row = document.createElement('div');
+    row.className = 'histrow';
+    var estadoBadge = r.fecha_salida
+      ? '<span class="badge ok">Salió: '+fechaBonitaHora(r.fecha_salida)+'</span>'
+      : '<span class="badge off">En oficina</span>';
+    var cub = (r.pies_cubicos!=null) ? r.pies_cubicos.toFixed(2)+' ft³' : '—';
+    row.innerHTML =
+      '<span class="hn">'+escHtml(r.nombre||'')+'</span>'+
+      '<span class="hm">'+escHtml(r._key)+'</span>'+
+      '<span class="hm">Recibido: '+fechaBonitaHora(r.fecha_recepcion)+'</span>'+
+      '<span class="hm">'+cub+'</span>'+
+      estadoBadge;
+    box.appendChild(row);
+  });
+  document.getElementById('recepHistEmpty').style.display = list.length ? 'none' : 'block';
+}
+
+function fechaBonitaHora(iso){
+  if(!iso) return '—';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return '—';
+  return d.toLocaleString('es-HN');
+}
+
+function escAttr(v){
+  return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+/* ============================================================
    ETIQUETA DE IMPRESION
    ============================================================ */
 function imprimirEtiqueta(key){
@@ -1163,6 +1495,7 @@ function showToast(msg, isErr){
 function initApp(){
   setDiaHoy();
   fetchFromSheet();
+  loadRecepMap();
   if(autoRefreshTimer) clearInterval(autoRefreshTimer);
   autoRefreshTimer = setInterval(fetchFromSheet, 60000); // auto-actualiza cada minuto, sin tener que tocar nada
 }
