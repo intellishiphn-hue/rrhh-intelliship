@@ -362,9 +362,17 @@
             <input type="text" id="recSearch" placeholder="Buscar por cliente, casillero, N° WR o contenedor..." oninput="renderRecibos()">
             <select id="recFiltroEstado" onchange="renderRecibos()" style="max-width:220px;"><option value="">Todos los estados</option></select>
           </div>
+          <div class="btnrow" style="margin-top:0;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="recSelAllHead" onchange="toggleSeleccionarTodosRecibos(this.checked)">
+              Seleccionar todos
+            </label>
+            <span class="hint" id="recSelCount" style="margin:0;">0 seleccionados</span>
+            <button class="btn" id="btnExportarAlmacen" onclick="exportarSeleccionadosParaAlmacen()" disabled>📦 Exportar para almacén (China)</button>
+          </div>
           <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>N° WR</th><th>Cliente</th><th>Casillero</th><th>Contenedor</th><th>Estado</th><th>Recibido</th></tr></thead>
+            <thead><tr><th></th><th>N° WR</th><th>Cliente</th><th>Casillero</th><th>Contenedor</th><th>Estado</th><th>Recibido</th></tr></thead>
             <tbody id="recBody"></tbody>
           </table>
           </div>
@@ -1246,6 +1254,7 @@ function renderRecFiltroEstado(){
   sel.value = current;
 }
 
+var recidsFiltradosActual = [];
 function renderRecibos(){
   var q = (document.getElementById('recSearch').value||'').toLowerCase();
   var filtroEstado = document.getElementById('recFiltroEstado').value;
@@ -1256,13 +1265,16 @@ function renderRecibos(){
     return hay.indexOf(q) !== -1;
   });
   ids.sort(function(a,b){ return (recibos[b].fechaCreacion||'').localeCompare(recibos[a].fechaCreacion||''); });
+  recidsFiltradosActual = ids;
   var body = document.getElementById('recBody');
   if(!ids.length){ body.innerHTML=''; document.getElementById('recEmpty').style.display='block'; }
   else {
     document.getElementById('recEmpty').style.display='none';
     body.innerHTML = ids.map(function(id){
       var r = recibos[id];
+      var marcado = exportSeleccion[id] ? ' checked' : '';
       return '<tr class="clickable" onclick="abrirDetalleRecibo(\''+id+'\')">'
+        + '<td onclick="event.stopPropagation()"><input type="checkbox"'+marcado+' onchange="toggleSeleccionExport(\''+id+'\', this.checked)"></td>'
         + '<td><b>'+escHtml(r.numeroWR)+'</b></td>'
         + '<td>'+escHtml(r.clienteNombre)+'</td>'
         + '<td>'+escHtml(r.clienteCasillero)+'</td>'
@@ -1282,6 +1294,119 @@ function renderRecibos(){
   document.getElementById('statSinContenedor').textContent = sinCont;
   document.getElementById('statRecHoy').textContent = recHoy;
   document.getElementById('statRecEntregados').textContent = entregados;
+  actualizarBarraExport();
+}
+
+/* ============================================================
+   EXPORTAR PARA ALMACEN DE CHINA (seleccion multiple + Excel
+   con enlaces clicables a foto / factura / packing list)
+   ============================================================ */
+var exportSeleccion = {};
+function toggleSeleccionExport(id, checked){
+  if(checked) exportSeleccion[id] = true; else delete exportSeleccion[id];
+  actualizarBarraExport();
+}
+function toggleSeleccionarTodosRecibos(checked){
+  recidsFiltradosActual.forEach(function(id){
+    if(checked) exportSeleccion[id] = true; else delete exportSeleccion[id];
+  });
+  renderRecibos();
+}
+function actualizarBarraExport(){
+  var n = Object.keys(exportSeleccion).length;
+  var count = document.getElementById('recSelCount');
+  if(count) count.textContent = n + (n===1 ? ' seleccionado' : ' seleccionados');
+  var btn = document.getElementById('btnExportarAlmacen');
+  if(btn) btn.disabled = (n===0);
+  var head = document.getElementById('recSelAllHead');
+  if(head && recidsFiltradosActual.length){
+    var todosMarcados = recidsFiltradosActual.every(function(id){ return !!exportSeleccion[id]; });
+    head.checked = todosMarcados;
+  } else if(head){
+    head.checked = false;
+  }
+}
+
+function archivoBaseUrl(){
+  var base = cfg.trackBase && cfg.trackBase.trim();
+  if(base && base.indexOf('rastreo-china.html')!==-1){
+    return base.replace('rastreo-china.html', 'archivo-china.html');
+  }
+  return location.href.replace(/casilleros-china\.html.*$/, 'archivo-china.html');
+}
+function linkArchivoRecibo(reciboId, campo){
+  return archivoBaseUrl() + '?id=' + encodeURIComponent(reciboId) + '&campo=' + campo;
+}
+
+var _xlsxLibCargando = null;
+function cargarLibXLSX(){
+  if(typeof XLSX !== 'undefined') return Promise.resolve(true);
+  if(_xlsxLibCargando) return _xlsxLibCargando;
+  _xlsxLibCargando = _cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+    .then(function(ok){ return ok && typeof XLSX !== 'undefined'; })
+    .catch(function(){ return false; });
+  return _xlsxLibCargando;
+}
+
+async function exportarSeleccionadosParaAlmacen(){
+  var ids = Object.keys(exportSeleccion);
+  if(!ids.length){ showToast('Selecciona al menos un recibo de la tabla.', true); return; }
+  var btn = document.getElementById('btnExportarAlmacen'); var prevTxt = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Generando...';
+  try{
+    var ok = await cargarLibXLSX();
+    if(!ok){ showToast('No se pudo cargar la librería de Excel. Revisa tu conexión e intenta de nuevo.', true); return; }
+
+    ids.sort(function(a,b){ return (recibos[a]&&recibos[a].fechaCreacion||'').localeCompare(recibos[b]&&recibos[b].fechaCreacion||''); });
+
+    var encabezado = ['N° WR','Cliente','Casillero','Contenido','Vendedor / Teléfono','Medidas','Peso','Unidad','CBM (m³)','Estado','Contenedor','Fecha recibido','Foto','Factura comercial','Packing list'];
+    var filas = [encabezado];
+    ids.forEach(function(id){
+      var r = recibos[id];
+      if(!r) return;
+      filas.push([
+        r.numeroWR||'', r.clienteNombre||'', r.clienteCasillero||'', r.contenido||'',
+        r.vendedorTelefono||'', r.medidas||'', r.peso||'', r.pesoUnidad||'', r.cbm||'',
+        r.estado||'', r.contenedorNombre||'', fechaBonita(r.fechaCreacion),
+        r.fotoB64 ? 'Ver foto' : '—',
+        r.facturaB64 ? 'Ver factura' : '—',
+        r.packingB64 ? 'Ver packing list' : '—'
+      ]);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(filas);
+    ws['!cols'] = [
+      {wch:12},{wch:22},{wch:12},{wch:28},{wch:20},{wch:16},{wch:8},{wch:8},{wch:10},
+      {wch:20},{wch:18},{wch:16},{wch:14},{wch:16},{wch:16}
+    ];
+    var colFoto = 12, colFactura = 13, colPacking = 14;
+    ids.forEach(function(id, i){
+      var r = recibos[id];
+      if(!r) return;
+      var fila = i + 1; // +1 por el encabezado (0-index de SheetJS -> fila 1 es la primera de datos)
+      if(r.fotoB64){
+        var refF = XLSX.utils.encode_cell({r: fila, c: colFoto});
+        ws[refF].l = {Target: linkArchivoRecibo(id, 'foto'), Tooltip: 'Ver foto del paquete'};
+      }
+      if(r.facturaB64){
+        var refFac = XLSX.utils.encode_cell({r: fila, c: colFactura});
+        ws[refFac].l = {Target: linkArchivoRecibo(id, 'factura'), Tooltip: 'Ver factura comercial'};
+      }
+      if(r.packingB64){
+        var refP = XLSX.utils.encode_cell({r: fila, c: colPacking});
+        ws[refP].l = {Target: linkArchivoRecibo(id, 'packing'), Tooltip: 'Ver packing list'};
+      }
+    });
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'WRs para almacén');
+    var hoyArchivo = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, 'INTELLISHIP_WRs_almacen_'+hoyArchivo+'.xlsx');
+    showToast('Excel generado con '+ids.length+' WR'+(ids.length===1?'':'s')+'.');
+  }catch(e){
+    showToast('No se pudo generar el Excel: '+e.message, true);
+  }
+  btn.disabled = false; btn.textContent = prevTxt;
 }
 
 function filaArchivo(label, b64, nombre){
