@@ -1359,7 +1359,7 @@ async function exportarSeleccionadosParaAlmacen(){
 
     ids.sort(function(a,b){ return (recibos[a]&&recibos[a].fechaCreacion||'').localeCompare(recibos[b]&&recibos[b].fechaCreacion||''); });
 
-    var encabezado = ['N° WR','Cliente','Casillero','Contenido','Vendedor / Teléfono','Medidas','Peso','Unidad','CBM (m³)','Estado','Contenedor','Fecha recibido','Foto','Factura comercial','Packing list'];
+    var encabezado = ['WR #','Client','Locker #','Description','Seller / Phone','Dimensions','Weight','Unit','CBM (m³)','Status','Container','Date Received','Photo','Commercial Invoice','Packing List'];
     var filas = [encabezado];
     ids.forEach(function(id){
       var r = recibos[id];
@@ -1368,9 +1368,9 @@ async function exportarSeleccionadosParaAlmacen(){
         r.numeroWR||'', r.clienteNombre||'', r.clienteCasillero||'', r.contenido||'',
         r.vendedorTelefono||'', r.medidas||'', r.peso||'', r.pesoUnidad||'', r.cbm||'',
         r.estado||'', r.contenedorNombre||'', fechaBonita(r.fechaCreacion),
-        r.fotoB64 ? 'Ver foto' : '—',
-        r.facturaB64 ? 'Ver factura' : '—',
-        r.packingB64 ? 'Ver packing list' : '—'
+        r.fotoB64 ? 'View photo' : '—',
+        r.facturaB64 ? 'View invoice' : '—',
+        r.packingB64 ? 'View packing list' : '—'
       ]);
     });
 
@@ -1386,22 +1386,22 @@ async function exportarSeleccionadosParaAlmacen(){
       var fila = i + 1; // +1 por el encabezado (0-index de SheetJS -> fila 1 es la primera de datos)
       if(r.fotoB64){
         var refF = XLSX.utils.encode_cell({r: fila, c: colFoto});
-        ws[refF].l = {Target: linkArchivoRecibo(id, 'foto'), Tooltip: 'Ver foto del paquete'};
+        ws[refF].l = {Target: linkArchivoRecibo(id, 'foto'), Tooltip: 'View package photo'};
       }
       if(r.facturaB64){
         var refFac = XLSX.utils.encode_cell({r: fila, c: colFactura});
-        ws[refFac].l = {Target: linkArchivoRecibo(id, 'factura'), Tooltip: 'Ver factura comercial'};
+        ws[refFac].l = {Target: linkArchivoRecibo(id, 'factura'), Tooltip: 'View commercial invoice'};
       }
       if(r.packingB64){
         var refP = XLSX.utils.encode_cell({r: fila, c: colPacking});
-        ws[refP].l = {Target: linkArchivoRecibo(id, 'packing'), Tooltip: 'Ver packing list'};
+        ws[refP].l = {Target: linkArchivoRecibo(id, 'packing'), Tooltip: 'View packing list'};
       }
     });
 
     var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'WRs para almacén');
+    XLSX.utils.book_append_sheet(wb, ws, 'WRs for warehouse');
     var hoyArchivo = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb, 'INTELLISHIP_WRs_almacen_'+hoyArchivo+'.xlsx');
+    XLSX.writeFile(wb, 'INTELLISHIP_WRs_warehouse_'+hoyArchivo+'.xlsx');
     showToast('Excel generado con '+ids.length+' WR'+(ids.length===1?'':'s')+'.');
   }catch(e){
     showToast('No se pudo generar el Excel: '+e.message, true);

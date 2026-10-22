@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
-<title>INTELLISHIP · Documento del paquete</title>
+<title>INTELLISHIP · Package Document</title>
 <style>
   :root{
     --acc:#14b8a6; --acc2:#0d9488; --bg:#f4f7fa; --sur:#ffffff; --sur2:#eef2f6;
@@ -43,7 +43,7 @@
   </div>
 
   <div id="contenido">
-    <div class="empty">Cargando documento...</div>
+    <div class="empty">Loading document...</div>
   </div>
 
   <div class="foot">INTELLISHIP · La experiencia lo es todo<br>www.intellishiphn.com</div>
@@ -92,8 +92,8 @@ function getParam(name){
 }
 
 var CAMPOS = {
-  foto:    {b64:'fotoB64',    nombre:'fotoNombreArchivo',    label:'Foto del paquete',   icono:'📷'},
-  factura: {b64:'facturaB64', nombre:'facturaNombreArchivo', label:'Factura comercial',  icono:'🧾'},
+  foto:    {b64:'fotoB64',    nombre:'fotoNombreArchivo',    label:'Package photo',      icono:'📷'},
+  factura: {b64:'facturaB64', nombre:'facturaNombreArchivo', label:'Commercial invoice', icono:'🧾'},
   packing: {b64:'packingB64', nombre:'packingNombreArchivo', label:'Packing list',       icono:'📋'}
 };
 
@@ -113,14 +113,14 @@ async function cargar(){
   var cont = document.getElementById('contenido');
   var def = CAMPOS[campo];
   if(!id || !def){
-    cont.innerHTML = '<div class="empty">Este link no es válido.<br>Revisa que copiaste el link completo que te enviaron.</div>';
+    cont.innerHTML = '<div class="empty">This link is not valid.<br>Please check that you copied the complete link you were sent.</div>';
     return;
   }
   try{
     var res = await fetch(FB_URL+'/recibos/'+encodeURIComponent(id)+'.json');
     var r = await res.json();
     if(!r){
-      cont.innerHTML = '<div class="empty">No encontramos ningún paquete con ese link.<br>Si crees que es un error, contáctanos.</div>';
+      cont.innerHTML = '<div class="empty">We could not find any package with this link.<br>If you think this is a mistake, please contact us.</div>';
       return;
     }
     var dataUri = r[def.b64];
@@ -130,7 +130,7 @@ async function cargar(){
         + '<div class="wr">'+escHtml(r.numeroWR||'')+'</div>'
         + '<div class="cliente">'+escHtml(r.clienteNombre||'')+'</div>'
         + '<div class="doclabel">'+def.icono+' '+def.label+'</div>'
-        + '<div class="empty" style="padding:30px 0;">Todavía no se subió este documento para este WR.</div>'
+        + '<div class="empty" style="padding:30px 0;">This document has not been uploaded yet for this WR.</div>'
         + '</div>';
       return;
     }
@@ -152,14 +152,14 @@ async function cargar(){
     html += '</div>'
       + '<div class="nombreArchivo">'+escHtml(nombreArchivo)+'</div>'
       + '<div class="dlrow">'
-      + '<a class="btn" href="'+blobUrl+'" download="'+escHtml(nombreArchivo)+'">⬇ Descargar</a>'
-      + '<a class="btn sec" href="'+blobUrl+'" target="_blank" rel="noopener">Abrir en pestaña nueva</a>'
+      + '<a class="btn" href="'+blobUrl+'" download="'+escHtml(nombreArchivo)+'">⬇ Download</a>'
+      + '<a class="btn sec" href="'+blobUrl+'" target="_blank" rel="noopener">Open in new tab</a>'
       + '</div>'
       + '</div>';
 
     cont.innerHTML = html;
   }catch(e){
-    cont.innerHTML = '<div class="empty">No pudimos cargar el documento en este momento.<br>Intenta de nuevo en un rato.</div>';
+    cont.innerHTML = '<div class="empty">We could not load the document right now.<br>Please try again in a moment.</div>';
   }
 }
 
