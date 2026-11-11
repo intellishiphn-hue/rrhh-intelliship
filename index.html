@@ -1124,6 +1124,8 @@ function fd(d){ if(!d) return '--'; var dt=new Date(d+'T00:00:00'); return dt.to
 function fm(n){ return 'L. '+parseFloat(n||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function antig(i){ return (new Date()-new Date(i))/(1000*60*60*24*365.25); }
 function dxley(y){ if(y<1) return 0; if(y<2) return 10; if(y<3) return 12; if(y<4) return 15; return 20; }
+// Dias de vacaciones segun ley, pero solo si el empleado inicio ANTES de este año calendario
+function vacTot(ingFecha){ var yr=new Date().getFullYear(); if(new Date(ingFecha+'T00:00:00').getFullYear()>=yr) return 0; return dxley(antig(ingFecha)); }
 function yt(y){ var yr=Math.floor(y),mo=Math.floor((y-yr)*12); if(yr===0) return mo+' mes(es)'; if(mo===0) return yr+' año(s)'; return yr+' año(s), '+mo+' mes(es)'; }
 function vacUsadas(eid){ var yr=new Date().getFullYear(); return regs.filter(function(r){ return r.eid===eid&&r.t==='vacaciones'&&new Date(r.fi).getFullYear()===yr; }).reduce(function(s,r){ return s+(r.d||0); },0); }
 function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t; }).length; }
@@ -1842,7 +1844,7 @@ function rDash(){
     document.getElementById('dtitle').textContent='Hola, '+e.n+' 👋';
     document.getElementById('dsub').textContent='Bienvenido a su panel';
     document.getElementById('dacts').innerHTML='';
-    var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+    var ag=antig(e.i),tot=vacTot(e.i),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
     var html='';
     for(var i=0;i<bd0.length;i++) if(bd0[i].id===e.id) html+='<div class="bday-row">🎂 <div><strong>Feliz Cumpleanos, '+e.n+'!</strong></div></div>';
     var todayStr=now.toISOString().split('T')[0];
@@ -1907,7 +1909,7 @@ function rMainTb(list){
   var html='';
   for(var i=0;i<list.length;i++){
     var e=list[i], idx=emps.indexOf(e), color=gc(idx>=0?idx:i);
-    var ag=antig(e.i), tot=dxley(ag), us=vacUsadas(e.id), disp=Math.max(0,tot-us);
+    var ag=antig(e.i), tot=vacTot(e.i), us=vacUsadas(e.id), disp=Math.max(0,tot-us);
     var pct=tot>0?Math.min(100,us/tot*100):0;
     var barColor=disp<=2?'var(--red)':disp<=5?'var(--yel)':'var(--grn)';
     var fNJ=cnt(e.id,'falta_no_justificada'), perm=cnt(e.id,'permiso');
@@ -1932,7 +1934,7 @@ function rEmps(){
   var hidden=emps.filter(function(e){ return e.hidden; });
   var html='';
   for(var i=0;i<visible.length;i++){
-    var e=visible[i],color=gc(i),ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+    var e=visible[i],color=gc(i),ag=antig(e.i),tot=vacTot(e.i),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
     var now=new Date(),b=e.nb?new Date(e.nb+'T00:00:00'):null;
     var isBday=b&&b.getMonth()===now.getMonth()&&b.getDate()===now.getDate();
     html+='<div class="card" style="cursor:pointer;" onclick="gv(\'perf\',\''+e.id+'\')"><div style="padding:15px 17px;">';
@@ -1961,7 +1963,7 @@ function rPerf(eid){
   var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
   if(!e) return;
   var idx=emps.indexOf(e),color=gc(idx);
-  var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+  var ag=antig(e.i),tot=vacTot(e.i),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
   var fJ=cnt(e.id,'falta_justificada'),fNJ=cnt(e.id,'falta_no_justificada'),perm=cnt(e.id,'permiso');
   document.getElementById('ptitle').textContent=e.n+' '+e.a;
   var pa=document.getElementById('pacts');
@@ -2141,7 +2143,7 @@ function saveReg(){
   var al=document.getElementById('re-al');
   if(tipo==='vacaciones'){
     var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
-    var tot=dxley(antig(e.i)),us=vacUsadas(eid),disp=Math.max(0,tot-us);
+    var tot=vacTot(e.i),us=vacUsadas(eid),disp=Math.max(0,tot-us);
     if(dias>disp){ al.textContent='⚠ Solo hay '+disp+' dia(s) disponibles. Guardando de todas formas.'; al.classList.remove('hidden'); }
     else al.classList.add('hidden');
   }
@@ -2638,7 +2640,7 @@ function checkBdays(){
 function dlPDF(eid){
   var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ e=emps[i]; break; }
   if(!e) return;
-  var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
+  var ag=antig(e.i),tot=vacTot(e.i),us=vacUsadas(e.id),disp=Math.max(0,tot-us);
   var fJ=cnt(e.id,'falta_justificada'),fNJ=cnt(e.id,'falta_no_justificada'),perm=cnt(e.id,'permiso');
   var hist=regs.filter(function(r){ return r.eid===eid; }).sort(function(a,b){ return new Date(b.fi)-new Date(a.fi); });
   var rows='';
@@ -2676,7 +2678,7 @@ async function syncSheets(){
   var dot=document.getElementById('sdot'),st=document.getElementById('sst');
   dot.style.background='var(--yel)'; st.textContent='Sincronizando...';
   try{
-    var er=emps.map(function(e){ var ag=antig(e.i),tot=dxley(ag),us=vacUsadas(e.id); return[e.id,e.n,e.a,e.i,e.c,e.t,tot,us,Math.max(0,tot-us)]; });
+    var er=emps.map(function(e){ var ag=antig(e.i),tot=vacTot(e.i),us=vacUsadas(e.id); return[e.id,e.n,e.a,e.i,e.c,e.t,tot,us,Math.max(0,tot-us)]; });
     var rr=regs.map(function(r){ var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===r.eid){ e=emps[i]; break; } return[e?e.n+' '+e.a:r.eid,r.t,r.fi,r.ff,r.d,r.notes,r.fecha]; });
     var sr=sals.map(function(s){ var e=null; for(var i=0;i<emps.length;i++) if(emps[i].id===s.eid){ e=emps[i]; break; } return[e?e.n+' '+e.a:s.eid,s.per,s.mes,s.monto,s.notes]; });
     var pairs=[['empleados',er],['registros',rr],['salarios',sr]];
