@@ -1125,18 +1125,7 @@ function fm(n){ return 'L. '+parseFloat(n||0).toLocaleString('es-HN',{minimumFra
 function antig(i){ return (new Date()-new Date(i))/(1000*60*60*24*365.25); }
 function dxley(y){ if(y<1) return 0; if(y<2) return 10; if(y<3) return 12; if(y<4) return 15; return 20; }
 function yt(y){ var yr=Math.floor(y),mo=Math.floor((y-yr)*12); if(yr===0) return mo+' mes(es)'; if(mo===0) return yr+' año(s)'; return yr+' año(s), '+mo+' mes(es)'; }
-function vacUsadas(eid){
-  // Busca la fecha de ingreso del empleado
-  var emp=null; for(var i=0;i<emps.length;i++) if(emps[i].id===eid){ emp=emps[i]; break; }
-  if(!emp||!emp.i) return 0;
-  // Calcula el ultimo aniversario laboral (mismo mes/dia, año actual o anterior)
-  var hoy=new Date();
-  var ing=new Date(emp.i+'T00:00:00');
-  var anivEsteAnio=new Date(hoy.getFullYear(),ing.getMonth(),ing.getDate());
-  var ultimoAniv=anivEsteAnio<=hoy ? anivEsteAnio : new Date(hoy.getFullYear()-1,ing.getMonth(),ing.getDate());
-  // Solo cuenta vacaciones usadas DESDE el ultimo aniversario
-  return regs.filter(function(r){ return r.eid===eid&&r.t==='vacaciones'&&new Date(r.fi+'T00:00:00')>=ultimoAniv; }).reduce(function(s,r){ return s+(r.d||0); },0);
-}
+function vacUsadas(eid){ var yr=new Date().getFullYear(); return regs.filter(function(r){ return r.eid===eid&&r.t==='vacaciones'&&new Date(r.fi).getFullYear()===yr; }).reduce(function(s,r){ return s+(r.d||0); },0); }
 function cnt(eid,t){ return regs.filter(function(r){ return r.eid===eid&&r.t===t; }).length; }
 function dh(fi,ff){ var d=new Date(fi+'T00:00:00'),e=new Date(ff+'T00:00:00'),c=0; while(d<=e){ var w=d.getDay(); if(w!==0&&w!==6) c++; d.setDate(d.getDate()+1); } return c; }
 function bdays(ahead){ var now=new Date(),tgt=new Date(now); tgt.setDate(tgt.getDate()+ahead); var m=tgt.getMonth()+1,d=tgt.getDate(); return emps.filter(function(e){ if(!e.nb) return false; var b=new Date(e.nb+'T00:00:00'); return b.getMonth()+1===m&&b.getDate()===d; }); }
